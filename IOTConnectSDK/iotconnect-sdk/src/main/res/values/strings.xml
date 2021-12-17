@@ -1,0 +1,72 @@
+<resources>
+
+    <string name="device_is_barred">Device:%s is barred - method:%s not Permitted</string>
+
+    <string name="ERR_IN01">Invalid URL</string>
+    <string name="ERR_IN02"><![CDATA[Discovery URL can not be blank]]></string>
+    <string name="ERR_IN03"><![CDATA[Missing required parameter \'discoveryUrl\' in sdkOptions]]></string>
+    <string name="ERR_IN04">cpId can not be blank</string>
+    <string name="ERR_IN05">uniqueId can not be blank</string>
+    <string name="ERR_IN08"><![CDATA[Network connection error or invalid url]]></string>
+    <string name="ERR_IN09">Unable to get baseUrl</string>
+    <string name="ERR_IN10">Device information not found</string>
+    <string name="ERR_IN11">Device broker information not found</string>
+    <string name="ERR_SD04">Device is barred SendData() method is not permitted</string>
+    <string name="ERR_SD05">Invalid data type to send the data. It should be in array of object type</string>
+    <string name="ERR_SD06">Missing required parameter \'data\'</string>
+    <string name="ERR_SD07">Missing required parameter \'time\'</string>
+    <string name="ERR_SD08">Missing required parameter \'uniqueId\'</string>
+    <string name="ERR_TP01">" Device is barred UpdateTwin() method is not permitted"</string>
+    <string name="ERR_TP03">Missing required parameter \'key\' or \'value\' to update twin property</string>
+    <string name="ERR_CM02">" Missing required parameter 'obj' or 'msgType' to send acknowledgement"</string>
+    <string name="ERR_CM03">Invalid data type to send the acknowledgment. It should be in \'object\' type</string>
+    <string name="ERR_CM04">Device is barred SendAck() method is not permitted</string>
+    <string name="ERR_SD02">It does not matched with payload\'s \'uniqueId\'</string>
+    <string name="ERR_SD03">" It does not matched with predefined standard date time format for payload's 'time'"</string>
+    <string name="ERR_SD10">Publish data failed : MQTT connection not found</string>
+
+    <string name="INFO_IN01">Device information received successfully</string>
+    <string name="INFO_IN02">Device connected </string>
+    <string name="INFO_IN03">Device disconnected</string>
+    <string name="INFO_IN04">Initializing…</string>
+    <string name="INFO_IN05">Connecting...</string>
+    <string name="INFO_SD01">Publish data :</string>
+    <string name="INFO_TP01">Twin property updated successfully :</string>
+
+    <string name="INFO_CM01">Command : 0x01 : STANDARD_COMMAND</string>
+
+    <string name="INFO_CM02">Command : 0x02 : FIRMWARE_UPDATE</string>
+    <string name="INFO_CM03">Command : 0x10 : ATTRIBUTE_UPDATE</string>
+    <string name="INFO_CM04">Command : 0x11 : SETTING_UPDATE</string>
+    <string name="INFO_CM05">Command : 0x12 : PASSWORD_UPDATE</string>
+    <string name="INFO_CM06">Command : 0x13 : DEVICE_UPDATE</string>
+    <string name="INFO_CM07">Command : 0x15 : RULE_UPDATE</string>
+    <string name="INFO_CM08">Command : 0x99 : STOP_SDK_CONNECTION</string>
+    <string name="INFO_CM09">Command : 0x16 : SDK_CONNECTION_STATUS</string>
+    <string name="INFO_CM10">Command acknowledgement success></string>
+    <string name="INFO_CM16">Command : 0x16 : DEVICE_CONNECTION_STATUS</string>
+
+    <string name="INFO_DC01">Device already disconnected</string>
+    <string name="INFO_IN06">Rechecking…</string>
+    <string name="ERR_GA02"><![CDATA[Attributes data not found]]></string>
+    <string name="ERR_TP04"><![CDATA[Device is barred getAllTwins() method is not permitted]]></string>
+    <string name="ERR_IN13"><![CDATA[Client connection failed]]></string>
+    <string name="INFO_IN15">Response Code : \'NO_RESPONSE_CODE_MATCHED\'</string>
+    <string name="INFO_IN08">Response Code : 0 \'OK\'</string>
+    <string name="INFO_IN09">Response Code : 1 \'DEVICE_NOT_REGISTERED\'</string>
+    <string name="INFO_IN10">Response Code : 2 \'AUTO_REGISTER\'</string>
+    <string name="INFO_IN11">Response Code : 3 \'DEVICE_NOT_FOUND\'</string>
+    <string name="INFO_IN12">Response Code : 4 \'DEVICE_INACTIVE\'</string>
+    <string name="INFO_IN13">Response Code : 5 \'OBJECT_MOVED\'</string>
+    <string name="INFO_IN14">Response Code : 6 \'CPID_NOT_FOUND\'</string>
+    <string name="INFO_IN07"><![CDATA[BaseUrl received to sync the device information]]></string>
+    <string name="INFO_TP02"><![CDATA[Request sent successfully to get the all twin properties]]></string>
+    <string name="INFO_GA01"><![CDATA[Get attributes successfully]]></string>
+    <string name="ERR_OS03">"Unable to read or write file - "</string>
+    <string name="ERR_OS02">"Error while creating log directory - "</string>
+    <string name="INFO_OS02">Offline data saved</string>
+    <string name="INFO_OS03">File has been created to store offline data.</string>
+    <string name="INFO_OS04">Offline log file deleted</string>
+    <string name="INFO_OS05">No offline data found</string>
+
+</resources>

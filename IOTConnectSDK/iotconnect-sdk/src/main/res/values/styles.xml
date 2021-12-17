@@ -1,0 +1,6 @@
+<resources>
+
+    <style name="TextLabel" parent="TextAppearance.Design.Hint">
+        <item name="android:textSize">30sp</item>
+    </style>
+</resources>
