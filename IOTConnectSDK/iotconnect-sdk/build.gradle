@@ -1,5 +1,6 @@
 plugins {
-    id "com.android.library"
+    id 'com.android.library'
+    id 'maven-publish'
 }
 
 android {
@@ -49,5 +50,22 @@ dependencies {
     implementation 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.1.1'
     implementation('org.eclipse.paho:org.eclipse.paho.android.service:1.1.1') {
         exclude module: 'support-v4'
+    }
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            // Creates a Maven publication called "release".
+            release(MavenPublication) {
+                // Applies the component for the release build variant.
+                from components.release
+
+                // You can then customize attributes of the publication as shown below.
+                groupId = 'com.github.sw-ms-imranbhadelia' //sw-tt-chunilalgamit
+                artifactId = 'iotconnect-sdk'
+                version = '3.0.1'
+            }
+        }
     }
 }
