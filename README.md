@@ -194,16 +194,16 @@ Note : (*) indicates the mandatory element of the object.
 	allprojects {
 		repositories {
 			...
-			 jcenter()
+			maven { url 'https://jitpack.io' }
 		}
 	}
-```	
+```
 
 2.Add below dependency in build.gradle file.
 
 ```java	
 	dependencies {
-	        implementation 'com.iotconnectsdk:iotconnectpoc:3.0'			
+	        implementation 'com.iotconnectsdk:iotconnectpoc:3.1.2'		
 	}
 ```	
 
