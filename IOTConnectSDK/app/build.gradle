@@ -46,9 +46,7 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
 
     implementation project(path: ':iotconnect-sdk')
-//    implementation 'com.github.avnet-iotconnect:iotc-android-sdk:4.0.2'
-
-
-
-
+//    implementation 'com.github.avnet-iotconnect:iotc-android-sdk:4.0.4'
 }
+
+
