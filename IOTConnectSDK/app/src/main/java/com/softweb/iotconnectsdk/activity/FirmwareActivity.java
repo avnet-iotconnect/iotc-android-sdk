@@ -50,14 +50,15 @@ import com.softweb.iotconnectsdk.model.SdkOptions;
  *****************************************************************************
  * @file : FirmwareActivity.java
  * @author : Softweb Solutions An Avnet Company
- * @modify : 17-March-2021
- * @brief : Firmware part for Android SDK 3.0
+ * @modify : 28-June-2022
+ * @brief : Firmware part for Android SDK 3.1.2
  * *****************************************************************************
  */
 
 /*
- * Hope you have imported SDK v3.0 in build.gradle as guided in README.md file or from documentation portal.
+ * Hope you have imported SDK v3.1.2 in build.gradle as guided in README.md file or from documentation portal.
  */
+
 public class FirmwareActivity extends AppCompatActivity implements View.OnClickListener, DeviceCallback, TwinUpdateCallback {
 
     private static final String TAG = FirmwareActivity.class.getSimpleName();
@@ -377,6 +378,12 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
 
             try {
                 JSONObject mainObject = new JSONObject(message);
+
+                //Publish message call back received.
+                if (!mainObject.has("cmdType")) {
+                    return;
+                }
+
                 String cmdType = mainObject.getString("cmdType");
 
                 String ackId = mainObject.getJSONObject("data").getString("ackId");

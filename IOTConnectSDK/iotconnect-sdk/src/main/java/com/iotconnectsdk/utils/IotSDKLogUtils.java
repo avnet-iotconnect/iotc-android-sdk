@@ -47,7 +47,7 @@ public class IotSDKLogUtils {
             String currentDate = IotSDKUtils.getCurrentDate();
 
             String LOG = "[" + code + "] " + currentDate + " [" + this.cpId + "_" + this.uniqueId + "]: " + msg;
-            Log.d("", LOG);
+         //   Log.d("", LOG);
 
             writeLogFile(isError, LOG);
         }

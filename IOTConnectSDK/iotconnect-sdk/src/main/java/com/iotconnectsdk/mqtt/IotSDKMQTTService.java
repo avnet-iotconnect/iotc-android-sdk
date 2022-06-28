@@ -245,7 +245,6 @@ public class IotSDKMQTTService {
 
     public void publishMessage(String msgPublish) {
         try {
-//            String msgPublish ="{\"cpId\": \"9bb0f18a-798d-4f94-a7fd-9c70743193d4\",\"company\": \"\",\"time\": \"2018-01-09T04:49:37:000Z\",\"msgtype\": \"\",\"data\": [{\"uniqueId\": \"\",\"guid\": \"\",\"dtime\": \"2018-01-09T04:49:37:000Z\",\"data\":[{\"parent\": \"\",\"guid\": \"\",\"stime\": \"2018-01-09T04:49:37:000Z\",\"data\": [{\"guid\": \"GUID\",\"localName\": \"system_state\",\"value\": 1}]}]}]}";
             if (mqttAndroidClient != null && mqttAndroidClient.isConnected() && msgPublish != null) {
                 MqttMessage message = new MqttMessage();
                 message.setPayload(msgPublish.getBytes());

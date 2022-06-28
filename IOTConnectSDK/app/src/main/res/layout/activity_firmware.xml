@@ -89,8 +89,6 @@
 
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <!--android:text="ddd2"-->
-
                 <Button
                     android:id="@+id/btnConnect"
                     android:layout_width="match_parent"

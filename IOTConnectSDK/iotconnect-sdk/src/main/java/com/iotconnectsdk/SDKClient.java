@@ -117,6 +117,8 @@ public class SDKClient implements WsResponseInterface, HubToSdkCallback, TwinUpd
     private int fileSizeToCreateInMb;
     private String directoryPath;
 
+    private int fileCount;
+
     /*return singleton object for this class.
      * */
     public static SDKClient getInstance(Context context, String cpId, String uniqueId, DeviceCallback deviceCallback, TwinUpdateCallback twinUpdateCallback, String sdkOptions, String environment) {
@@ -165,6 +167,7 @@ public class SDKClient implements WsResponseInterface, HubToSdkCallback, TwinUpd
         this.idEdgeDevice = false;
         this.isSaveToOffline = false;
         this.isDebug = false;
+        fileCount = 0;
 
         //get is debug option.
         JSONObject sdkObj = null;
@@ -186,7 +189,6 @@ public class SDKClient implements WsResponseInterface, HubToSdkCallback, TwinUpd
                             this.isSaveToOffline = isSaveToOffline;
 
                             //Add below configuration in respective sdk configuration. We want this setting to be done form firmware. default fileCount 1 and availeSpaceInMb is unlimited.
-                            int fileCount;
                             if (offlineStorage.has("fileCount") && offlineStorage.getInt("fileCount") > 0) {
                                 fileCount = offlineStorage.getInt("fileCount");
                             } else {
@@ -955,6 +957,7 @@ public class SDKClient implements WsResponseInterface, HubToSdkCallback, TwinUpd
     public void onSendMsg(String message) {
         if (message != null) {
 //            hubToSdkCallback.onSendMsg(message);
+            deviceCallback.onReceiveMsg(message);
         }
     }
 
@@ -1413,7 +1416,7 @@ public class SDKClient implements WsResponseInterface, HubToSdkCallback, TwinUpd
         sdkPreferences.getInstance(context).saveList(TEXT_FILE_NAME, list);
 
         //Delete first text file, when more than user defined count.
-        if (list.size() > 2) {
+        if (list.size() > fileCount) {
             deleteTextFile(list);
         }
 
