@@ -59,24 +59,4 @@ public class CallWebServices {
             }
         });
     }
-
-   /* private void showDialog(Activity com.softweb.iotconnectsdk.activity) {
-        try {
-            progressDialog = new ProgressDialog(com.softweb.iotconnectsdk.activity);
-            if (com.softweb.iotconnectsdk.activity != null && !com.softweb.iotconnectsdk.activity.isFinishing()) {
-                progressDialog.setMessage(IotSDKConstant.PLEASE_WAIT);
-                progressDialog.setCancelable(false);
-                progressDialog.show();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void hideDialog(Activity com.softweb.iotconnectsdk.activity) {
-        if (com.softweb.iotconnectsdk.activity != null && !com.softweb.iotconnectsdk.activity.isFinishing() && progressDialog != null && progressDialog.isShowing()) {
-            progressDialog.dismiss();
-        }
-    }*/
-
 }

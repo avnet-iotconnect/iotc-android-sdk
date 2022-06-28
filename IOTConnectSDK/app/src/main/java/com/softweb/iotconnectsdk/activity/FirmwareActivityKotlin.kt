@@ -31,6 +31,19 @@ import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.*
 
+/*
+ *****************************************************************************
+ * @file : FirmwareActivity.java
+ * @author : Softweb Solutions An Avnet Company
+ * @modify : 28-June-2022
+ * @brief : Firmware part for Android SDK 3.1.2
+ * *****************************************************************************
+ */
+
+/*
+ * Hope you have imported SDK v3.1.2 in build.gradle as guided in README.md file or from documentation portal.
+ */
+
 class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, DeviceCallback,
     TwinUpdateCallback {
 
@@ -316,6 +329,12 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
             var messageType = ""
             try {
                 val mainObject = JSONObject(message)
+
+                //Publish message call back received.
+                if (!mainObject.has("cmdType")) {
+                    return
+                }
+
                 val cmdType = mainObject.getString("cmdType")
                 val ackId = mainObject.getJSONObject("data").getString("ackId")
                 when (cmdType) {
@@ -384,13 +403,17 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
                             ) + "," + Date()
                         )
                         if (dataObj.has("command")) {
-                            if (dataObj.getBoolean("command")) isConnected = true else isConnected =
-                                false
+                            if (dataObj.getBoolean("command")) {
+                                isConnected = true
+                            } else {
+                                isConnected = false
+                            }
 
                             onConnectionStateChange(isConnected)
                         }
                     }
-                    else -> {}
+                    else -> {
+                    }
                 }
             } catch (e: JSONException) {
                 e.printStackTrace()
