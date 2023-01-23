@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
-import com.softweb.iotconnectsdk.R;
 import com.softweb.iotconnectsdk.model.Attribute;
 import com.softweb.iotconnectsdk.model.AttributesModel;
 import com.softweb.iotconnectsdk.model.Certificate;
@@ -45,6 +44,8 @@ import com.softweb.iotconnectsdk.model.D;
 import com.softweb.iotconnectsdk.model.Device;
 import com.softweb.iotconnectsdk.model.OfflineStorage;
 import com.softweb.iotconnectsdk.model.SdkOptions;
+import com.softweb.iotconnectsdk.R;
+
 
 /*
  *****************************************************************************
