@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
-import com.softweb.iotconnectsdk.R;
 import com.softweb.iotconnectsdk.model.Attribute;
 import com.softweb.iotconnectsdk.model.AttributesModel;
 import com.softweb.iotconnectsdk.model.Certificate;
@@ -45,19 +44,22 @@ import com.softweb.iotconnectsdk.model.D;
 import com.softweb.iotconnectsdk.model.Device;
 import com.softweb.iotconnectsdk.model.OfflineStorage;
 import com.softweb.iotconnectsdk.model.SdkOptions;
+import com.softweb.iotconnectsdk.R;
+
 
 /*
  *****************************************************************************
  * @file : FirmwareActivity.java
  * @author : Softweb Solutions An Avnet Company
- * @modify : 17-March-2021
- * @brief : Firmware part for Android SDK 3.0
+ * @modify : 28-June-2022
+ * @brief : Firmware part for Android SDK 3.1.2
  * *****************************************************************************
  */
 
 /*
- * Hope you have imported SDK v3.0 in build.gradle as guided in README.md file or from documentation portal.
+ * Hope you have imported SDK v3.1.2 in build.gradle as guided in README.md file or from documentation portal.
  */
+
 public class FirmwareActivity extends AppCompatActivity implements View.OnClickListener, DeviceCallback, TwinUpdateCallback {
 
     private static final String TAG = FirmwareActivity.class.getSimpleName();
@@ -377,6 +379,12 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
 
             try {
                 JSONObject mainObject = new JSONObject(message);
+
+                //Publish message call back received.
+                if (!mainObject.has("cmdType")) {
+                    return;
+                }
+
                 String cmdType = mainObject.getString("cmdType");
 
                 String ackId = mainObject.getJSONObject("data").getString("ackId");
