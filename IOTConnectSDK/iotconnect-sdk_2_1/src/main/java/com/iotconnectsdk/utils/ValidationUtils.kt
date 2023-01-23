@@ -70,7 +70,7 @@ internal class ValidationUtils private constructor(
     }
 
     fun validateBaseUrl(discoveryApiResponse: DiscoveryApiResponse): Boolean {
-        if (discoveryApiResponse.baseUrl == null || discoveryApiResponse.baseUrl.length == 0) {
+        if (discoveryApiResponse.d.bu == null || discoveryApiResponse.d.bu.isEmpty()) {
             iotSDKLogUtils.log(true, isDebug, "ERR_IN09", context.getString(R.string.ERR_IN09))
             return false
         }
