@@ -159,7 +159,6 @@ public class SDKClient implements WsResponseInterface, HubToSdkCallback, TwinUpd
     }
 
     private void connect() {
-
         this.directoryPath = "";
         this.reCheckingCountTime = 0;
         this.commandType = null;
