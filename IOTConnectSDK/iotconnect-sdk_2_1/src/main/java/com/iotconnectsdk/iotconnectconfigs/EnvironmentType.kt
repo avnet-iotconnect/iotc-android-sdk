@@ -1,6 +1,6 @@
 package com.iotconnectsdk.iotconnectconfigs
 
-enum class EnvironmentType constructor(val value:String) {
+enum class EnvironmentType(val value:String) {
     DEV("DEV"),
     STAGE("STAGE"),
     POC("POC"),

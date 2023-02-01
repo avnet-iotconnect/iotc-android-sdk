@@ -143,7 +143,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
     public void onClick(View v) {
         if (v.getId() == R.id.btnConnect) {
             if (sdkClient != null && isConnected) {
-                sdkClient.dispose();
+               // sdkClient.dispose();
             } else {
                 if (environment.isEmpty()) {
                     Toast.makeText(FirmwareActivity.this, getString(R.string.string_select_environment), Toast.LENGTH_LONG).show();
@@ -166,11 +166,11 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                      */
                     sdkClient = SDKClient.getInstance(FirmwareActivity.this, cpId, uniqueId, FirmwareActivity.this, FirmwareActivity.this, getSdkOptions(), environment);
 
-                    showDialog(FirmwareActivity.this);
+                 //   showDialog(FirmwareActivity.this);
                 }
             }
         } else if (v.getId() == R.id.btnSendData) {
-            showDialog(FirmwareActivity.this);
+           // showDialog(FirmwareActivity.this);
             sendInputData();
         } else if (v.getId() == R.id.btnGetAllTwins) {
             if (sdkClient != null) {
@@ -181,7 +181,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                      * Input   :
                      * Output  :
                      */
-                    sdkClient.getAllTwins();
+                   // sdkClient.getAllTwins();
                 } else {
                     Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
                 }
@@ -334,16 +334,16 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
             }
         }
         // Device to Cloud data publish.
-        if (isConnected)
-            /*
+        /*if (isConnected)
+            *//*
              * Type    : Public data Method "sendData()"
              * Usage   : To publish the data on cloud D2C
              * Input   : Predefined data object
              * Output  :
-             */
+             *//*
             sdkClient.sendData(inputArray.toString());
         else
-            Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
+            Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();*/
     }
 
     /*
@@ -407,10 +407,10 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                              * - Message Type
                              *     msgType = 5; // for "0x01" device command
                              */
-                            if (isConnected)
+                            /*if (isConnected)
                                 sdkClient.sendAck(objD, messageType);
                             else
-                                Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
+                                Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();*/
                         }
                         break;
                     case "0x02":
@@ -430,10 +430,10 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                              *     msgType = 11; // for "0x02" Firmware command
                              */
 
-                            if (isConnected)
+                           /* if (isConnected)
                                 sdkClient.sendAck(obj, messageType);
                             else
-                                Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
+                                Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();*/
                         }
                         break;
                     case "0x16":
@@ -482,12 +482,12 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
              * Input   :
              * Output  :
              */
-            String data = sdkClient.getAttributes();
+         /*   String data = sdkClient.getAttributes();
             if (data != null) {
                 btnSendData.setEnabled(true);
                 btnGetAllTwins.setEnabled(true);
                 createDynamicViews(data);
-            }
+            }*/
 
         } else {
             setStatusText(R.string.device_disconnected);
@@ -619,7 +619,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
              * Input   :
              * Output  :
              */
-            sdkClient.dispose();
+           // sdkClient.dispose();
         }
     }
 
@@ -691,7 +691,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                         Object value = jsonObject.get(key);
 
                         if (sdkClient != null && isConnected) {
-                            sdkClient.updateTwin(key, "" + value);
+                          //  sdkClient.updateTwin(key, "" + value);
                         }
 
                         break;

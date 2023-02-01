@@ -91,7 +91,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
         when (view?.id) {
             R.id.btnConnect -> {
                 if (sdkClient != null && isConnected) {
-                    sdkClient!!.dispose()
+                //    sdkClient!!.dispose()
                 } else {
                     if (environment.isEmpty()) {
                         Toast.makeText(
@@ -140,7 +140,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
                              * Input   :
                              * Output  :
                              */
-                        sdkClient!!.getAllTwins()
+                        //sdkClient!!.getAllTwins()
                     } else {
                         Toast.makeText(
                             this@FirmwareActivityKotlin,
@@ -291,7 +291,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
              * Input   : Predefined data object
              * Output  :
              */
-            sdkClient!!.sendData(inputArray.toString())
+            //sdkClient!!.sendData(inputArray.toString())
         } else {
             Toast.makeText(
                 this@FirmwareActivityKotlin,
@@ -319,10 +319,10 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
      * Input   :
      * Output  : Receive device command, firmware command and other device initialize error response
      */
-    override fun onReceiveMsg(message: String) {
+    override fun onReceiveMsg(message: String?) {
         hideDialog(this@FirmwareActivityKotlin)
         Log.d(TAG, "onReceiveMsg => $message")
-        if (!message.isEmpty()) {
+        if (!message?.isEmpty()!!) {
             btnClear!!.isEnabled = true
             etSubscribe!!.append("\n--- Device Command Received ---\n")
             etSubscribe!!.append(message + "")
@@ -354,14 +354,14 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
                              *     st = 4; // Failed Ack
                              * - Message Type
                              *     msgType = 5; // for "0x01" device command
-                             */if (isConnected) sdkClient!!.sendAck(
+                             *//*if (isConnected) sdkClient!!.sendAck(
                                 objD,
                                 messageType
                             ) else Toast.makeText(
                                 this@FirmwareActivityKotlin,
                                 getString(R.string.string_connection_not_found),
                                 Toast.LENGTH_LONG
-                            ).show()
+                            ).show()*/
                         }
                     }
                     "0x02" -> {
@@ -379,14 +379,14 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
                              *     st = 4; // Failed Ack
                              * - Message Type
                              *     msgType = 11; // for "0x02" Firmware command
-                             */if (isConnected) sdkClient!!.sendAck(
+                             *//*if (isConnected) sdkClient!!.sendAck(
                                 obj,
                                 messageType
                             ) else Toast.makeText(
                                 this@FirmwareActivityKotlin,
                                 getString(R.string.string_connection_not_found),
                                 Toast.LENGTH_LONG
-                            ).show()
+                            ).show()*/
                         }
                     }
                     "0x16" -> {
@@ -438,12 +438,12 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
              * Input   :
              * Output  :
              */
-            val data = sdkClient!!.attributes
+            /*val data = sdkClient!!.attributes
             if (data != null) {
                 btnSendData!!.isEnabled = true
                 btnGetAllTwins!!.isEnabled = true
                 createDynamicViews(data)
-            }
+            }*/
         } else {
             setStatusText(R.string.device_disconnected)
             tvConnStatus.isSelected = false
@@ -580,7 +580,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
              * Input   :
              * Output  :
              */
-            sdkClient!!.dispose()
+           // sdkClient!!.dispose()
         }
     }
 
@@ -617,12 +617,12 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
      * Input   :
      * Output  : Receive twin Desired and twin Reported properties
      */
-    override fun twinUpdateCallback(data: JSONObject) {
+    override fun twinUpdateCallback(data: JSONObject?) {
         Log.d(TAG, "twinUpdateCallback => $data")
         etSubscribe!!.append("\n\n---------twinUpdateCallback----------\n\n")
         etSubscribe!!.append(data.toString() + "")
         try {
-            if (data.has("desired")) {
+            if (data?.has("desired")!!) {
                 val jsonObject = data.getJSONObject("desired")
                 val iter = jsonObject.keys()
                 while (iter.hasNext()) {
@@ -633,7 +633,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
                     try {
                         val value = jsonObject[key]
                         if (sdkClient != null && isConnected) {
-                            sdkClient!!.updateTwin(key, "" + value)
+                           // sdkClient!!.updateTwin(key, "" + value)
                         }
                         break
                     } catch (e: JSONException) {

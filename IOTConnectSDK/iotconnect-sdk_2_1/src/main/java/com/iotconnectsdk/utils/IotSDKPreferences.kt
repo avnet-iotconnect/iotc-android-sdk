@@ -4,14 +4,31 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.iotconnectsdk.webservices.responsebean.SyncServiceResponse
+import com.iotconnectsdk.webservices.responsebean.IdentityServiceResponse
 
 /**
  * Stores Application Preference Data
  */
 internal class IotSDKPreferences private constructor(context: Context) {
-    init {
-        mSharedPreferences = context.getSharedPreferences(APPLICATION, Context.MODE_PRIVATE)
+
+    private val APPLICATION = "IotConnectSDK"
+    private var mSharedPreferences = context.getSharedPreferences(APPLICATION, Context.MODE_PRIVATE)
+
+    companion object {
+
+        val SYNC_API = "SYNC_API"
+        val SYNC_RESPONSE = "sync_response"
+        val TEXT_FILE_NAME = "text_file"
+
+        @Volatile
+        private var iotSDKPreferences: IotSDKPreferences? = null
+        fun getInstance(context: Context): IotSDKPreferences? {
+            synchronized(this) {
+                if (iotSDKPreferences == null) iotSDKPreferences = IotSDKPreferences(context)
+                return iotSDKPreferences
+            }
+
+        }
     }
 
     fun putStringData(key: String?, value: String?): Boolean {
@@ -29,11 +46,11 @@ internal class IotSDKPreferences private constructor(context: Context) {
         }
     }
 
-    fun getSyncResponse(key: String?): SyncServiceResponse? {
-        var syncServiceResponse: SyncServiceResponse? = null
+    fun getSyncResponse(key: String?): IdentityServiceResponse? {
+        var syncServiceResponse: IdentityServiceResponse? = null
         syncServiceResponse = try {
             val jsonString = getStringData(key)
-            Gson().fromJson(jsonString, SyncServiceResponse::class.java)
+            Gson().fromJson(jsonString, IdentityServiceResponse::class.java)
         } catch (e: Exception) {
             return null
         }
@@ -63,16 +80,5 @@ internal class IotSDKPreferences private constructor(context: Context) {
         }
     }
 
-    companion object {
-        private const val APPLICATION = "IotConnectSDK"
-        const val SYNC_API = "SYNC_API"
-        const val SYNC_RESPONSE = "sync_response"
-        const val TEXT_FILE_NAME = "text_file"
-        private lateinit var mSharedPreferences: SharedPreferences
-        private var iotSDKPreferences: IotSDKPreferences? = null
-        fun getInstance(context: Context): IotSDKPreferences? {
-            if (iotSDKPreferences == null) iotSDKPreferences = IotSDKPreferences(context)
-            return iotSDKPreferences
-        }
-    }
+
 }

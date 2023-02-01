@@ -7,6 +7,7 @@ import com.iotconnectsdk.interfaces.HubToSdkCallback
 import com.iotconnectsdk.interfaces.TwinUpdateCallback
 import com.iotconnectsdk.utils.IotSDKLogUtils
 import com.iotconnectsdk.utils.IotSDKUtils
+import com.iotconnectsdk.webservices.responsebean.IdentityServiceResponse
 import com.iotconnectsdk.webservices.responsebean.SyncServiceResponse
 import org.eclipse.paho.android.service.MqttAndroidClient
 import org.eclipse.paho.client.mqttv3.*
@@ -17,7 +18,7 @@ import org.json.JSONObject
  */
 class IotSDKMQTTService private constructor(
     private val context: Context,
-    private val protocolBean: SyncServiceResponse.DBeanXX.PBean,
+    private val protocolBean: IdentityServiceResponse.D.P,
     private val hubToSdkCallback: HubToSdkCallback,
     private val twinCallbackMessage: TwinUpdateCallback,
     private val iotSDKLogUtils: IotSDKLogUtils,
@@ -49,12 +50,13 @@ class IotSDKMQTTService private constructor(
 
     private var publishTopic: String? = null // = "devices/520uta-sdk003/messages/events/";
 
+
     companion object {
 
         @Volatile
         private var iotSDKMQTTService: IotSDKMQTTService? = null
         fun getInstance(
-            context: Context, protocolBean: SyncServiceResponse.DBeanXX.PBean,
+            context: Context, protocolBean: IdentityServiceResponse.D.P,
             hubToSdkCallback: HubToSdkCallback, twinCallbackMessage: TwinUpdateCallback,
             iotSDKLogUtils: IotSDKLogUtils, isDebug: Boolean, uniqueId: String
         ): IotSDKMQTTService? {
@@ -80,12 +82,10 @@ class IotSDKMQTTService private constructor(
     fun connectMQTT() {
         //init log.
         iotSDKLogUtils.log(false, isDebug, "INFO_IN04", context.getString(R.string.INFO_IN04))
-        subscriptionTopic = protocolBean.sub
-        publishTopic = protocolBean.pub
+        //   subscriptionTopic = protocolBean.sub
+        //   publishTopic = protocolBean.pub
         mqttAndroidClient = MqttAndroidClient(
-            context,
-            "ssl://" + protocolBean.h + ":" + protocolBean.p,
-            protocolBean.id
+            context, "ssl://" + protocolBean.h + ":" + protocolBean.p, protocolBean.id
         )
         mqttAndroidClient?.setCallback(object : MqttCallbackExtended {
             override fun connectComplete(reconnect: Boolean, serverURI: String) {
@@ -238,7 +238,7 @@ class IotSDKMQTTService private constructor(
 
     fun publishMessage(msgPublish: String?) {
         try {
-            if (mqttAndroidClient != null && mqttAndroidClient!!.isConnected() && msgPublish != null) {
+            if (mqttAndroidClient != null && mqttAndroidClient!!.isConnected && msgPublish != null) {
                 val message = MqttMessage()
                 message.payload = msgPublish.toByteArray()
                 mqttAndroidClient!!.publish(publishTopic, message)

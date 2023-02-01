@@ -17,11 +17,11 @@ import retrofit2.Response
 
 internal class CallWebServices {
 
-    fun sync(url: String?, syncServiceRequest: SyncServiceRequest?, wsResponseInterface: WsResponseInterface) {
+    fun sync(url: String?, wsResponseInterface: WsResponseInterface) {
 
         val service= getAPIService(url)
         CoroutineScope(Dispatchers.IO).launch {
-            val response = service?.sync(url, syncServiceRequest)
+            val response = service?.sync(url)
             try {
                 if (response != null) {
                     withContext(Dispatchers.Main) {

@@ -14,6 +14,8 @@ import com.iotconnectsdk.utils.*
 import com.iotconnectsdk.webservices.CallWebServices
 import com.iotconnectsdk.webservices.interfaces.WsResponseInterface
 import com.iotconnectsdk.webservices.responsebean.DiscoveryApiResponse
+import com.iotconnectsdk.webservices.responsebean.IdentityServiceResponse
+import com.iotconnectsdk.webservices.responsebean.SyncServiceResponse
 import org.json.JSONException
 import org.json.JSONObject
 import java.util.*
@@ -36,7 +38,7 @@ class SDKClient private constructor(
 
     private var iotSDKLogUtils: IotSDKLogUtils? = null
 
-    private val mqttService: IotSDKMQTTService? = null
+    private var mqttService: IotSDKMQTTService? = null
 
     // private val deviceCallback: DeviceCallback? = null
 
@@ -64,13 +66,13 @@ class SDKClient private constructor(
 
     private var idEdgeDevice = false
 
-    private val appVersion = "2.0"
+    private val appVersion = "v2.1"
 
     private var discoveryUrl = ""
 
     private val DEFAULT_DISCOVERY_URL = "https://discovery.iotconnect.io/"
 
-    private val URL_PATH = "api/sdk/"
+    private val URL_PATH = "api/$appVersion/dsdk/"
 
     private val SYNC = "sync"
 
@@ -80,7 +82,7 @@ class SDKClient private constructor(
 
     private val ENV = "/env/"
 
-    private val UNIQUE_ID = "uniqueId"
+    private val UNIQUE_ID = "/uid/"
 
     private val CP_ID = "cpId"
 
@@ -149,6 +151,7 @@ class SDKClient private constructor(
         @Volatile
         private lateinit var sdkClient: SDKClient
 
+        @JvmStatic
         fun getInstance(
             context: Context?, cpId: String?, uniqueId: String?, deviceCallback: DeviceCallback?,
             twinUpdateCallback: TwinUpdateCallback?, sdkOptions: String?, environment: String?
@@ -294,7 +297,7 @@ class SDKClient private constructor(
 //        appVersion = VERSION_NAME;
         if (appVersion != null) {
             val discoveryApi =
-                discoveryUrl + URL_PATH + CPID + cpId + LANG_ANDROID_VER + appVersion + ENV + environment
+                discoveryUrl + URL_PATH + CPID + cpId /*+ LANG_ANDROID_VER + appVersion*/ + ENV + environment
             CallWebServices().getDiscoveryApi(discoveryApi, this)
         }
     }
@@ -305,9 +308,7 @@ class SDKClient private constructor(
             IotSDKPreferences.getInstance(context!!)?.getStringData(IotSDKPreferences.SYNC_API)
         if (baseUrl != null) {
             CallWebServices().sync(
-                baseUrl,
-                SDKClientUtils.getSyncServiceRequest(cpId, uniqueId, commandType),
-                this
+                baseUrl, this
             )
         }
     }
@@ -333,7 +334,7 @@ class SDKClient private constructor(
                         false, isDebug, "INFO_IN07", context!!.getString(R.string.INFO_IN07)
                     )
                     if (!validationUtils!!.validateBaseUrl(discoveryApiResponse)) return
-                    val baseUrl: String = discoveryApiResponse.d.bu + SYNC
+                    val baseUrl: String = discoveryApiResponse.d.bu + UNIQUE_ID + uniqueId
                     IotSDKPreferences.getInstance(context)
                         ?.putStringData(IotSDKPreferences.SYNC_API, baseUrl)
                     callSyncService()
@@ -343,7 +344,17 @@ class SDKClient private constructor(
                     ignoreCase = true
                 ) && response != null
             ) {
+                val syncServiceResponseData =
+                    Gson().fromJson(response, IdentityServiceResponse::class.java)
 
+                if (syncServiceResponseData?.d != null) {
+                    //save the sync response to sahred pref.
+
+                    //save the sync response to sahred pref.
+                    IotSDKPreferences.getInstance(context!!)
+                        ?.putStringData(IotSDKPreferences.SYNC_RESPONSE, response)
+                    callMQTTService()
+                }
             }
         } catch (e: java.lang.Exception) {
             e.printStackTrace()
@@ -365,33 +376,59 @@ class SDKClient private constructor(
         }
     }
 
+
+    /*MQTT service call to connect device.
+     * */
+    private fun callMQTTService() {
+        val response = getSyncResponse()
+        if (response!!.d == null || response.d.p == null) {
+            iotSDKLogUtils!!.log(true, isDebug, "ERR_IN11", context!!.getString(R.string.ERR_IN11))
+            return
+        }
+        mqttService = IotSDKMQTTService.getInstance(
+            context!!, response.d.p, this, this, iotSDKLogUtils!!, isDebug,
+            uniqueId!!
+        )
+        mqttService!!.connectMQTT()
+    }
+
+
+    /*get the saved sync response from shared preference.
+     * */
+    private fun getSyncResponse(): IdentityServiceResponse? {
+        return IotSDKPreferences.getInstance(context!!)
+            ?.getSyncResponse(IotSDKPreferences.SYNC_RESPONSE)
+    }
+
+
     override fun onReceiveMsg(message: String?) {
-        TODO("Not yet implemented")
+
     }
 
     override fun onSendMsg(message: String?) {
-        TODO("Not yet implemented")
+
     }
 
     override fun onConnectionStateChange(isConnected: Boolean) {
-        TODO("Not yet implemented")
+
     }
 
     override fun twinUpdateCallback(data: JSONObject?) {
-        TODO("Not yet implemented")
+
     }
 
     override fun networkAvailable() {
-        TODO("Not yet implemented")
+
     }
 
     override fun networkUnavailable() {
-        TODO("Not yet implemented")
+
     }
 
 
     override fun onFailedResponse(message: String?) {
-        TODO("Not yet implemented")
+
     }
+
 }
 
