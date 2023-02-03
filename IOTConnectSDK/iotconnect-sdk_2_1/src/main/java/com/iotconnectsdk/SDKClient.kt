@@ -6,6 +6,7 @@ import android.net.ConnectivityManager
 import android.util.Log
 import android.webkit.URLUtil
 import com.google.gson.Gson
+import com.iotconnectsdk.beans.CommonResponseBean
 import com.iotconnectsdk.beans.TumblingWindowBean
 import com.iotconnectsdk.interfaces.DeviceCallback
 import com.iotconnectsdk.interfaces.HubToSdkCallback
@@ -108,7 +109,7 @@ class SDKClient private constructor(
 
     private val ATTRIBUTES = "attributes"
 
-    private val CMD_TYPE = "cmdType"
+    private val CMD_TYPE = "ct"
 
     private val DISCOVERY_URL = "discoveryUrl"
 
@@ -408,11 +409,11 @@ class SDKClient private constructor(
     /*Call publish method of IotSDKMQTTService class to publish to web.
      * 1.When device is not connected to network and offline storage is true from client, than save all published message to device memory.
      * */
-    private fun publishMessage(topics:String,publishMessage: String, isUpdate: Boolean) {
+    private fun publishMessage(topics: String, publishMessage: String, isUpdate: Boolean) {
         try {
             if (validationUtils!!.networkConnectionCheck()) {
                 if (!isUpdate) {
-                    mqttService!!.publishMessage(topics,publishMessage)
+                    mqttService!!.publishMessage(topics, publishMessage)
                 } else {
                     mqttService!!.updateTwin(publishMessage)
                 }
@@ -483,10 +484,56 @@ class SDKClient private constructor(
 
         if (message != null) {
             try {
-                val mainObject = JSONObject(message)
-                Log.d("mainObject", "::$mainObject")
+                val mainObjectLog = JSONObject(message)
+                Log.d("mainObject", "::$mainObjectLog")
+
+                val gson = Gson()
+                val commonModel = gson.fromJson(message, CommonResponseBean::class.java)
+
+                if (commonModel?.d != null) {
+                    if (commonModel.d.ct == 201) {
+
+                        IotSDKPreferences.getInstance(context!!)!!.putStringData(
+                            IotSDKPreferences.ATTRIBUTE_RESPONSE, Gson().toJson(commonModel.d.att)
+                        )
+
+                    }
+
+                    if (commonModel.d.ct == 202) {
+
+                    }
+
+                    if (commonModel.d.ct == 203) {
+
+                    }
+
+                    if (commonModel.d.ct == 204) {
+
+                    }
+
+                    if (commonModel.d.ct == 205) {
+
+                    }
+                } else {
+                    val mainObject = JSONObject(message)
+
+                    when (mainObject.getInt(CMD_TYPE)) {
+                        0 -> {
+                            deviceCallback?.onReceiveMsg(message)
+                        }
+                        1 -> {
+
+                        }
+                        2 -> {
+
+                        }
+                        3 -> {
+
+                        }
+                    }
+                }
             } catch (e: JSONException) {
-                e.printStackTrace();
+                e.printStackTrace()
             }
         }
 
@@ -556,7 +603,13 @@ class SDKClient private constructor(
         }
 
         if (response?.d?.has?.attr == 1) {
-            publishMessage(response.d.p.topics.di,JSONObject().put(MESSAGE_TYPE, DeviceIdentityMessages.GET_DEVICE_TEMPLATE_ATTRIBUTES.value).toString(), false
+            publishMessage(
+                response.d.p.topics.di,
+                JSONObject().put(
+                    MESSAGE_TYPE,
+                    DeviceIdentityMessages.GET_DEVICE_TEMPLATE_ATTRIBUTES.value
+                ).toString(),
+                false
             )
         }
 

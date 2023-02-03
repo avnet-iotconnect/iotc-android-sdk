@@ -18,6 +18,12 @@ internal class IotSDKPreferences private constructor(context: Context) {
 
         val SYNC_API = "SYNC_API"
         val SYNC_RESPONSE = "sync_response"
+        val ATTRIBUTE_RESPONSE = "att_response"
+        val SETTING_TWIN_RESPONSE = "setting_response"
+        val EDGE_RULE_RESPONSE = "edge_rule_response"
+        val CHILD_DEVICE_RESPONSE = "child_device_response"
+        val PENDING_OTA_RESPONSE = "ota_response"
+
         val TEXT_FILE_NAME = "text_file"
 
         @Volatile
