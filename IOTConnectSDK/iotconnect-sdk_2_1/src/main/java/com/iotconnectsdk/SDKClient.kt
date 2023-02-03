@@ -3,21 +3,24 @@ package com.iotconnectsdk
 import android.content.Context
 import android.content.IntentFilter
 import android.net.ConnectivityManager
+import android.util.Log
 import android.webkit.URLUtil
 import com.google.gson.Gson
 import com.iotconnectsdk.beans.TumblingWindowBean
 import com.iotconnectsdk.interfaces.DeviceCallback
 import com.iotconnectsdk.interfaces.HubToSdkCallback
+import com.iotconnectsdk.interfaces.PublishMessageCallback
 import com.iotconnectsdk.interfaces.TwinUpdateCallback
 import com.iotconnectsdk.mqtt.IotSDKMQTTService
 import com.iotconnectsdk.utils.*
+import com.iotconnectsdk.utils.SDKClientUtils.createTextFile
 import com.iotconnectsdk.webservices.CallWebServices
 import com.iotconnectsdk.webservices.interfaces.WsResponseInterface
 import com.iotconnectsdk.webservices.responsebean.DiscoveryApiResponse
 import com.iotconnectsdk.webservices.responsebean.IdentityServiceResponse
-import com.iotconnectsdk.webservices.responsebean.SyncServiceResponse
 import org.json.JSONException
 import org.json.JSONObject
+import java.io.File
 import java.util.*
 
 /**
@@ -30,8 +33,9 @@ class SDKClient private constructor(
     private val deviceCallback: DeviceCallback?,
     private val twinUpdateCallback: TwinUpdateCallback?,
     private val sdkOptions: String?,
-    private val environment: String?
-) : WsResponseInterface, HubToSdkCallback, TwinUpdateCallback,
+    private val environment: String?,
+
+    ) : WsResponseInterface, HubToSdkCallback, PublishMessageCallback, TwinUpdateCallback,
     NetworkStateReceiver.NetworkStateReceiverListener {
 
     private var validationUtils: ValidationUtils? = null
@@ -39,6 +43,8 @@ class SDKClient private constructor(
     private var iotSDKLogUtils: IotSDKLogUtils? = null
 
     private var mqttService: IotSDKMQTTService? = null
+
+    private val TEXT_FILE_PREFIX = "current"
 
     // private val deviceCallback: DeviceCallback? = null
 
@@ -145,6 +151,7 @@ class SDKClient private constructor(
 
     private var reCheckingCountTime = 0
 
+
     /*return singleton object for this class.
      * */
     companion object {
@@ -162,16 +169,14 @@ class SDKClient private constructor(
                         context, cpId, uniqueId, deviceCallback,
                         twinUpdateCallback, sdkOptions, environment
                     )
+                    sdkClient.connect()
+                    sdkClient.registerNetworkState()
                 }
                 return sdkClient
             }
 
         }
-    }
 
-    init {
-        connect()
-        registerNetworkState()
     }
 
 
@@ -348,9 +353,7 @@ class SDKClient private constructor(
                     Gson().fromJson(response, IdentityServiceResponse::class.java)
 
                 if (syncServiceResponseData?.d != null) {
-                    //save the sync response to sahred pref.
-
-                    //save the sync response to sahred pref.
+                    //save the sync response to shared pref
                     IotSDKPreferences.getInstance(context!!)
                         ?.putStringData(IotSDKPreferences.SYNC_RESPONSE, response)
                     callMQTTService()
@@ -386,10 +389,11 @@ class SDKClient private constructor(
             return
         }
         mqttService = IotSDKMQTTService.getInstance(
-            context!!, response.d.p, this, this, iotSDKLogUtils!!, isDebug,
+            context!!, response.d.p, this, this, this, iotSDKLogUtils!!, isDebug,
             uniqueId!!
         )
         mqttService!!.connectMQTT()
+
     }
 
 
@@ -401,12 +405,127 @@ class SDKClient private constructor(
     }
 
 
+    /*Call publish method of IotSDKMQTTService class to publish to web.
+     * 1.When device is not connected to network and offline storage is true from client, than save all published message to device memory.
+     * */
+    private fun publishMessage(topics:String,publishMessage: String, isUpdate: Boolean) {
+        try {
+            if (validationUtils!!.networkConnectionCheck()) {
+                if (!isUpdate) {
+                    mqttService!!.publishMessage(topics,publishMessage)
+                } else {
+                    mqttService!!.updateTwin(publishMessage)
+                }
+            } else if (!isSaveToOffline) { // save message to offline.
+                var fileToWrite: String? = null
+                val sdkPreferences = IotSDKPreferences.getInstance(
+                    context!!
+                )
+                val fileNamesList = sdkPreferences!!.getList(IotSDKPreferences.TEXT_FILE_NAME)
+                if (fileNamesList.isEmpty()) { //create new file when file list is empty.
+                    fileToWrite =
+                        createTextFile(context, directoryPath, fileCount, iotSDKLogUtils, isDebug)
+                } else {
+
+                    /*1.check file with "current" prefix.
+                     * 2.get the text file size and compare with defined size.
+                     * 3.When text file size is more than defined size than create new file and write to that file.
+                     * */
+                    if (!fileNamesList.isEmpty()) {
+                        for (textFile in fileNamesList) {
+                            if (textFile!!.contains(TEXT_FILE_PREFIX)) {
+                                fileToWrite = textFile
+                                val file = File(
+                                    File(context.filesDir, directoryPath),
+                                    "$textFile.txt"
+                                )
+                                if (fileSizeToCreateInMb != 0 && SDKClientUtils.getFileSizeInKB(file) >= fileSizeToCreateInMb) {
+                                    //create new text file.
+                                    fileToWrite = createTextFile(
+                                        context,
+                                        directoryPath,
+                                        fileCount,
+                                        iotSDKLogUtils,
+                                        isDebug
+                                    )
+                                }
+                                break
+                            }
+                        }
+                    }
+                }
+                try {
+                    iotSDKLogUtils!!.writePublishedMessage(
+                        directoryPath!!,
+                        fileToWrite!!, publishMessage
+                    )
+                } catch (e: java.lang.Exception) {
+                    iotSDKLogUtils!!.log(
+                        true,
+                        isDebug,
+                        "ERR_OS02",
+                        context.getString(R.string.ERR_OS02) + e.message
+                    )
+                }
+                iotSDKLogUtils!!.log(
+                    false,
+                    isDebug,
+                    "INFO_OS020",
+                    context.getString(R.string.INFO_OS02)
+                )
+            }
+        } catch (e: java.lang.Exception) {
+            iotSDKLogUtils!!.log(true, isDebug, "ERR_OS01", e.message!!)
+        }
+    }
+
     override fun onReceiveMsg(message: String?) {
+
+        if (message != null) {
+            try {
+                val mainObject = JSONObject(message)
+                Log.d("mainObject", "::$mainObject")
+            } catch (e: JSONException) {
+                e.printStackTrace();
+            }
+        }
+
 
     }
 
     override fun onSendMsg(message: String?) {
 
+
+        if (message != null) {
+//            hubToSdkCallback.onSendMsg(message);
+            deviceCallback?.onReceiveMsg(message)
+        }
+    }
+
+
+    /*Disconnect the device from MQTT connection.
+     * stop all timers and change the device connection status.
+     * */
+    fun dispose() {
+        isDispose = true
+        //edgeDeviceTimerStop()
+
+        if (mqttService != null) {
+            mqttService!!.disconnectClient()
+            mqttService!!.clearInstance() //destroy singleton object.
+        }
+        //  timerStop(reCheckingTimer)
+        // timerStop(timerCheckDeviceState)
+        // timerStop(timerOfflineSync)
+        unregisterReceiver()
+    }
+
+    /* Unregister network receiver.
+     *
+     * */
+    private fun unregisterReceiver() {
+        networkStateReceiver!!.removeListener(this)
+        context!!.unregisterReceiver(networkStateReceiver)
     }
 
     override fun onConnectionStateChange(isConnected: Boolean) {
@@ -427,6 +546,31 @@ class SDKClient private constructor(
 
 
     override fun onFailedResponse(message: String?) {
+
+    }
+
+    override fun onSendMsg() {
+        val response = getSyncResponse()
+        if ((response?.d?.has?.d == 1)) {
+
+        }
+
+        if (response?.d?.has?.attr == 1) {
+            publishMessage(response.d.p.topics.di,JSONObject().put(MESSAGE_TYPE, DeviceIdentityMessages.GET_DEVICE_TEMPLATE_ATTRIBUTES.value).toString(), false
+            )
+        }
+
+        if ((response?.d?.has?.set == 1)) {
+
+        }
+
+        if ((response?.d?.has?.r == 1)) {
+
+        }
+
+        if ((response?.d?.has?.ota == 1)) {
+
+        }
 
     }
 

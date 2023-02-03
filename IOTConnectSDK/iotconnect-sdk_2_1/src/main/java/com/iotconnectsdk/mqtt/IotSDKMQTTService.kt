@@ -1,9 +1,11 @@
 package com.iotconnectsdk.mqtt
 
 import android.content.Context
+import android.util.Log
 import com.iotconnectsdk.R
 import com.iotconnectsdk.SDKClient
 import com.iotconnectsdk.interfaces.HubToSdkCallback
+import com.iotconnectsdk.interfaces.PublishMessageCallback
 import com.iotconnectsdk.interfaces.TwinUpdateCallback
 import com.iotconnectsdk.utils.IotSDKLogUtils
 import com.iotconnectsdk.utils.IotSDKUtils
@@ -20,6 +22,7 @@ class IotSDKMQTTService private constructor(
     private val context: Context,
     private val protocolBean: IdentityServiceResponse.D.P,
     private val hubToSdkCallback: HubToSdkCallback,
+    private val publishMessageCallback: PublishMessageCallback,
     private val twinCallbackMessage: TwinUpdateCallback,
     private val iotSDKLogUtils: IotSDKLogUtils,
     private val isDebug: Boolean,
@@ -45,8 +48,7 @@ class IotSDKMQTTService private constructor(
 
     private val TWIN_SUBTOPIC_CONTAINT = "\$iothub/twin/"
 
-    private var subscriptionTopic: String? =
-        null // = "devices/520uta-sdk003/messages/devicebound/#";
+    private var subscriptionTopic: String? = null // = "devices/520uta-sdk003/messages/devicebound/#";
 
     private var publishTopic: String? = null // = "devices/520uta-sdk003/messages/events/";
 
@@ -56,15 +58,20 @@ class IotSDKMQTTService private constructor(
         @Volatile
         private var iotSDKMQTTService: IotSDKMQTTService? = null
         fun getInstance(
-            context: Context, protocolBean: IdentityServiceResponse.D.P,
-            hubToSdkCallback: HubToSdkCallback, twinCallbackMessage: TwinUpdateCallback,
-            iotSDKLogUtils: IotSDKLogUtils, isDebug: Boolean, uniqueId: String
+            context: Context,
+            protocolBean: IdentityServiceResponse.D.P,
+            hubToSdkCallback: HubToSdkCallback,
+            publishMessageCallback: PublishMessageCallback,
+            twinCallbackMessage: TwinUpdateCallback,
+            iotSDKLogUtils: IotSDKLogUtils,
+            isDebug: Boolean,
+            uniqueId: String
         ): IotSDKMQTTService? {
 
             synchronized(this) {
                 if (iotSDKMQTTService == null) {
                     iotSDKMQTTService = IotSDKMQTTService(
-                        context, protocolBean, hubToSdkCallback,
+                        context, protocolBean, hubToSdkCallback, publishMessageCallback,
                         twinCallbackMessage, iotSDKLogUtils, isDebug, uniqueId
                     )
                 }
@@ -82,7 +89,7 @@ class IotSDKMQTTService private constructor(
     fun connectMQTT() {
         //init log.
         iotSDKLogUtils.log(false, isDebug, "INFO_IN04", context.getString(R.string.INFO_IN04))
-        //   subscriptionTopic = protocolBean.sub
+        subscriptionTopic = protocolBean.topics.c2d
         //   publishTopic = protocolBean.pub
         mqttAndroidClient = MqttAndroidClient(
             context, "ssl://" + protocolBean.h + ":" + protocolBean.p, protocolBean.id
@@ -133,7 +140,7 @@ class IotSDKMQTTService private constructor(
             }
 
             override fun deliveryComplete(token: IMqttDeliveryToken) {
-
+                Log.d("deliveryComplete", "::$token");
             }
         })
         val mqttConnectOptions = MqttConnectOptions()
@@ -153,6 +160,7 @@ class IotSDKMQTTService private constructor(
                     disconnectedBufferOptions.isDeleteOldestMessages = false
                     mqttAndroidClient?.setBufferOpts(disconnectedBufferOptions)
                     subscribeToTopic()
+                    publishMessageCallback.onSendMsg()
                 }
 
                 override fun onFailure(asyncActionToken: IMqttToken, exception: Throwable) {
@@ -236,12 +244,12 @@ class IotSDKMQTTService private constructor(
         }
     }
 
-    fun publishMessage(msgPublish: String?) {
+    fun publishMessage(topics: String, msgPublish: String?) {
         try {
             if (mqttAndroidClient != null && mqttAndroidClient!!.isConnected && msgPublish != null) {
                 val message = MqttMessage()
                 message.payload = msgPublish.toByteArray()
-                mqttAndroidClient!!.publish(publishTopic, message)
+                mqttAndroidClient!!.publish(topics, message)
                 hubToSdkCallback.onSendMsg(msgPublish)
                 iotSDKLogUtils.log(
                     false,

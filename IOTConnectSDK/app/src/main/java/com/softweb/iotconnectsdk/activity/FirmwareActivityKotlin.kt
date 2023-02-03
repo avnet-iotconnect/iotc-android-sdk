@@ -91,7 +91,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
         when (view?.id) {
             R.id.btnConnect -> {
                 if (sdkClient != null && isConnected) {
-                //    sdkClient!!.dispose()
+                    sdkClient?.dispose()
                 } else {
                     if (environment.isEmpty()) {
                         Toast.makeText(
@@ -580,7 +580,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
              * Input   :
              * Output  :
              */
-           // sdkClient!!.dispose()
+            // sdkClient!!.dispose()
         }
     }
 
@@ -633,7 +633,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
                     try {
                         val value = jsonObject[key]
                         if (sdkClient != null && isConnected) {
-                           // sdkClient!!.updateTwin(key, "" + value)
+                            // sdkClient!!.updateTwin(key, "" + value)
                         }
                         break
                     } catch (e: JSONException) {

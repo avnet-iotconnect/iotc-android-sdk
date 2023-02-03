@@ -143,7 +143,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
     public void onClick(View v) {
         if (v.getId() == R.id.btnConnect) {
             if (sdkClient != null && isConnected) {
-               // sdkClient.dispose();
+                sdkClient.dispose();
             } else {
                 if (environment.isEmpty()) {
                     Toast.makeText(FirmwareActivity.this, getString(R.string.string_select_environment), Toast.LENGTH_LONG).show();

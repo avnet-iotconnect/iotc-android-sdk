@@ -1,6 +1,8 @@
 package com.iotconnectsdk.utils
 
+import android.content.Context
 import com.google.gson.Gson
+import com.iotconnectsdk.R
 import com.iotconnectsdk.beans.CommandFormatJson
 import com.iotconnectsdk.beans.Data
 import com.iotconnectsdk.beans.TumblingWindowBean
@@ -17,6 +19,7 @@ import org.json.JSONException
 import org.json.JSONObject
 import org.json.JSONTokener
 import java.io.File
+import java.util.concurrent.CopyOnWriteArrayList
 
 object SDKClientUtils {
     private const val CP_ID = "cpId"
@@ -40,6 +43,8 @@ object SDKClientUtils {
     private static final String DATA = "data";
     private static final String COMMAND = "command";*/
     private const val EDGE_DEVICE_MESSAGE_TYPE = 2
+    private const val TEXT_FILE_PREFIX = "current"
+
     fun getSyncServiceRequest(
         cpId: String?,
         uniqueId: String?,
@@ -736,5 +741,77 @@ object SDKClientUtils {
         return fileSizeInBytes / 1024 //KB
 
         //        return (fileSizeInBytes / (1024 * 1024)); //MB
+    }
+
+     fun createTextFile(
+         context: Context,
+         directoryPath: String?,
+         fileCount: Int,
+         iotSDKLogUtils: IotSDKLogUtils?,
+         isDebug: Boolean
+     ): String {
+
+        //rename file to directory
+        val directory: File = File(context.getFilesDir(), directoryPath)
+        if (directory.exists()) {
+            val contents = directory.listFiles()
+            if (contents != null) for (filePath in contents) {
+                val path = filePath.toString()
+                val textFileName = path.substring(path.lastIndexOf("/") + 1)
+                if (textFileName.contains(TEXT_FILE_PREFIX)) {
+                    val reNameFile =
+                        textFileName.split("_".toRegex()).dropLastWhile { it.isEmpty() }
+                            .toTypedArray()[1]
+                    val from = File(directory, textFileName)
+                    val to = File(directory, reNameFile)
+                    if (from.exists()) from.renameTo(to)
+                }
+            }
+        }
+        val textFileName: String =
+           TEXT_FILE_PREFIX + "_" + System.currentTimeMillis() / 1000 + ""
+        val sdkPreferences = IotSDKPreferences.getInstance(context)
+        val fileList = CopyOnWriteArrayList(sdkPreferences!!.getList(IotSDKPreferences.TEXT_FILE_NAME))
+        //re-name the file to shared preference.
+        for (file in fileList) {
+            if (file!!.contains(TEXT_FILE_PREFIX)) {
+                fileList.remove(file)
+                fileList.add(file.split("_".toRegex()).dropLastWhile { it.isEmpty() }
+                    .toTypedArray()[1])
+            }
+        }
+        fileList.add(textFileName)
+        val list= ArrayList(fileList)
+        IotSDKPreferences.getInstance(context)!!
+            .saveList(IotSDKPreferences.TEXT_FILE_NAME, list)
+
+        //Delete first text file, when more than user defined count.
+        if (list.size > fileCount) {
+            if (directoryPath != null) {
+                deleteTextFile(list,context,directoryPath,iotSDKLogUtils,isDebug)
+            }
+        }
+        iotSDKLogUtils?.log(false, isDebug, "INFO_OS03", context.getString(R.string.INFO_OS03))
+        return textFileName
+    }
+
+    private fun deleteTextFile(fileNamesList: ArrayList<String?>,context: Context,directoryPath: String, iotSDKLogUtils: IotSDKLogUtils?,
+                               isDebug: Boolean): Boolean {
+        try {
+            //Delete from device
+            val file: File =
+                File(File(context.filesDir,directoryPath), fileNamesList[0] + ".txt")
+            if (file.exists()) {
+                file.delete()
+            }
+            fileNamesList.removeAt(0)
+            //delete from shared preferences
+            IotSDKPreferences.getInstance(context)?.saveList(IotSDKPreferences.TEXT_FILE_NAME, fileNamesList)
+        } catch (e: java.lang.Exception) {
+            iotSDKLogUtils?.log(true,isDebug, "ERR_OS01", e.message!!)
+            e.printStackTrace()
+            return false
+        }
+        return true
     }
 }
