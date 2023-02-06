@@ -513,18 +513,18 @@ object SDKClientUtils {
         ack: Boolean,
         ackId: String?
     ): String {
-        val cfj = CommandFormatJson()
-        cfj.setCmdType(commandType)
+       // val cfj = CommandFormatJson()
+       // cfj.cmdType = commandType
         val data = Data()
-        data.setCpid(cpId)
-        data.setGuid(guid)
-        data.setUniqueId(uniqueId)
-        data.setCommand(command)
-        data.setAck(ack)
-        data.setAckId(ackId)
-        data.setCmdType(commandType)
-        cfj.setData(data)
-        return Gson().toJson(cfj)
+        data.cpid = cpId
+        data.guid = guid
+        data.uniqueId = uniqueId
+        data.command = command
+        data.isAck = ack
+        data.ackId = ackId
+        data.cmdType = commandType
+       // cfj.data = data
+        return Gson().toJson(data)
     }
 
     fun getAttributeName(con: String): String? {

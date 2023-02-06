@@ -4,16 +4,16 @@ import com.google.gson.annotations.SerializedName;
 
 public class Data{
 
-	@SerializedName("ackId")
+	@SerializedName("ack")
 	private Object ackId;
 
 	@SerializedName("cpid")
 	private String cpid;
 
-	@SerializedName("cmdType")
+	@SerializedName("ct")
 	private String cmdType;
 
-	@SerializedName("ack")
+	@SerializedName("ackb")
 	private boolean ack;
 
 	@SerializedName("guid")
@@ -24,6 +24,7 @@ public class Data{
 
 	@SerializedName("command")
 	private String command;
+
 
 	public void setAckId(Object ackId){
 		this.ackId = ackId;

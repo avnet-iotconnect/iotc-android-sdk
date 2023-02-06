@@ -127,7 +127,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
                 }
             }
             R.id.btnSendData -> {
-                showDialog(this@FirmwareActivityKotlin)
+                // showDialog(this@FirmwareActivityKotlin)
                 sendInputData()
             }
             R.id.btnGetAllTwins -> {
@@ -290,6 +290,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
              * Input   : Predefined data object
              * Output  :
              */
+
             //sdkClient!!.sendData(inputArray.toString())
         } else {
             Toast.makeText(
@@ -341,26 +342,6 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
                         Log.d(TAG, "--- Device Command Received ---")
                         if (ackId != null && ackId.isNotEmpty()) {
                             messageType = "5"
-                            //  val objD = getAckObject(mainObject)
-                            //  objD!!.put("st", 6)
-
-                            /*
-                             * Type    : Public Method "sendAck()"
-                             * Usage   : Send device command received acknowledgment to cloud
-                             *
-                             * - status Type
-                             *     st = 6; // Device command Ack status
-                             *     st = 4; // Failed Ack
-                             * - Message Type
-                             *     msgType = 5; // for "0x01" device command
-                             *//*if (isConnected) sdkClient!!.sendAck(
-                                objD,
-                                messageType
-                            ) else Toast.makeText(
-                                this@FirmwareActivityKotlin,
-                                getString(R.string.string_connection_not_found),
-                                Toast.LENGTH_LONG
-                            ).show()*/
 
 
                             /*
@@ -373,12 +354,22 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
                              * - Message Type
                              *     msgType = 5; // for "0x01" device command
                              */
+
+
                             val d2CSendAckBean = D2CSendAckBean(
                                 currentDate, D2CSendAckBean.Data(ackId, 0, 6, "", null)
                             )
                             val gson = Gson()
                             val jsonString = gson.toJson(d2CSendAckBean)
-                            sdkClient?.sendAck(jsonString, messageType)
+
+                            if (isConnected)
+                                sdkClient?.sendAck(jsonString, messageType)
+                            else
+                                Toast.makeText(
+                                this@FirmwareActivityKotlin,
+                                getString(R.string.string_connection_not_found),
+                                Toast.LENGTH_LONG
+                            ).show()
 
                         }
                     }
@@ -407,26 +398,20 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
                             ).show()*/
                         }
                     }
-                    "0x16" -> {
+                    "116" -> {
                         /*command type "0x16" for Device "Connection Status"
                           true = connected, false = disconnected*/Log.d(
                             TAG,
                             "--- Device connection status ---"
                         )
-                        val dataObj = mainObject.getJSONObject("data")
                         Log.d(
                             TAG,
-                            "DeviceId ::: [" + dataObj.getString("uniqueId") + "] :: Device status :: " + dataObj.getString(
+                            "DeviceId ::: [" + mainObject.getString("uniqueId") + "] :: Device status :: " + mainObject.getString(
                                 "command"
                             ) + "," + Date()
                         )
-                        if (dataObj.has("command")) {
-                            if (dataObj.getBoolean("command")) {
-                                isConnected = true
-                            } else {
-                                isConnected = false
-                            }
-
+                        if (mainObject.has("command")) {
+                            isConnected = mainObject.getBoolean("command")
                             onConnectionStateChange(isConnected)
                         }
                     }
@@ -598,7 +583,8 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
              * Input   :
              * Output  :
              */
-            // sdkClient!!.dispose()
+
+             sdkClient?.dispose()
         }
     }
 

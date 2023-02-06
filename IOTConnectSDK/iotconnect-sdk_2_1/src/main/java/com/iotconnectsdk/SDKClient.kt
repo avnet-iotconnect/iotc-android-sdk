@@ -63,7 +63,7 @@ class SDKClient private constructor(
 
     //  private val environment: String = "PROD"
 
-    private val isConnected = false
+    private var isConnected = false
 
     private var isDispose = false
 
@@ -170,9 +170,9 @@ class SDKClient private constructor(
                         context, cpId, uniqueId, deviceCallback,
                         twinUpdateCallback, sdkOptions, environment
                     )
-                    sdkClient.connect()
-                    sdkClient.registerNetworkState()
                 }
+                sdkClient.connect()
+                sdkClient.registerNetworkState()
                 return sdkClient
             }
 
@@ -519,6 +519,12 @@ class SDKClient private constructor(
 
                     when (mainObject.getInt(CMD_TYPE)) {
                         0 -> {
+                            iotSDKLogUtils!!.log(
+                                false,
+                                isDebug,
+                                "INFO_CM01",
+                                context!!.getString(R.string.INFO_CM01)
+                            )
                             deviceCallback?.onReceiveMsg(message)
                         }
                         1 -> {
@@ -529,6 +535,15 @@ class SDKClient private constructor(
                         }
                         3 -> {
 
+                        }
+                        116 -> {
+                            iotSDKLogUtils?.log(
+                                false,
+                                isDebug,
+                                "INFO_CM16",
+                                context!!.getString(R.string.INFO_CM16)
+                            )
+                            deviceCallback?.onReceiveMsg(message)
                         }
                     }
                 }
@@ -556,13 +571,13 @@ class SDKClient private constructor(
      * @param messageType Message Type
      */
     fun sendAck(obj: String?, messageType: String?) {
-        var request: JSONObject? =null
+        var request: JSONObject? = null
         if (isDispose) {
             iotSDKLogUtils!!.log(true, isDebug, "ERR_CM04", context!!.getString(R.string.ERR_CM04))
             return
         }
         try {
-             request = JSONObject(obj)
+            request = JSONObject(obj)
         } catch (e: JSONException) {
             // TODO Auto-generated catch block
             e.printStackTrace()
@@ -573,32 +588,32 @@ class SDKClient private constructor(
         if (obj != null) {
             val response = getSyncResponse()
             if (response != null) {
-                publishMessage(response.d.p.topics.ack, obj,false)
+                publishMessage(response.d.p.topics.ack, obj, false)
             }
         }
-       /* val objMain = JSONObject()
-        try {
-            objMain.put(SDKClient.UNIQUE_ID, uniqueId)
-            objMain.put(SDKClient.CP_ID, cpId)
-            objMain.put(SDKClient.CURRENT_DATE, IotSDKUtils.getCurrentDate())
-            objMain.put(SDKClient.MESSAGE_TYPE, messageType)
-            objMain.putOpt(
-                SDKClient.SDK_OBJ, SDKClientUtils.getSdk(
-                    environment, appVersion
-                )
-            )
-            objMain.putOpt(SDKClient.D_OBJ, obj)
-            publishMessage(objMain.toString(), false)
-            iotSDKLogUtils!!.log(
-                false,
-                isDebug,
-                "INFO_CM10",
-                context!!.getString(R.string.INFO_CM10) + " " + IotSDKUtils.getCurrentDate()
-            )
-        } catch (e: JSONException) {
-            iotSDKLogUtils!!.log(true, isDebug, "CM01_CM01", e.message!!)
-            e.printStackTrace()
-        }*/
+        /* val objMain = JSONObject()
+         try {
+             objMain.put(SDKClient.UNIQUE_ID, uniqueId)
+             objMain.put(SDKClient.CP_ID, cpId)
+             objMain.put(SDKClient.CURRENT_DATE, IotSDKUtils.getCurrentDate())
+             objMain.put(SDKClient.MESSAGE_TYPE, messageType)
+             objMain.putOpt(
+                 SDKClient.SDK_OBJ, SDKClientUtils.getSdk(
+                     environment, appVersion
+                 )
+             )
+             objMain.putOpt(SDKClient.D_OBJ, obj)
+             publishMessage(objMain.toString(), false)
+             iotSDKLogUtils!!.log(
+                 false,
+                 isDebug,
+                 "INFO_CM10",
+                 context!!.getString(R.string.INFO_CM10) + " " + IotSDKUtils.getCurrentDate()
+             )
+         } catch (e: JSONException) {
+             iotSDKLogUtils!!.log(true, isDebug, "CM01_CM01", e.message!!)
+             e.printStackTrace()
+         }*/
     }
 
 
@@ -610,8 +625,8 @@ class SDKClient private constructor(
         //edgeDeviceTimerStop()
 
         if (mqttService != null) {
-            mqttService!!.disconnectClient()
-            mqttService!!.clearInstance() //destroy singleton object.
+            mqttService?.disconnectClient()
+            mqttService?.clearInstance() //destroy singleton object.
         }
         //  timerStop(reCheckingTimer)
         // timerStop(timerCheckDeviceState)
@@ -624,11 +639,51 @@ class SDKClient private constructor(
      * */
     private fun unregisterReceiver() {
         networkStateReceiver!!.removeListener(this)
-        context!!.unregisterReceiver(networkStateReceiver)
+        context?.unregisterReceiver(networkStateReceiver)
     }
 
     override fun onConnectionStateChange(isConnected: Boolean) {
+        if (isConnected) {
+            iotSDKLogUtils!!.log(
+                false,
+                isDebug,
+                "INFO_IN02",
+                context!!.getString(R.string.INFO_IN02)
+            )
+        } else {
+            iotSDKLogUtils!!.log(
+                false,
+                isDebug,
+                "INFO_IN03",
+                context!!.getString(R.string.INFO_IN03)
+            )
+        }
 
+        setConnected(isConnected)
+        onDeviceConnectionStatus(isConnected)
+
+    }
+
+    private fun isConnected(): Boolean {
+        return isConnected
+    }
+
+    private fun setConnected(connected: Boolean) {
+        isConnected = connected
+    }
+
+
+    private fun onDeviceConnectionStatus(isConnected: Boolean) {
+        val strJson = SDKClientUtils.createCommandFormat(
+            IotSDKConstant.DEVICE_CONNECTION_STATUS,
+            cpId,
+            "",
+            uniqueId,
+            isConnected.toString(),
+            false,
+            ""
+        )
+        deviceCallback?.onReceiveMsg(strJson)
     }
 
     override fun twinUpdateCallback(data: JSONObject?) {
@@ -655,7 +710,13 @@ class SDKClient private constructor(
         }
 
         if (response?.d?.has?.attr == 1) {
-            publishMessage(response.d.p.topics.di, JSONObject().put(MESSAGE_TYPE, DeviceIdentityMessages.GET_DEVICE_TEMPLATE_ATTRIBUTES.value).toString(), false
+            publishMessage(
+                response.d.p.topics.di,
+                JSONObject().put(
+                    MESSAGE_TYPE,
+                    DeviceIdentityMessages.GET_DEVICE_TEMPLATE_ATTRIBUTES.value
+                ).toString(),
+                false
             )
         }
 

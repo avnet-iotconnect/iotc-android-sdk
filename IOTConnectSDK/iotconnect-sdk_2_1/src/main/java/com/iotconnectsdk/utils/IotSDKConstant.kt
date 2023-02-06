@@ -8,7 +8,7 @@ internal object IotSDKConstant {
     const val PASSWORD_INFO_UPDATE = "0x12"
     const val DEVICE_INFO_UPDATE = "0x13"
     const val RULE_INFO_UPDATE = "0x15"
-    const val DEVICE_CONNECTION_STATUS = "0x16"
+    const val DEVICE_CONNECTION_STATUS = "116"
     const val STOP_SDK_CONNECTION = "0x99"
     const val M_ANDROID = "M_android"
 }
