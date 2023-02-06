@@ -48,7 +48,8 @@ class IotSDKMQTTService private constructor(
 
     private val TWIN_SUBTOPIC_CONTAINT = "\$iothub/twin/"
 
-    private var subscriptionTopic: String? = null // = "devices/520uta-sdk003/messages/devicebound/#";
+    private var subscriptionTopic: String? =
+        null // = "devices/520uta-sdk003/messages/devicebound/#";
 
     private var publishTopic: String? = null // = "devices/520uta-sdk003/messages/events/";
 
@@ -160,7 +161,7 @@ class IotSDKMQTTService private constructor(
                     disconnectedBufferOptions.isDeleteOldestMessages = false
                     mqttAndroidClient?.setBufferOpts(disconnectedBufferOptions)
                     subscribeToTopic()
-                    publishMessageCallback.onSendMsg()
+
                 }
 
                 override fun onFailure(asyncActionToken: IMqttToken, exception: Throwable) {
@@ -189,6 +190,7 @@ class IotSDKMQTTService private constructor(
                 object : IMqttActionListener {
                     override fun onSuccess(asyncActionToken: IMqttToken) {
                         hubToSdkCallback.onConnectionStateChange(true)
+                        publishMessageCallback.onSendMsg()
                     }
 
                     override fun onFailure(asyncActionToken: IMqttToken, exception: Throwable) {

@@ -18,13 +18,12 @@ import com.google.gson.Gson
 import com.iotconnectsdk.SDKClient
 import com.iotconnectsdk.interfaces.DeviceCallback
 import com.iotconnectsdk.interfaces.TwinUpdateCallback
+import com.iotconnectsdk.utils.IotSDKUtils
+import com.iotconnectsdk.utils.IotSDKUtils.currentDate
 import com.softweb.iotconnectsdk.R
+import com.softweb.iotconnectsdk.model.*
 
 import kotlinx.android.synthetic.main.activity_firmware.*
-import com.softweb.iotconnectsdk.model.AttributesModel
-import com.softweb.iotconnectsdk.model.Certificate
-import com.softweb.iotconnectsdk.model.OfflineStorage
-import com.softweb.iotconnectsdk.model.SdkOptions
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -331,19 +330,19 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
                 val mainObject = JSONObject(message)
 
                 //Publish message call back received.
-                if (!mainObject.has("cmdType")) {
+                if (!mainObject.has("ct")) {
                     return
                 }
 
-                val cmdType = mainObject.getString("cmdType")
-                val ackId = mainObject.getJSONObject("data").getString("ackId")
+                val cmdType = mainObject.getString("ct")
+                val ackId = mainObject.getString("ack")
                 when (cmdType) {
-                    "0x01" -> {
+                    "0" -> {
                         Log.d(TAG, "--- Device Command Received ---")
                         if (ackId != null && ackId.isNotEmpty()) {
                             messageType = "5"
-                            val objD = getAckObject(mainObject)
-                            objD!!.put("st", 6)
+                            //  val objD = getAckObject(mainObject)
+                            //  objD!!.put("st", 6)
 
                             /*
                              * Type    : Public Method "sendAck()"
@@ -362,6 +361,25 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
                                 getString(R.string.string_connection_not_found),
                                 Toast.LENGTH_LONG
                             ).show()*/
+
+
+                            /*
+                             * Type    : Public Method "sendAck()"
+                             * Usage   : Send device command received acknowledgment to cloud
+                             *
+                             * - status Type
+                             *     st = 6; // Device command Ack status
+                             *     st = 4; // Failed Ack
+                             * - Message Type
+                             *     msgType = 5; // for "0x01" device command
+                             */
+                            val d2CSendAckBean = D2CSendAckBean(
+                                currentDate, D2CSendAckBean.Data(ackId, 0, 6, "", null)
+                            )
+                            val gson = Gson()
+                            val jsonString = gson.toJson(d2CSendAckBean)
+                            sdkClient?.sendAck(jsonString, messageType)
+
                         }
                     }
                     "0x02" -> {

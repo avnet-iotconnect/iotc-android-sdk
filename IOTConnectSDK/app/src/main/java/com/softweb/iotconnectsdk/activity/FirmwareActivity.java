@@ -18,6 +18,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.gson.Gson;
 import com.iotconnectsdk.SDKClient;
@@ -37,10 +38,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
+import com.iotconnectsdk.utils.IotSDKUtils;
 import com.softweb.iotconnectsdk.model.Attribute;
 import com.softweb.iotconnectsdk.model.AttributesModel;
 import com.softweb.iotconnectsdk.model.Certificate;
 import com.softweb.iotconnectsdk.model.D;
+import com.softweb.iotconnectsdk.model.D2CSendAckBean;
 import com.softweb.iotconnectsdk.model.Device;
 import com.softweb.iotconnectsdk.model.OfflineStorage;
 import com.softweb.iotconnectsdk.model.SdkOptions;
@@ -381,21 +384,38 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                 JSONObject mainObject = new JSONObject(message);
 
                 //Publish message call back received.
-                if (!mainObject.has("cmdType")) {
+                if (!mainObject.has("ct")) {
                     return;
                 }
 
-                String cmdType = mainObject.getString("cmdType");
+                String cmdType = mainObject.getString("ct");
 
-                String ackId = mainObject.getJSONObject("data").getString("ackId");
+                String ackId = mainObject.getString("ack");
 
                 switch (cmdType) {
-                    case "0x01":
+                    case "0":
                         Log.d(TAG, "--- Device Command Received ---");
                         if (ackId != null && !ackId.isEmpty()) {
                             messageType = "5";
-                            JSONObject objD = getAckObject(mainObject);
-                            objD.put("st", 6);
+
+                            /*
+                             * Type    : Public Method "sendAck()"
+                             * Usage   : Send device command received acknowledgment to cloud
+                             *
+                             * - status Type
+                             *     st = 6; // Device command Ack status
+                             *     st = 4; // Failed Ack
+                             * - Message Type
+                             *     msgType = 5; // for "0x01" device command
+                             */
+
+                            D2CSendAckBean d2CSendAckBean = new D2CSendAckBean(IotSDKUtils.getCurrentDate(), new D2CSendAckBean.Data(ackId, 0, 6, "", null));
+                            Gson gson = new Gson();
+                            String jsonString = gson.toJson(d2CSendAckBean);
+                            sdkClient.sendAck(jsonString, messageType);
+
+                           // JSONObject objD = getAckObject(mainObject);
+                           // objD.put("st", 6);
 
                             /*
                              * Type    : Public Method "sendAck()"

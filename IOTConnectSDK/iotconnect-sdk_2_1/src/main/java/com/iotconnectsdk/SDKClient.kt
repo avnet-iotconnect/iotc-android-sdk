@@ -549,6 +549,58 @@ class SDKClient private constructor(
         }
     }
 
+    /**
+     * send acknowledgment
+     *
+     * @param obj         JSONObject object for "d"
+     * @param messageType Message Type
+     */
+    fun sendAck(obj: String?, messageType: String?) {
+        var request: JSONObject? =null
+        if (isDispose) {
+            iotSDKLogUtils!!.log(true, isDebug, "ERR_CM04", context!!.getString(R.string.ERR_CM04))
+            return
+        }
+        try {
+             request = JSONObject(obj)
+        } catch (e: JSONException) {
+            // TODO Auto-generated catch block
+            e.printStackTrace()
+        }
+
+        if (!validationUtils!!.validateAckParameters(request, messageType!!)) return
+
+        if (obj != null) {
+            val response = getSyncResponse()
+            if (response != null) {
+                publishMessage(response.d.p.topics.ack, obj,false)
+            }
+        }
+       /* val objMain = JSONObject()
+        try {
+            objMain.put(SDKClient.UNIQUE_ID, uniqueId)
+            objMain.put(SDKClient.CP_ID, cpId)
+            objMain.put(SDKClient.CURRENT_DATE, IotSDKUtils.getCurrentDate())
+            objMain.put(SDKClient.MESSAGE_TYPE, messageType)
+            objMain.putOpt(
+                SDKClient.SDK_OBJ, SDKClientUtils.getSdk(
+                    environment, appVersion
+                )
+            )
+            objMain.putOpt(SDKClient.D_OBJ, obj)
+            publishMessage(objMain.toString(), false)
+            iotSDKLogUtils!!.log(
+                false,
+                isDebug,
+                "INFO_CM10",
+                context!!.getString(R.string.INFO_CM10) + " " + IotSDKUtils.getCurrentDate()
+            )
+        } catch (e: JSONException) {
+            iotSDKLogUtils!!.log(true, isDebug, "CM01_CM01", e.message!!)
+            e.printStackTrace()
+        }*/
+    }
+
 
     /*Disconnect the device from MQTT connection.
      * stop all timers and change the device connection status.
@@ -603,13 +655,7 @@ class SDKClient private constructor(
         }
 
         if (response?.d?.has?.attr == 1) {
-            publishMessage(
-                response.d.p.topics.di,
-                JSONObject().put(
-                    MESSAGE_TYPE,
-                    DeviceIdentityMessages.GET_DEVICE_TEMPLATE_ATTRIBUTES.value
-                ).toString(),
-                false
+            publishMessage(response.d.p.topics.di, JSONObject().put(MESSAGE_TYPE, DeviceIdentityMessages.GET_DEVICE_TEMPLATE_ATTRIBUTES.value).toString(), false
             )
         }
 
