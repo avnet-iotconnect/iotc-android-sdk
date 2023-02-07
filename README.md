@@ -203,7 +203,7 @@ Note : (*) indicates the mandatory element of the object.
 
 ```java	
 	dependencies {
-	        implementation 'com.iotconnectsdk:iotconnectpoc:3.1.2'		
+	        implementation 'com.iotconnectsdk:iotconnectpoc:3.1.4'		
 	}
 ```	
 
