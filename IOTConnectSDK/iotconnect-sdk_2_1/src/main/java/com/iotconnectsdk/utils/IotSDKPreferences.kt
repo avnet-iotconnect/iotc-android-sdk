@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.iotconnectsdk.beans.CommonResponseBean
 import com.iotconnectsdk.webservices.responsebean.IdentityServiceResponse
 
 /**
@@ -61,6 +62,16 @@ internal class IotSDKPreferences private constructor(context: Context) {
             return null
         }
         return syncServiceResponse
+    }
+
+    fun getAttributes(key: String?): CommonResponseBean.D? {
+        var attributeResponse:CommonResponseBean.D = try {
+            val jsonString = getStringData(key)
+            Gson().fromJson(jsonString, CommonResponseBean.D::class.java)
+        } catch (e: Exception) {
+            return null
+        }
+        return attributeResponse
     }
 
     fun saveList(key: String?, valueList: List<String?>?): Boolean {
