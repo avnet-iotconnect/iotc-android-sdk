@@ -64,10 +64,10 @@ internal class IotSDKPreferences private constructor(context: Context) {
         return syncServiceResponse
     }
 
-    fun getAttributes(key: String?): CommonResponseBean.D? {
-        var attributeResponse:CommonResponseBean.D = try {
+    fun getAttributes(key: String?): CommonResponseBean? {
+        var attributeResponse = try {
             val jsonString = getStringData(key)
-            Gson().fromJson(jsonString, CommonResponseBean.D::class.java)
+            Gson().fromJson(jsonString, CommonResponseBean::class.java)
         } catch (e: Exception) {
             return null
         }

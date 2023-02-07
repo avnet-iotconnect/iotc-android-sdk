@@ -186,7 +186,6 @@
                     android:enabled="false"
                     android:text="Send Data"
                     android:textSize="15dp"
-                    android:visibility="gone"
                     app:layout_constraintLeft_toLeftOf="parent"
                     app:layout_constraintRight_toRightOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/llTemp" />
@@ -200,7 +199,6 @@
                     android:enabled="false"
                     android:text="Get AllTwins"
                     android:textSize="15dp"
-                    android:visibility="gone"
                     app:layout_constraintLeft_toLeftOf="parent"
                     app:layout_constraintRight_toRightOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/btnSendData" />

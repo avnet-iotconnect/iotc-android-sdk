@@ -251,7 +251,7 @@ class IotSDKMQTTService private constructor(
             if (mqttAndroidClient != null && mqttAndroidClient!!.isConnected && msgPublish != null) {
                 val message = MqttMessage()
                 message.payload = msgPublish.toByteArray()
-                mqttAndroidClient!!.publish(topics, message)
+                mqttAndroidClient?.publish(topics, message)
                 hubToSdkCallback.onSendMsg(msgPublish)
                 iotSDKLogUtils.log(
                     false,

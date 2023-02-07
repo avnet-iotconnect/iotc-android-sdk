@@ -19,7 +19,6 @@ import com.iotconnectsdk.webservices.CallWebServices
 import com.iotconnectsdk.webservices.interfaces.WsResponseInterface
 import com.iotconnectsdk.webservices.responsebean.DiscoveryApiResponse
 import com.iotconnectsdk.webservices.responsebean.IdentityServiceResponse
-import com.iotconnectsdk.webservices.responsebean.SyncServiceResponse
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -357,7 +356,8 @@ class SDKClient private constructor(
 
                 if (syncServiceResponseData?.d != null) {
                     //save the sync response to shared pref
-                    IotSDKPreferences.getInstance(context!!)?.putStringData(IotSDKPreferences.SYNC_RESPONSE, response)
+                    IotSDKPreferences.getInstance(context!!)
+                        ?.putStringData(IotSDKPreferences.SYNC_RESPONSE, response)
                     callMQTTService()
                 }
             }
@@ -406,9 +406,8 @@ class SDKClient private constructor(
             ?.getSyncResponse(IotSDKPreferences.SYNC_RESPONSE)
     }
 
-    private fun getAttributeResponse(): CommonResponseBean.D? {
-        return IotSDKPreferences.getInstance(context!!)
-            ?.getAttributes(IotSDKPreferences.ATTRIBUTE_RESPONSE)
+    private fun getAttributeResponse(): CommonResponseBean? {
+        return IotSDKPreferences.getInstance(context!!)?.getAttributes(IotSDKPreferences.ATTRIBUTE_RESPONSE)
     }
 
 
@@ -498,11 +497,7 @@ class SDKClient private constructor(
 
                 if (commonModel?.d != null) {
                     if (commonModel.d.ct == 201) {
-
-                        IotSDKPreferences.getInstance(context!!)!!.putStringData(
-                            IotSDKPreferences.ATTRIBUTE_RESPONSE, Gson().toJson(commonModel.d.att)
-                        )
-
+                        IotSDKPreferences.getInstance(context!!)!!.putStringData(IotSDKPreferences.ATTRIBUTE_RESPONSE, Gson().toJson(commonModel))
                     }
 
                     if (commonModel.d.ct == 202) {
@@ -571,59 +566,59 @@ class SDKClient private constructor(
     }
 
 
-   /* fun getAttributes(): String? {
-        val mainArray = JSONArray()
+    fun getAttributes(): String? {
+        var jsonString = ""
         val response = getAttributeResponse()
         if (response != null) {
-            val data = response.att
+           // val data = response.att
             try {
 
-                data.forEach {
-                    it.d
-                }
+                val gson = Gson()
+                jsonString = gson.toJson(response)
 
-                for (device in response.att) {
 
-                    //CREATE DEVICE OBJECT, "device":{"id":"dee02","tg":"gateway"}
-                    val deviceObj = JSONObject()
-                    deviceObj.put(SDKClient.DEVICE_ID, device.id)
-                    deviceObj.put(SDKClient.DEVICE_TAG, device.tg)
+                /*  for (device in response.att) {
 
-                    //ADD TO MAIN OBJECT
-                    val mainObj = JSONObject()
-                    mainObj.put(SDKClient.DEVICE, deviceObj)
-                    mainObj.put(
-                        SDKClient.ATTRIBUTES,
-                        SDKClientUtils.getAttributesList(data.att, device.tg)
-                    )
+                      //CREATE DEVICE OBJECT, "device":{"id":"dee02","tg":"gateway"}
+                      val deviceObj = JSONObject()
+                      deviceObj.put(SDKClient.DEVICE_ID, device.id)
+                      deviceObj.put(SDKClient.DEVICE_TAG, device.tg)
 
-                    //ADD MAIN BOJ TO ARRAY.
-                    mainArray.put(mainObj)
+                      //ADD TO MAIN OBJECT
+                      val mainObj = JSONObject()
+                      mainObj.put(SDKClient.DEVICE, deviceObj)
+                      mainObj.put(
+                          SDKClient.ATTRIBUTES,
+                          SDKClientUtils.getAttributesList(data.att, device.tg)
+                      )
 
-                    //Attributes data not found
-                    if (mainArray.length() == 0) {
-                        iotSDKLogUtils!!.log(
-                            true,
-                            isDebug,
-                            "ERR_GA02",
-                            context!!.getString(R.string.ERR_GA02)
-                        )
-                    } else {
-                        iotSDKLogUtils!!.log(
-                            false,
-                            isDebug,
-                            "INFO_GA01",
-                            context!!.getString(R.string.INFO_GA01)
-                        )
-                    }
-                }
+                      //ADD MAIN BOJ TO ARRAY.
+                      mainArray.put(mainObj)
+
+                      //Attributes data not found
+                      if (mainArray.length() == 0) {
+                          iotSDKLogUtils!!.log(
+                              true,
+                              isDebug,
+                              "ERR_GA02",
+                              context!!.getString(R.string.ERR_GA02)
+                          )
+                      } else {
+                          iotSDKLogUtils!!.log(
+                              false,
+                              isDebug,
+                              "INFO_GA01",
+                              context!!.getString(R.string.INFO_GA01)
+                          )
+                      }
+                  }*/
             } catch (e: java.lang.Exception) {
                 iotSDKLogUtils!!.log(true, isDebug, "ERR_GA01", e.message!!)
                 e.printStackTrace()
             }
         }
-        return mainArray.toString()
-    }*/
+        return jsonString
+    }
 
 
     /**
