@@ -18,4 +18,8 @@ internal object IotSDKUtils {
             df.timeZone = TimeZone.getTimeZone("gmt")
             return df.format(Date())
         }
+
+     fun getCurrentTime(): Long {
+        return System.currentTimeMillis() / 1000
+    }
 }

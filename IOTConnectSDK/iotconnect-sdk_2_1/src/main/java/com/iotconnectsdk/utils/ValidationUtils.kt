@@ -81,7 +81,7 @@ internal class ValidationUtils private constructor(
      * */
     fun isValidInputFormat(jsonData: String, uniqueId: String): Boolean {
         //check is input empty.
-        if (jsonData.isEmpty() || jsonData.length == 0) {
+        if (jsonData.isEmpty() || jsonData.isEmpty()) {
             iotSDKLogUtils.log(true, isDebug, "ERR_SD05", context.getString(R.string.ERR_SD05))
             return false
         }

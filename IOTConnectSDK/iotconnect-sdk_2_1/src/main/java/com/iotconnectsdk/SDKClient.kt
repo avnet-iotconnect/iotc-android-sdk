@@ -7,6 +7,7 @@ import android.util.Log
 import android.webkit.URLUtil
 import com.google.gson.Gson
 import com.iotconnectsdk.beans.CommonResponseBean
+import com.iotconnectsdk.beans.SendAttributeBean
 import com.iotconnectsdk.beans.TumblingWindowBean
 import com.iotconnectsdk.interfaces.DeviceCallback
 import com.iotconnectsdk.interfaces.HubToSdkCallback
@@ -14,12 +15,13 @@ import com.iotconnectsdk.interfaces.PublishMessageCallback
 import com.iotconnectsdk.interfaces.TwinUpdateCallback
 import com.iotconnectsdk.mqtt.IotSDKMQTTService
 import com.iotconnectsdk.utils.*
+import com.iotconnectsdk.utils.IotSDKUtils.getCurrentTime
+import com.iotconnectsdk.utils.SDKClientUtils.compareForInputValidation
 import com.iotconnectsdk.utils.SDKClientUtils.createTextFile
 import com.iotconnectsdk.webservices.CallWebServices
 import com.iotconnectsdk.webservices.interfaces.WsResponseInterface
 import com.iotconnectsdk.webservices.responsebean.DiscoveryApiResponse
 import com.iotconnectsdk.webservices.responsebean.IdentityServiceResponse
-import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.File
@@ -128,7 +130,7 @@ class SDKClient private constructor(
 
     private val DIRECTORY_PATH = "logs/offline/"
 
-    private val savedTime: Long = 0
+    private var savedTime: Long = 0
 
     private val EDGE_DEVICE_RULE_MATCH_MESSAGE_TYPE = 3
 
@@ -162,14 +164,24 @@ class SDKClient private constructor(
 
         @JvmStatic
         fun getInstance(
-            context: Context?, cpId: String?, uniqueId: String?, deviceCallback: DeviceCallback?,
-            twinUpdateCallback: TwinUpdateCallback?, sdkOptions: String?, environment: String?
+            context: Context?,
+            cpId: String?,
+            uniqueId: String?,
+            deviceCallback: DeviceCallback?,
+            twinUpdateCallback: TwinUpdateCallback?,
+            sdkOptions: String?,
+            environment: String?
         ): SDKClient {
             synchronized(this) {
                 if (!::sdkClient.isInitialized) {
                     sdkClient = SDKClient(
-                        context, cpId, uniqueId, deviceCallback,
-                        twinUpdateCallback, sdkOptions, environment
+                        context,
+                        cpId,
+                        uniqueId,
+                        deviceCallback,
+                        twinUpdateCallback,
+                        sdkOptions,
+                        environment
                     )
                 }
                 sdkClient.connect()
@@ -187,8 +199,7 @@ class SDKClient private constructor(
             networkStateReceiver = NetworkStateReceiver()
             networkStateReceiver?.addListener(this)
             context?.registerReceiver(
-                networkStateReceiver,
-                IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
+                networkStateReceiver, IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
             )
         } catch (e: Exception) {
             e.printStackTrace()
@@ -244,12 +255,10 @@ class SDKClient private constructor(
             return
         }
         iotSDKLogUtils = IotSDKLogUtils.getInstance(
-            context!!,
-            cpId!!, uniqueId!!
+            context!!, cpId!!, uniqueId!!
         )
         validationUtils = ValidationUtils.getInstance(
-            iotSDKLogUtils!!,
-            context, isDebug
+            iotSDKLogUtils!!, context, isDebug
         )
         if (sdkOptions != null) {
 
@@ -277,19 +286,14 @@ class SDKClient private constructor(
                 }
             }
         } else {
-            discoveryUrl =
-                DEFAULT_DISCOVERY_URL //set default discovery url when sdkOption is null.
+            discoveryUrl = DEFAULT_DISCOVERY_URL //set default discovery url when sdkOption is null.
         }
         if (!validationUtils!!.isEmptyValidation(
-                cpId,
-                "ERR_IN04",
-                context.getString(R.string.ERR_IN04)
+                cpId, "ERR_IN04", context.getString(R.string.ERR_IN04)
             )
         ) return
         if (!validationUtils!!.isEmptyValidation(
-                uniqueId,
-                "ERR_IN05",
-                context.getString(R.string.ERR_IN05)
+                uniqueId, "ERR_IN05", context.getString(R.string.ERR_IN05)
             )
         ) return
         callDiscoveryService()
@@ -329,8 +333,9 @@ class SDKClient private constructor(
     * */
     override fun onSuccessResponse(methodName: String?, response: String?) {
         try {
-            if (methodName.equals(IotSDKUrls.DISCOVERY_SERVICE, ignoreCase = true)
-                && response != null
+            if (methodName.equals(
+                    IotSDKUrls.DISCOVERY_SERVICE, ignoreCase = true
+                ) && response != null
             ) {
                 val discoveryApiResponse = Gson().fromJson(
                     response, DiscoveryApiResponse::class.java
@@ -347,8 +352,7 @@ class SDKClient private constructor(
                     callSyncService()
                 }
             } else if (methodName.equals(
-                    IotSDKUrls.SYNC_SERVICE,
-                    ignoreCase = true
+                    IotSDKUrls.SYNC_SERVICE, ignoreCase = true
                 ) && response != null
             ) {
                 val syncServiceResponseData =
@@ -391,8 +395,7 @@ class SDKClient private constructor(
             return
         }
         mqttService = IotSDKMQTTService.getInstance(
-            context!!, response.d.p, this, this, this, iotSDKLogUtils!!, isDebug,
-            uniqueId!!
+            context!!, response.d.p, this, this, this, iotSDKLogUtils!!, isDebug, uniqueId!!
         )
         mqttService!!.connectMQTT()
 
@@ -407,7 +410,8 @@ class SDKClient private constructor(
     }
 
     private fun getAttributeResponse(): CommonResponseBean? {
-        return IotSDKPreferences.getInstance(context!!)?.getAttributes(IotSDKPreferences.ATTRIBUTE_RESPONSE)
+        return IotSDKPreferences.getInstance(context!!)
+            ?.getAttributes(IotSDKPreferences.ATTRIBUTE_RESPONSE)
     }
 
 
@@ -442,17 +446,12 @@ class SDKClient private constructor(
                             if (textFile!!.contains(TEXT_FILE_PREFIX)) {
                                 fileToWrite = textFile
                                 val file = File(
-                                    File(context.filesDir, directoryPath),
-                                    "$textFile.txt"
+                                    File(context.filesDir, directoryPath), "$textFile.txt"
                                 )
                                 if (fileSizeToCreateInMb != 0 && SDKClientUtils.getFileSizeInKB(file) >= fileSizeToCreateInMb) {
                                     //create new text file.
                                     fileToWrite = createTextFile(
-                                        context,
-                                        directoryPath,
-                                        fileCount,
-                                        iotSDKLogUtils,
-                                        isDebug
+                                        context, directoryPath, fileCount, iotSDKLogUtils, isDebug
                                     )
                                 }
                                 break
@@ -462,22 +461,15 @@ class SDKClient private constructor(
                 }
                 try {
                     iotSDKLogUtils!!.writePublishedMessage(
-                        directoryPath!!,
-                        fileToWrite!!, publishMessage
+                        directoryPath!!, fileToWrite!!, publishMessage
                     )
                 } catch (e: java.lang.Exception) {
                     iotSDKLogUtils!!.log(
-                        true,
-                        isDebug,
-                        "ERR_OS02",
-                        context.getString(R.string.ERR_OS02) + e.message
+                        true, isDebug, "ERR_OS02", context.getString(R.string.ERR_OS02) + e.message
                     )
                 }
                 iotSDKLogUtils!!.log(
-                    false,
-                    isDebug,
-                    "INFO_OS020",
-                    context.getString(R.string.INFO_OS02)
+                    false, isDebug, "INFO_OS020", context.getString(R.string.INFO_OS02)
                 )
             }
         } catch (e: java.lang.Exception) {
@@ -497,7 +489,9 @@ class SDKClient private constructor(
 
                 if (commonModel?.d != null) {
                     if (commonModel.d.ct == 201) {
-                        IotSDKPreferences.getInstance(context!!)!!.putStringData(IotSDKPreferences.ATTRIBUTE_RESPONSE, Gson().toJson(commonModel))
+                        IotSDKPreferences.getInstance(context!!)!!.putStringData(
+                            IotSDKPreferences.ATTRIBUTE_RESPONSE, Gson().toJson(commonModel)
+                        )
                     }
 
                     if (commonModel.d.ct == 202) {
@@ -521,10 +515,7 @@ class SDKClient private constructor(
                     when (mainObject.getInt(CMD_TYPE)) {
                         0 -> {
                             iotSDKLogUtils!!.log(
-                                false,
-                                isDebug,
-                                "INFO_CM01",
-                                context!!.getString(R.string.INFO_CM01)
+                                false, isDebug, "INFO_CM01", context!!.getString(R.string.INFO_CM01)
                             )
                             deviceCallback?.onReceiveMsg(message)
                         }
@@ -539,10 +530,7 @@ class SDKClient private constructor(
                         }
                         116 -> {
                             iotSDKLogUtils?.log(
-                                false,
-                                isDebug,
-                                "INFO_CM16",
-                                context!!.getString(R.string.INFO_CM16)
+                                false, isDebug, "INFO_CM16", context!!.getString(R.string.INFO_CM16)
                             )
                             deviceCallback?.onReceiveMsg(message)
                         }
@@ -570,7 +558,7 @@ class SDKClient private constructor(
         var jsonString = ""
         val response = getAttributeResponse()
         if (response != null) {
-           // val data = response.att
+            // val data = response.att
             try {
 
                 val gson = Gson()
@@ -702,17 +690,11 @@ class SDKClient private constructor(
     override fun onConnectionStateChange(isConnected: Boolean) {
         if (isConnected) {
             iotSDKLogUtils!!.log(
-                false,
-                isDebug,
-                "INFO_IN02",
-                context!!.getString(R.string.INFO_IN02)
+                false, isDebug, "INFO_IN02", context!!.getString(R.string.INFO_IN02)
             )
         } else {
             iotSDKLogUtils!!.log(
-                false,
-                isDebug,
-                "INFO_IN03",
-                context!!.getString(R.string.INFO_IN03)
+                false, isDebug, "INFO_IN03", context!!.getString(R.string.INFO_IN03)
             )
         }
 
@@ -768,12 +750,9 @@ class SDKClient private constructor(
 
         if (response?.d?.has?.attr == 1) {
             publishMessage(
-                response.d.p.topics.di,
-                JSONObject().put(
-                    MESSAGE_TYPE,
-                    DeviceIdentityMessages.GET_DEVICE_TEMPLATE_ATTRIBUTES.value
-                ).toString(),
-                false
+                response.d.p.topics.di, JSONObject().put(
+                    MESSAGE_TYPE, DeviceIdentityMessages.GET_DEVICE_TEMPLATE_ATTRIBUTES.value
+                ).toString(), false
             )
         }
 
@@ -789,6 +768,66 @@ class SDKClient private constructor(
 
         }
 
+    }
+
+    /**
+     * Send device data to server by calling publish method.
+     *
+     * @param jsonData json data from client as below.
+     *
+     */
+    fun sendData(jsonData: String?) {
+        if (isDispose) {
+            if (uniqueId != null) {
+                iotSDKLogUtils!!.log(
+                    true, isDebug, "ERR_SD04", context!!.getString(R.string.ERR_SD04)
+                )
+            }
+            return
+        }
+        /* if (!validationUtils!!.isValidInputFormat(jsonData!!, uniqueId!!))
+             return*/
+        if (!idEdgeDevice) { // simple device.
+            publishDeviceInputData(jsonData)
+        } else { //Edge device
+            //  processEdgeDeviceInputData(jsonData)
+        }
+    }
+
+    /*process input data to publish.
+     * 1.Publish input data based on interval of "df" value.
+     * "df"="60" than data is published in interval of 60 seconds. If data is publish lass than 60 second time than data is ignored.
+     * 2.If "df" = 0, input data can be published on button click.
+     *
+     * @param jsonData       input data from framework.
+     * */
+    private fun publishDeviceInputData(jsonData: String?) {
+
+        val response = getSyncResponse()
+        var df = 0
+        if (response != null) {
+            df = response.d.meta.df
+        }
+        if (savedTime == 0L) {
+            savedTime = getCurrentTime()
+            savedTime = savedTime + df
+        } else {
+            val currentTime: Long = getCurrentTime()
+            if (currentTime <= savedTime) {
+                return
+            } else {
+                savedTime = savedTime + df
+            }
+        }
+        if (response?.d != null) {
+            if (jsonData != null) {
+                publishMessage(response.d.p.topics.rpt, jsonData, false)
+            }
+            val gson = Gson()
+            val sendAttributeBean = gson.fromJson(jsonData, SendAttributeBean::class.java)
+           compareForInputValidation(getAttributeResponse(),sendAttributeBean)
+            // publishDeviceInputData(jsonData, response.d)
+        }
     }
 
 }

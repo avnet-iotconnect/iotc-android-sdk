@@ -3,8 +3,9 @@ package com.iotconnectsdk.utils
 import android.content.Context
 import com.google.gson.Gson
 import com.iotconnectsdk.R
-import com.iotconnectsdk.beans.CommandFormatJson
+import com.iotconnectsdk.beans.CommonResponseBean
 import com.iotconnectsdk.beans.Data
+import com.iotconnectsdk.beans.SendAttributeBean
 import com.iotconnectsdk.beans.TumblingWindowBean
 import com.iotconnectsdk.utils.IotSDKConstant.ATTRIBUTE_INFO_UPDATE
 import com.iotconnectsdk.utils.IotSDKConstant.DEVICE_INFO_UPDATE
@@ -178,7 +179,7 @@ object SDKClientUtils {
         return tag
     }
 
-    @Synchronized
+   /* @Synchronized
     fun compareForInputValidation(
         key: String,
         value: String,
@@ -197,7 +198,7 @@ object SDKClientUtils {
                 val dt = data.dt
                 if (key.equals(ln, ignoreCase = true) && tag.equals(tg, ignoreCase = true)) {
                     result =
-                        if (dt == 0 && !value.isEmpty() && !isDigit(value)) {
+                        if (dt == 0 && value.isNotEmpty() && !isDigit(value)) {
                             1
                         } else {
                             compareWithInput(value, dv)
@@ -206,6 +207,18 @@ object SDKClientUtils {
                 }
             }
         }
+        return result
+    }*/
+
+    @Synchronized
+    fun compareForInputValidation(response: CommonResponseBean?, sendAttributeBean: SendAttributeBean): Int {
+        var result=0
+
+        response?.d?.att?.forEach {
+
+        }
+
+
         return result
     }
 
