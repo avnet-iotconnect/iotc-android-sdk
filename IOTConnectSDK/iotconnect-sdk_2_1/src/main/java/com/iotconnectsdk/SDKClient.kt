@@ -22,8 +22,10 @@ import com.iotconnectsdk.webservices.CallWebServices
 import com.iotconnectsdk.webservices.interfaces.WsResponseInterface
 import com.iotconnectsdk.webservices.responsebean.DiscoveryApiResponse
 import com.iotconnectsdk.webservices.responsebean.IdentityServiceResponse
+import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+import org.json.JSONTokener
 import java.io.File
 import java.util.*
 
@@ -56,15 +58,15 @@ class SDKClient private constructor(
 
     //  private val context: Context? = null
 
-    //  private val cpId: String? = null
+    //  private var cpId: String? = null
 
-    // private val uniqueId: String? = null
+    // private var uniqueId: String? = null
 
     private var commandType: String? = null
 
-    //  private val sdkOptions: String? = null
+    //  private var sdkOptions: String? = null
 
-    //  private val environment: String = "PROD"
+    //  private var environment: String = ""
 
     private var isConnected = false
 
@@ -160,37 +162,26 @@ class SDKClient private constructor(
      * */
     companion object {
         @Volatile
-        private lateinit var sdkClient: SDKClient
+        private var sdkClient: SDKClient? = null
 
         @JvmStatic
         fun getInstance(
-            context: Context?,
-            cpId: String?,
-            uniqueId: String?,
-            deviceCallback: DeviceCallback?,
-            twinUpdateCallback: TwinUpdateCallback?,
-            sdkOptions: String?,
-            environment: String?
+            context: Context?, cpId: String?, uniqueId: String?, deviceCallback: DeviceCallback?,
+            twinUpdateCallback: TwinUpdateCallback?, sdkOptions: String?, environment: String?
         ): SDKClient {
             synchronized(this) {
-                if (!::sdkClient.isInitialized) {
+                if (sdkClient == null) {
                     sdkClient = SDKClient(
-                        context,
-                        cpId,
-                        uniqueId,
-                        deviceCallback,
-                        twinUpdateCallback,
-                        sdkOptions,
+                        context, cpId, uniqueId, deviceCallback, twinUpdateCallback, sdkOptions,
                         environment
                     )
                 }
-                sdkClient.connect()
-                sdkClient.registerNetworkState()
-                return sdkClient
+                sdkClient?.connect()
+                sdkClient?.registerNetworkState()
+                return sdkClient!!
             }
 
         }
-
     }
 
 
@@ -233,12 +224,18 @@ class SDKClient private constructor(
 
                             //Add below configuration in respective sdk configuration. We want this setting to be done form firmware. default fileCount 1 and availeSpaceInMb is unlimited.
                             fileCount =
-                                if (offlineStorage.has("fileCount") && offlineStorage.getInt("fileCount") > 0) {
+                                if (offlineStorage.has("fileCount") && offlineStorage.getInt(
+                                        "fileCount"
+                                    ) > 0
+                                ) {
                                     offlineStorage.getInt("fileCount")
                                 } else {
                                     1
                                 }
-                            if (offlineStorage.has("availSpaceInMb") && offlineStorage.getInt("availSpaceInMb") > 0) {
+                            if (offlineStorage.has("availSpaceInMb") && offlineStorage.getInt(
+                                    "availSpaceInMb"
+                                ) > 0
+                            ) {
                                 val availSpaceInMb = offlineStorage.getInt("availSpaceInMb")
                                 fileSizeToCreateInMb = availSpaceInMb * 1000 / fileCount
                             } else {
@@ -289,11 +286,11 @@ class SDKClient private constructor(
             discoveryUrl = DEFAULT_DISCOVERY_URL //set default discovery url when sdkOption is null.
         }
         if (!validationUtils!!.isEmptyValidation(
-                cpId, "ERR_IN04", context.getString(R.string.ERR_IN04)
+                cpId!!, "ERR_IN04", context.getString(R.string.ERR_IN04)
             )
         ) return
         if (!validationUtils!!.isEmptyValidation(
-                uniqueId, "ERR_IN05", context.getString(R.string.ERR_IN05)
+                uniqueId!!, "ERR_IN05", context.getString(R.string.ERR_IN05)
             )
         ) return
         callDiscoveryService()
@@ -448,7 +445,10 @@ class SDKClient private constructor(
                                 val file = File(
                                     File(context.filesDir, directoryPath), "$textFile.txt"
                                 )
-                                if (fileSizeToCreateInMb != 0 && SDKClientUtils.getFileSizeInKB(file) >= fileSizeToCreateInMb) {
+                                if (fileSizeToCreateInMb != 0 && SDKClientUtils.getFileSizeInKB(
+                                        file
+                                    ) >= fileSizeToCreateInMb
+                                ) {
                                     //create new text file.
                                     fileToWrite = createTextFile(
                                         context, directoryPath, fileCount, iotSDKLogUtils, isDebug
@@ -528,7 +528,7 @@ class SDKClient private constructor(
                         3 -> {
 
                         }
-                        116 -> {
+                        106, 107, 108, 109, 116 -> {
                             iotSDKLogUtils?.log(
                                 false, isDebug, "INFO_CM16", context!!.getString(R.string.INFO_CM16)
                             )
@@ -677,6 +677,7 @@ class SDKClient private constructor(
         // timerStop(timerCheckDeviceState)
         // timerStop(timerOfflineSync)
         unregisterReceiver()
+        sdkClient = null
     }
 
     /* Unregister network receiver.
@@ -714,13 +715,8 @@ class SDKClient private constructor(
 
     private fun onDeviceConnectionStatus(isConnected: Boolean) {
         val strJson = SDKClientUtils.createCommandFormat(
-            IotSDKConstant.DEVICE_CONNECTION_STATUS,
-            cpId,
-            "",
-            uniqueId,
-            isConnected.toString(),
-            false,
-            ""
+            IotSDKConstant.DEVICE_CONNECTION_STATUS, cpId, "", uniqueId, isConnected.toString(),
+            false, ""
         )
         deviceCallback?.onReceiveMsg(strJson)
     }
@@ -825,8 +821,138 @@ class SDKClient private constructor(
             }
             val gson = Gson()
             val sendAttributeBean = gson.fromJson(jsonData, SendAttributeBean::class.java)
-           compareForInputValidation(getAttributeResponse(),sendAttributeBean)
-            // publishDeviceInputData(jsonData, response.d)
+            // compareForInputValidation(getAttributeResponse(), sendAttributeBean)
+            if (jsonData != null) {
+                publishDeviceInputData(jsonData, getAttributeResponse())
+            }
+        }
+    }
+
+    /* Publish input data for Device.
+     * @param inputJsonStr input json from user.
+     * */
+    private fun publishDeviceInputData(mainJson: String, dObj: CommonResponseBean?) {
+        try {
+
+            val inputJsonStr = JSONObject(mainJson).getJSONArray("d")
+            val jsonArray = JSONArray(inputJsonStr)
+            var doFaultyPublish = false
+            var doReportingPublish = false
+            var time: String? = ""
+            /*val reportingObject_reporting = SDKClientUtils.getMainObject(
+                "0", dObj, appVersion,
+                environment!!
+            ) */
+            // 0 for reporting.
+            /* val reportingObject_faulty = SDKClientUtils.getMainObject(
+                 "1", dObj, appVersion,
+                 environment
+             )*/
+            // 1 for faulty.
+            val arrayObj_reporting = JSONArray()
+            val arrayObj_Faulty = JSONArray()
+            var outerD_Obj_reporting: JSONObject? = null
+            var outerD_Obj_Faulty: JSONObject? = null
+            for (i in 0 until jsonArray.length()) {
+                time = jsonArray.getJSONObject(i).optString(TIME)
+                // val uniqueId = jsonArray.getJSONObject(i).getString(UNIQUE_ID)
+                val dataObj = jsonArray.getJSONObject(i).getJSONObject(DATA)
+                val dataJsonKey = dataObj.keys()
+                //  val tag = SDKClientUtils.getTag(uniqueId, dObj)
+                outerD_Obj_reporting = JSONObject()
+                outerD_Obj_reporting.put(ID, uniqueId)
+                outerD_Obj_reporting.put(DT, time)
+                //   outerD_Obj_reporting.put(TG, tag)
+                outerD_Obj_Faulty = JSONObject()
+                // outerD_Obj_Faulty.put(ID, uniqueId)
+                outerD_Obj_Faulty.put(DT, time)
+                //    outerD_Obj_Faulty.put(TG, tag)
+                val innerD_Obj_reporting = JSONObject()
+                val innerD_Obj_faulty = JSONObject()
+
+                //getting value for
+//                 "d": {"Temp":"66","humidity":"55","abc":"y","gyro":{"x":"7","y":"8","z":"9"}}
+                while (dataJsonKey.hasNext()) {
+                    val key = dataJsonKey.next()
+                    val value = dataObj.getString(key)
+                    if (value.replace("\\s".toRegex(), "").isNotEmpty()
+                        && JSONTokener(value).nextValue() is JSONObject
+                    ) {
+                        val gyroObj_reporting = JSONObject()
+                        val gyroObj_faulty = JSONObject()
+                        val innerObj = dataObj.getJSONObject(key)
+                        val innerJsonKey = innerObj.keys()
+
+                        // get value for
+//                         "gyro": {"x":"7","y":"8","z":"9"}
+                        while (innerJsonKey.hasNext()) {
+                            val InnerKey = innerJsonKey.next()
+                            val InnerKValue = innerObj.getString(InnerKey)
+                            val gyroValidationValue =
+                                compareForInputValidation(InnerKey, InnerKValue, "", dObj)
+                            if (gyroValidationValue == 0) {
+                                gyroObj_reporting.put(InnerKey, InnerKValue)
+                            } else {
+                                gyroObj_faulty.put(InnerKey, InnerKValue)
+                            }
+                        }
+
+                        //add gyro object to parent d object.
+                        if (gyroObj_reporting.length() != 0) innerD_Obj_reporting.put(
+                            key, gyroObj_reporting
+                        )
+                        if (gyroObj_faulty.length() != 0) innerD_Obj_faulty.put(key, gyroObj_faulty)
+                    } else {
+                        val othersValidation = compareForInputValidation(key, value, "", dObj)
+                        if (othersValidation == 0) {
+                            innerD_Obj_reporting.put(key, value)
+                        } else {
+                            innerD_Obj_faulty.put(key, value)
+                        }
+                    }
+                }
+                val arrayObj_attributes_reporting = JSONArray()
+                val arrayObj_attributes_faulty = JSONArray()
+                if (innerD_Obj_reporting.length() != 0) arrayObj_attributes_reporting.put(
+                    innerD_Obj_reporting
+                )
+                if (innerD_Obj_faulty.length() != 0) arrayObj_attributes_faulty.put(
+                    innerD_Obj_faulty
+                )
+                if (arrayObj_attributes_reporting.length() > 0) doReportingPublish = true
+                if (arrayObj_attributes_faulty.length() > 0) doFaultyPublish = true
+
+
+                //add object of attribute object to parent object.
+                outerD_Obj_reporting.put(D_OBJ, arrayObj_attributes_reporting)
+                outerD_Obj_Faulty.put(D_OBJ, arrayObj_attributes_faulty)
+                arrayObj_reporting.put(outerD_Obj_reporting)
+                arrayObj_Faulty.put(outerD_Obj_Faulty)
+            }
+            //  reportingObject_reporting.put(CURRENT_DATE, time)
+            //  reportingObject_faulty.put(CURRENT_DATE, time)
+
+            //Reporting json string as below.
+//            {"cpId":"uei","dtg":"f76f806a-b0b6-4f34-bb15-11516d1e42ed","mt":"0","sdk":{"e":"qa","l":"M_android","v":"2.0"},"t":"2020-10-05T10:09:27.362Z","d":[{"id":"ddd2","dt":"2020-10-05T10:09:27.350Z","tg":"gateway","d":[{"Temp":"25","humidity":"0","abc":"abc","gyro":{"x":"0","y":"blue"}}]},{"id":"c1","dt":"2020-10-05T10:09:27.357Z","tg":"zg1","d":[{"Temperature":"0","Humidity":"50"}]},{"id":"c2","dt":"2020-10-05T10:09:27.362Z","tg":"zg2","d":[{"pressure":"500","vibration":"0","gyro":{"x":"5"}}]}]}
+
+            //publish reporting data
+            /*if (doReportingPublish) publishMessage(
+                reportingObject_reporting.put(
+                    SDKClient.D_OBJ,
+                    arrayObj_reporting
+                ).toString(), false
+            )
+
+            //publish faulty data
+            if (doFaultyPublish) publishMessage(
+                reportingObject_faulty.put(
+                    SDKClient.D_OBJ,
+                    arrayObj_Faulty
+                ).toString(), false
+            )*/
+        } catch (e: JSONException) {
+            e.printStackTrace()
+            iotSDKLogUtils!!.log(true, isDebug, "CM01_SD01", e.message!!)
         }
     }
 

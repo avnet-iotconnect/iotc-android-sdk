@@ -19,14 +19,11 @@ import org.json.JSONObject
  * Service class for MQTT data upload to cloud
  */
 class IotSDKMQTTService private constructor(
-    private val context: Context,
-    private val protocolBean: IdentityServiceResponse.D.P,
+    private val context: Context, private val protocolBean: IdentityServiceResponse.D.P,
     private val hubToSdkCallback: HubToSdkCallback,
     private val publishMessageCallback: PublishMessageCallback,
-    private val twinCallbackMessage: TwinUpdateCallback,
-    private val iotSDKLogUtils: IotSDKLogUtils,
-    private val isDebug: Boolean,
-    private val uniqueId: String
+    private val twinCallbackMessage: TwinUpdateCallback, private val iotSDKLogUtils: IotSDKLogUtils,
+    private val isDebug: Boolean, private val uniqueId: String
 ) {
     private val TAG = IotSDKMQTTService::class.java.simpleName
 
@@ -59,14 +56,10 @@ class IotSDKMQTTService private constructor(
         @Volatile
         private var iotSDKMQTTService: IotSDKMQTTService? = null
         fun getInstance(
-            context: Context,
-            protocolBean: IdentityServiceResponse.D.P,
-            hubToSdkCallback: HubToSdkCallback,
-            publishMessageCallback: PublishMessageCallback,
-            twinCallbackMessage: TwinUpdateCallback,
-            iotSDKLogUtils: IotSDKLogUtils,
-            isDebug: Boolean,
-            uniqueId: String
+            context: Context, protocolBean: IdentityServiceResponse.D.P,
+            hubToSdkCallback: HubToSdkCallback, publishMessageCallback: PublishMessageCallback,
+            twinCallbackMessage: TwinUpdateCallback, iotSDKLogUtils: IotSDKLogUtils,
+            isDebug: Boolean, uniqueId: String
         ): IotSDKMQTTService? {
 
             synchronized(this) {
@@ -124,8 +117,7 @@ class IotSDKMQTTService private constructor(
                         twinCallbackMessage.twinUpdateCallback(mainObj)
                     } else if (topic.contains(
                             TWIN_SUB_TOPIC_BLANK_MSG.substring(
-                                0,
-                                TWIN_SUB_TOPIC_BLANK_MSG.length - 1
+                                0, TWIN_SUB_TOPIC_BLANK_MSG.length - 1
                             )
                         )
                     ) {
@@ -167,10 +159,7 @@ class IotSDKMQTTService private constructor(
                 override fun onFailure(asyncActionToken: IMqttToken, exception: Throwable) {
                     hubToSdkCallback.onConnectionStateChange(false)
                     iotSDKLogUtils.log(
-                        true,
-                        isDebug,
-                        "ERR_IN13",
-                        context.getString(R.string.ERR_IN13)
+                        true, isDebug, "ERR_IN13", context.getString(R.string.ERR_IN13)
                     )
                 }
             })
@@ -183,10 +172,7 @@ class IotSDKMQTTService private constructor(
         iotSDKLogUtils.log(false, isDebug, "INFO_IN05", context.getString(R.string.INFO_IN05))
         try {
             val topics = arrayOf(subscriptionTopic, TWIN_SUB_TOPIC, TWIN_SUB_TOPIC_BLANK_MSG)
-            mqttAndroidClient?.subscribe(
-                topics,
-                intArrayOf(0, 0, 0),
-                null,
+            mqttAndroidClient?.subscribe(topics, intArrayOf(0, 0, 0), null,
                 object : IMqttActionListener {
                     override fun onSuccess(asyncActionToken: IMqttToken) {
                         hubToSdkCallback.onConnectionStateChange(true)
@@ -209,10 +195,9 @@ class IotSDKMQTTService private constructor(
             } catch (e: MqttException) {
                 e.printStackTrace()
             }
-            hubToSdkCallback.onConnectionStateChange(false)
             mqttAndroidClient?.unregisterResources()
-            //            mqttAndroidClient.close();
             mqttAndroidClient = null
+            hubToSdkCallback.onConnectionStateChange(false)
         }
     }
 
@@ -235,9 +220,7 @@ class IotSDKMQTTService private constructor(
                 message.payload = msgPublish.toByteArray()
                 mqttAndroidClient!!.publish(TWIN_PUB_TOPIC, message)
                 iotSDKLogUtils.log(
-                    false,
-                    isDebug,
-                    "INFO_TP01",
+                    false, isDebug, "INFO_TP01",
                     context.getString(R.string.INFO_TP01) + " " + IotSDKUtils.currentDate
                 )
             } catch (e: MqttException) {
@@ -254,16 +237,12 @@ class IotSDKMQTTService private constructor(
                 mqttAndroidClient?.publish(topics, message)
                 hubToSdkCallback.onSendMsg(msgPublish)
                 iotSDKLogUtils.log(
-                    false,
-                    isDebug,
-                    "INFO_SD01",
+                    false, isDebug, "INFO_SD01",
                     context.getString(R.string.INFO_SD01) + " " + IotSDKUtils.currentDate
                 )
             } else {
                 iotSDKLogUtils.log(
-                    true,
-                    isDebug,
-                    "ERR_SD10",
+                    true, isDebug, "ERR_SD10",
                     context.getString(R.string.ERR_SD10) + " : " + IotSDKUtils.currentDate
                 )
             }

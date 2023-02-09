@@ -5,7 +5,6 @@ import com.google.gson.Gson
 import com.iotconnectsdk.R
 import com.iotconnectsdk.beans.CommonResponseBean
 import com.iotconnectsdk.beans.Data
-import com.iotconnectsdk.beans.SendAttributeBean
 import com.iotconnectsdk.beans.TumblingWindowBean
 import com.iotconnectsdk.utils.IotSDKConstant.ATTRIBUTE_INFO_UPDATE
 import com.iotconnectsdk.utils.IotSDKConstant.DEVICE_INFO_UPDATE
@@ -47,9 +46,7 @@ object SDKClientUtils {
     private const val TEXT_FILE_PREFIX = "current"
 
     fun getSyncServiceRequest(
-        cpId: String?,
-        uniqueId: String?,
-        cmdType: String?
+        cpId: String?, uniqueId: String?, cmdType: String?
     ): SyncServiceRequest {
         val syncServiceRequest = SyncServiceRequest()
         syncServiceRequest.cpId = cpId
@@ -84,8 +81,7 @@ object SDKClientUtils {
     }
 
     fun getAttributesList(
-        attributesLists: List<SyncServiceResponse.DBeanXX.AttBean>,
-        tag: String
+        attributesLists: List<SyncServiceResponse.DBeanXX.AttBean>, tag: String
     ): JSONArray {
 
         //CREATE ATTRIBUTES ARRAY and OBJECT, "attributes":[{"ln":"Temp","dt":"number","dv":"5 to 20, 25","tg":"gateway","tw":"60s"},{"p":"gyro","dt":"object","tg":"gateway","tw":"90s","d":[{"ln":"x","dt":"number","dv":"","tg":"gateway","tw":"90s"},{"ln":"y","dt":"string","dv":"red, gray,   blue","tg":"gateway","tw":"90s"},{"ln":"z","dt":"number","dv":"-5 to 5, 10","tg":"gateway","tw":"90s"}]}]
@@ -132,9 +128,7 @@ object SDKClientUtils {
     }
 
     fun getMainObject(
-        reportingORFaulty: String?,
-        dObj: SyncServiceResponse.DBeanXX,
-        appVersion: String,
+        reportingORFaulty: String?, dObj: SyncServiceResponse.DBeanXX, appVersion: String,
         environment: String
     ): JSONObject {
         val obj = JSONObject()
@@ -179,48 +173,50 @@ object SDKClientUtils {
         return tag
     }
 
-   /* @Synchronized
+    @Synchronized
     fun compareForInputValidation(
-        key: String,
-        value: String,
-        tag: String,
-        dObj: SyncServiceResponse.DBeanXX
+        key: String, value: String, tag: String, dObj: CommonResponseBean?
     ): Int {
         var result = 0
-        val attributesList = dObj.att
-        outerloop@ for (i in attributesList.indices) {
-            val dataBeanList = attributesList[i].d
-            for (j in dataBeanList.indices) {
-                val data = dataBeanList[j]
-                val ln = data.ln
-                val tg = data.tg
-                val dv = data.dv
-                val dt = data.dt
-                if (key.equals(ln, ignoreCase = true) && tag.equals(tg, ignoreCase = true)) {
-                    result =
-                        if (dt == 0 && value.isNotEmpty() && !isDigit(value)) {
+        val attributesList = dObj?.d?.att
+        if (attributesList != null) {
+            outerloop@
+            for (i in attributesList.indices) {
+                val dataBeanList = attributesList[i].d
+                for (j in dataBeanList.indices) {
+                    val data = dataBeanList[j]
+                    val ln = data.ln
+                   // val tg = data.tg
+                    val dv = data.dv
+                    val dt = data.dt
+                    if (key.equals(ln, ignoreCase = true) /*&& tag.equals(tg, ignoreCase = true)*/) {
+                        result = if (dt == 0 && value.isNotEmpty() && !isDigit(value)) {
                             1
                         } else {
                             compareWithInput(value, dv)
                         }
-                    break@outerloop
+                        break@outerloop
+                    }
                 }
             }
         }
         return result
-    }*/
-
-    @Synchronized
-    fun compareForInputValidation(response: CommonResponseBean?, sendAttributeBean: SendAttributeBean): Int {
-        var result=0
-
-        response?.d?.att?.forEach {
-
-        }
-
-
-        return result
     }
+
+    /* @Synchronized
+     fun compareForInputValidation(getattributeBean: CommonResponseBean?, sendAttributeBean: SendAttributeBean): Int {
+         var result=0
+
+         getattributeBean?.d?.att?.forEach {attList->
+             attList.d.forEach {singleAtt->
+                 singleAtt.ln
+             }
+
+         }
+
+
+         return result
+     }*/
 
     /*
      * return 0 = reporting, return 1 = faulty.
@@ -254,8 +250,8 @@ object SDKClientUtils {
                 return 1 // return faulty (input value is not an int type, so we can not campare with between.)
             }
             validationValue = validationValue.replace("to", ",")
-            val array = validationValue.split(",".toRegex()).dropLastWhile { it.isEmpty() }
-                .toTypedArray()
+            val array =
+                validationValue.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
 
             // "dv": "5 to 20, 25",  compare with 25
             if (array.size == 3 && array[2].equals(inputValue, ignoreCase = true)) return 0
@@ -282,8 +278,8 @@ object SDKClientUtils {
                 return 1 // return faulty (input value is not an int type, so we can not campare with between.)
             }
             validationValue = validationValue.replace("to", ",")
-            val array = validationValue.split(",".toRegex()).dropLastWhile { it.isEmpty() }
-                .toTypedArray()
+            val array =
+                validationValue.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
 
             // "dv": "5 to 20",  compare between 5 to 20
             val from = array[0].toInt()
@@ -298,8 +294,8 @@ object SDKClientUtils {
         //"dv": "red, gray,   blue",
         if (validationValue.contains(",")) {
             var result = 1
-            val array = validationValue.split(",".toRegex()).dropLastWhile { it.isEmpty() }
-                .toTypedArray()
+            val array =
+                validationValue.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
             for (i in array.indices) {
                 if (inputValue.equals(array[i], ignoreCase = true)) {
                     result = 0
@@ -318,9 +314,7 @@ object SDKClientUtils {
     }
 
     fun updateEdgeDeviceGyroObj(
-        key: String,
-        innerKey: String,
-        value: String,
+        key: String, innerKey: String, value: String,
         edgeDeviceAttributeGyroMap: Map<String?, List<TumblingWindowBean?>?>
     ) {
         for ((key1, tlbList) in edgeDeviceAttributeGyroMap) {
@@ -338,9 +332,7 @@ object SDKClientUtils {
     }
 
     fun updateEdgeDeviceObj(
-        key: String,
-        value: String,
-        edgeDeviceAttributeMap: Map<String?, TumblingWindowBean?>
+        key: String, value: String, edgeDeviceAttributeMap: Map<String?, TumblingWindowBean?>
     ) {
         for ((key1, tlb) in edgeDeviceAttributeMap) {
             if (key1 == key) {
@@ -357,24 +349,14 @@ object SDKClientUtils {
      * @Param attributeName     Attribute name (humidity etc...)
      * */
     fun publishEdgeDeviceInputData(
-        attributeName: String,
-        tag: String,
+        attributeName: String, tag: String,
         edgeDeviceAttributeGyroMap: Map<String?, List<TumblingWindowBean?>?>,
-        edgeDeviceAttributeMap: Map<String?, TumblingWindowBean?>,
-        uniqueId: String,
-        cpId: String?,
-        environment: String?,
-        appVersion: String?,
-        dtg: String?
+        edgeDeviceAttributeMap: Map<String?, TumblingWindowBean?>, uniqueId: String, cpId: String?,
+        environment: String?, appVersion: String?, dtg: String?
     ): JSONObject? {
         val currentTime = IotSDKUtils.currentDate
         val mainObj = getEdgeDevicePublishMainObj(
-            currentTime,
-            dtg,
-            cpId,
-            environment,
-            appVersion,
-            EDGE_DEVICE_MESSAGE_TYPE
+            currentTime, dtg, cpId, environment, appVersion, EDGE_DEVICE_MESSAGE_TYPE
         )
         val dArray = JSONArray()
         val dArrayObject = getEdgeDevicePublishDObj(currentTime, tag, uniqueId)
@@ -434,12 +416,8 @@ object SDKClientUtils {
     }
 
     fun getEdgeDevicePublishMainObj(
-        currentTime: String?,
-        dtg: String?,
-        cpId: String?,
-        environment: String?,
-        appVersion: String?,
-        messageType: Int
+        currentTime: String?, dtg: String?, cpId: String?, environment: String?,
+        appVersion: String?, messageType: Int
     ): JSONObject {
         val mainObj = JSONObject()
         try {
@@ -455,9 +433,7 @@ object SDKClientUtils {
     }
 
     private fun getEdgeDevicePublishDObj(
-        currentTime: String,
-        tag: String,
-        uniqueId: String
+        currentTime: String, tag: String, uniqueId: String
     ): JSONObject {
         val dArrayObject = JSONObject()
         try {
@@ -518,16 +494,11 @@ object SDKClientUtils {
     }
 
     fun createCommandFormat(
-        commandType: String?,
-        cpId: String?,
-        guid: String?,
-        uniqueId: String?,
-        command: String?,
-        ack: Boolean,
-        ackId: String?
+        commandType: String?, cpId: String?, guid: String?, uniqueId: String?, command: String?,
+        ack: Boolean, ackId: String?
     ): String {
-       // val cfj = CommandFormatJson()
-       // cfj.cmdType = commandType
+        // val cfj = CommandFormatJson()
+        // cfj.cmdType = commandType
         val data = Data()
         data.cpid = cpId
         data.guid = guid
@@ -536,7 +507,7 @@ object SDKClientUtils {
         data.isAck = ack
         data.ackId = ackId
         data.cmdType = commandType
-       // cfj.data = data
+        // cfj.data = data
         return Gson().toJson(data)
     }
 
@@ -547,30 +518,27 @@ object SDKClientUtils {
         try {
             //gyro#vibration.x > 5 AND gyro#vibration.y > 10
             if (con.contains("#") && con.contains("AND")) {
-                val param = con.split("AND".toRegex()).dropLastWhile { it.isEmpty() }
-                    .toTypedArray()
+                val param = con.split("AND".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
                 for (i in 0..param.size) {
                     val att = param[i]
                     if (att.contains(".")) {           //gyro#vibration.x > 5
                         val KeyValue =
                             att.split("\\.".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-                        val parent =
-                            KeyValue[0].split("#".toRegex()).dropLastWhile { it.isEmpty() }
-                                .toTypedArray() //gyro#vibration
+                        val parent = KeyValue[0].split("#".toRegex()).dropLastWhile { it.isEmpty() }
+                            .toTypedArray() //gyro#vibration
                         //                        String childAttName = parent[1]; //vibration
 //                        String keyAttName = KeyValue[1]; //x > 5
                         return parent[0]
                     } else if (con.contains("#")) {                    //gyro#x > 5
-                        val parent =
-                            att.split("#".toRegex()).dropLastWhile { it.isEmpty() }
-                                .toTypedArray() //gyro#x > 5
+                        val parent = att.split("#".toRegex()).dropLastWhile { it.isEmpty() }
+                            .toTypedArray() //gyro#x > 5
                         //                        String childAttName = parent[1]; //x > 5
                         return parent[0]
                     }
                 }
             } else if (con.contains("#")) {     //ac1#vibration.x > 5
-                val KeyValue = con.split("\\.".toRegex()).dropLastWhile { it.isEmpty() }
-                    .toTypedArray()
+                val KeyValue =
+                    con.split("\\.".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
                 val parent = KeyValue[0].split("#".toRegex()).dropLastWhile { it.isEmpty() }
                     .toTypedArray() //gyro#vibration
                 val parentAttName = parent[0] //gyro
@@ -578,8 +546,8 @@ object SDKClientUtils {
                 val keyAttName = KeyValue[1] //x > 5
                 return getAttName(keyAttName)
             } else if (con.contains(".")) {
-                val keyValue = con.split("\\.".toRegex()).dropLastWhile { it.isEmpty() }
-                    .toTypedArray()
+                val keyValue =
+                    con.split("\\.".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
                 return keyValue[0]
             } else {    //x > 5
                 return getAttName(con)
@@ -628,8 +596,7 @@ object SDKClientUtils {
     }
 
     private fun getRuleAttName(con: String, operator: String): String {
-        val att = con.split(operator.toRegex()).dropLastWhile { it.isEmpty() }
-            .toTypedArray()
+        val att = con.split(operator.toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
         return att[0].replace("\\s".toRegex(), "")
     }
 
@@ -667,8 +634,7 @@ object SDKClientUtils {
     }
 
     private fun getRuleValue(con: String, operator: String): Int {
-        val att = con.split(operator.toRegex()).dropLastWhile { it.isEmpty() }
-            .toTypedArray()
+        val att = con.split(operator.toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
         return att[1].replace("\\s".toRegex(), "").toInt()
     }
 
@@ -676,12 +642,8 @@ object SDKClientUtils {
      * {"cpId":"uei","dtg":"b55d6d86-5320-4b26-8df2-b65e3221385e","t":"2020-11-25T12:56:34.487Z","mt":3,"sdk":{"e":"qa","l":"M_android","v":"2.0"},"d":[{"id":"AAA02","dt":"2020-11-25T12:56:34.487Z","rg":"3A171114-4CC4-4A1C-924C-D3FCF84E4BD1","ct":"gyro.x = 10 AND gyro.y > 10 AND gyro.z < 10","sg":"514076B1-3C21-4849-A777-F423B1821FC7","d":[{"temp":"10","gyro":{"x":"10","y":"11","z":"9"}}],"cv":{"gyro":{"x":"10","y":"11","z":"9"}}}]}
      * */
     fun getPublishStringEdgeDevice(
-        uniqueId: String?,
-        currentTime: String?,
-        bean: SyncServiceResponse.DBeanXX.RuleBean,
-        inputJsonString: String,
-        cvAttObj: JSONObject?,
-        mainObj: JSONObject
+        uniqueId: String?, currentTime: String?, bean: SyncServiceResponse.DBeanXX.RuleBean,
+        inputJsonString: String, cvAttObj: JSONObject?, mainObj: JSONObject
     ): JSONObject? {
         return try {
             val dArray = JSONArray()
@@ -717,8 +679,9 @@ object SDKClientUtils {
                 while (dataJsonKey.hasNext()) {
                     val key = dataJsonKey.next()
                     val value = dataObj.getString(key)
-                    if (!value.replace("\\s".toRegex(), "")
-                            .isEmpty() && JSONTokener(value).nextValue() is JSONObject
+                    if (!value.replace("\\s".toRegex(), "").isEmpty() && JSONTokener(
+                            value
+                        ).nextValue() is JSONObject
                     ) {
                         val gyro = JSONObject()
 
@@ -756,13 +719,10 @@ object SDKClientUtils {
         //        return (fileSizeInBytes / (1024 * 1024)); //MB
     }
 
-     fun createTextFile(
-         context: Context,
-         directoryPath: String?,
-         fileCount: Int,
-         iotSDKLogUtils: IotSDKLogUtils?,
-         isDebug: Boolean
-     ): String {
+    fun createTextFile(
+        context: Context, directoryPath: String?, fileCount: Int, iotSDKLogUtils: IotSDKLogUtils?,
+        isDebug: Boolean
+    ): String {
 
         //rename file to directory
         val directory: File = File(context.getFilesDir(), directoryPath)
@@ -781,47 +741,50 @@ object SDKClientUtils {
                 }
             }
         }
-        val textFileName: String =
-           TEXT_FILE_PREFIX + "_" + System.currentTimeMillis() / 1000 + ""
+        val textFileName: String = TEXT_FILE_PREFIX + "_" + System.currentTimeMillis() / 1000 + ""
         val sdkPreferences = IotSDKPreferences.getInstance(context)
-        val fileList = CopyOnWriteArrayList(sdkPreferences!!.getList(IotSDKPreferences.TEXT_FILE_NAME))
+        val fileList =
+            CopyOnWriteArrayList(sdkPreferences!!.getList(IotSDKPreferences.TEXT_FILE_NAME))
         //re-name the file to shared preference.
         for (file in fileList) {
             if (file!!.contains(TEXT_FILE_PREFIX)) {
                 fileList.remove(file)
-                fileList.add(file.split("_".toRegex()).dropLastWhile { it.isEmpty() }
-                    .toTypedArray()[1])
+                fileList.add(
+                    file.split("_".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()[1]
+                )
             }
         }
         fileList.add(textFileName)
-        val list= ArrayList(fileList)
-        IotSDKPreferences.getInstance(context)!!
-            .saveList(IotSDKPreferences.TEXT_FILE_NAME, list)
+        val list = ArrayList(fileList)
+        IotSDKPreferences.getInstance(context)!!.saveList(IotSDKPreferences.TEXT_FILE_NAME, list)
 
         //Delete first text file, when more than user defined count.
         if (list.size > fileCount) {
             if (directoryPath != null) {
-                deleteTextFile(list,context,directoryPath,iotSDKLogUtils,isDebug)
+                deleteTextFile(list, context, directoryPath, iotSDKLogUtils, isDebug)
             }
         }
         iotSDKLogUtils?.log(false, isDebug, "INFO_OS03", context.getString(R.string.INFO_OS03))
         return textFileName
     }
 
-    private fun deleteTextFile(fileNamesList: ArrayList<String?>,context: Context,directoryPath: String, iotSDKLogUtils: IotSDKLogUtils?,
-                               isDebug: Boolean): Boolean {
+    private fun deleteTextFile(
+        fileNamesList: ArrayList<String?>, context: Context, directoryPath: String,
+        iotSDKLogUtils: IotSDKLogUtils?, isDebug: Boolean
+    ): Boolean {
         try {
             //Delete from device
-            val file: File =
-                File(File(context.filesDir,directoryPath), fileNamesList[0] + ".txt")
+            val file: File = File(File(context.filesDir, directoryPath), fileNamesList[0] + ".txt")
             if (file.exists()) {
                 file.delete()
             }
             fileNamesList.removeAt(0)
             //delete from shared preferences
-            IotSDKPreferences.getInstance(context)?.saveList(IotSDKPreferences.TEXT_FILE_NAME, fileNamesList)
+            IotSDKPreferences.getInstance(context)?.saveList(
+                IotSDKPreferences.TEXT_FILE_NAME, fileNamesList
+            )
         } catch (e: java.lang.Exception) {
-            iotSDKLogUtils?.log(true,isDebug, "ERR_OS01", e.message!!)
+            iotSDKLogUtils?.log(true, isDebug, "ERR_OS01", e.message!!)
             e.printStackTrace()
             return false
         }
