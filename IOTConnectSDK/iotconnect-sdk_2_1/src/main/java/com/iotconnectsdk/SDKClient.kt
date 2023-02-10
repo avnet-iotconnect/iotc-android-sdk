@@ -100,7 +100,7 @@ class SDKClient private constructor(
 
     private val CP_ID = "cpId"
 
-    private val CURRENT_DATE = "t"
+    private val CURRENT_DATE = "dt"
 
     private val MESSAGE_TYPE = "mt"
 
@@ -122,7 +122,7 @@ class SDKClient private constructor(
 
     private val IS_DEBUG = "isDebug"
 
-    private val DATA = "data"
+    private val DATA = "d"
 
     private val TIME = "time"
 
@@ -608,9 +608,7 @@ class SDKClient private constructor(
 
                         }
 
-                        C2DMessageEnums.DEVICE_DELETED.value,  C2DMessageEnums.DEVICE_DISABLED.value,
-                        C2DMessageEnums.DEVICE_RELEASED.value,  C2DMessageEnums.STOP_OPERATION.value,
-                        C2DMessageEnums.DEVICE_CONNECTION_STATUS.value -> {
+                        C2DMessageEnums.DEVICE_DELETED.value, C2DMessageEnums.DEVICE_DISABLED.value, C2DMessageEnums.DEVICE_RELEASED.value, C2DMessageEnums.STOP_OPERATION.value, C2DMessageEnums.DEVICE_CONNECTION_STATUS.value -> {
                             iotSDKLogUtils?.log(
                                 false, isDebug, "INFO_CM16", context!!.getString(R.string.INFO_CM16)
                             )
@@ -788,8 +786,8 @@ class SDKClient private constructor(
 
     private fun onDeviceConnectionStatus(isConnected: Boolean) {
         val strJson = SDKClientUtils.createCommandFormat(
-            C2DMessageEnums.DEVICE_CONNECTION_STATUS.value, cpId, "", uniqueId, isConnected.toString(),
-            false, ""
+            C2DMessageEnums.DEVICE_CONNECTION_STATUS.value, cpId, "", uniqueId,
+            isConnected.toString(), false, ""
         )
         deviceCallback?.onReceiveMsg(strJson)
     }
@@ -863,13 +861,7 @@ class SDKClient private constructor(
         }
         if (response?.d != null) {
             if (jsonData != null) {
-                publishMessage(response.d.p.topics.rpt, jsonData, false)
-            }
-            val gson = Gson()
-            val sendAttributeBean = gson.fromJson(jsonData, SendAttributeBean::class.java)
-            // compareForInputValidation(getAttributeResponse(), sendAttributeBean)
-            if (jsonData != null) {
-                publishDeviceInputData(jsonData, getAttributeResponse())
+                publishDeviceInputData(response.d.p.topics, jsonData, getAttributeResponse())
             }
         }
     }
@@ -877,41 +869,38 @@ class SDKClient private constructor(
     /* Publish input data for Device.
      * @param inputJsonStr input json from user.
      * */
-    private fun publishDeviceInputData(mainJson: String, dObj: CommonResponseBean?) {
+    private fun publishDeviceInputData(
+        responseTopics: IdentityServiceResponse.D.P.Topics, mainJson: String,
+        dObj: CommonResponseBean?
+    ) {
         try {
 
             val inputJsonStr = JSONObject(mainJson).getJSONArray("d")
-            val jsonArray = JSONArray(inputJsonStr)
+            val jsonArray = inputJsonStr as JSONArray
+            // val jsonArray = JSONArray(inputJsonStr)
             var doFaultyPublish = false
             var doReportingPublish = false
-            var time: String? = ""
-            /*val reportingObject_reporting = SDKClientUtils.getMainObject(
-                "0", dObj, appVersion,
-                environment!!
-            ) */
+
+            val reportingObject_reporting = JSONObject()
             // 0 for reporting.
-            /* val reportingObject_faulty = SDKClientUtils.getMainObject(
-                 "1", dObj, appVersion,
-                 environment
-             )*/
+            val reportingObject_faulty = JSONObject()
             // 1 for faulty.
-            val arrayObj_reporting = JSONArray()
-            val arrayObj_Faulty = JSONArray()
+
             var outerD_Obj_reporting: JSONObject? = null
             var outerD_Obj_Faulty: JSONObject? = null
             for (i in 0 until jsonArray.length()) {
-                time = jsonArray.getJSONObject(i).optString(TIME)
+
                 // val uniqueId = jsonArray.getJSONObject(i).getString(UNIQUE_ID)
                 val dataObj = jsonArray.getJSONObject(i).getJSONObject(DATA)
                 val dataJsonKey = dataObj.keys()
                 //  val tag = SDKClientUtils.getTag(uniqueId, dObj)
                 outerD_Obj_reporting = JSONObject()
-                outerD_Obj_reporting.put(ID, uniqueId)
-                outerD_Obj_reporting.put(DT, time)
+                //  outerD_Obj_reporting.put(ID, uniqueId)
+                outerD_Obj_reporting.put(DT, IotSDKUtils.currentDate)
                 //   outerD_Obj_reporting.put(TG, tag)
                 outerD_Obj_Faulty = JSONObject()
                 // outerD_Obj_Faulty.put(ID, uniqueId)
-                outerD_Obj_Faulty.put(DT, time)
+                outerD_Obj_Faulty.put(DT, IotSDKUtils.currentDate)
                 //    outerD_Obj_Faulty.put(TG, tag)
                 val innerD_Obj_reporting = JSONObject()
                 val innerD_Obj_faulty = JSONObject()
@@ -921,8 +910,9 @@ class SDKClient private constructor(
                 while (dataJsonKey.hasNext()) {
                     val key = dataJsonKey.next()
                     val value = dataObj.getString(key)
-                    if (value.replace("\\s".toRegex(), "").isNotEmpty()
-                        && JSONTokener(value).nextValue() is JSONObject
+                    if (value.replace("\\s".toRegex(), "").isNotEmpty() && JSONTokener(
+                            value
+                        ).nextValue() is JSONObject
                     ) {
                         val gyroObj_reporting = JSONObject()
                         val gyroObj_faulty = JSONObject()
@@ -959,12 +949,23 @@ class SDKClient private constructor(
                 }
                 val arrayObj_attributes_reporting = JSONArray()
                 val arrayObj_attributes_faulty = JSONArray()
+
+
+                reportingObject_reporting.put(DT, IotSDKUtils.currentDate)
+                reportingObject_reporting.put(D_OBJ, innerD_Obj_reporting)
+
+                reportingObject_faulty.put(DT, IotSDKUtils.currentDate)
+                reportingObject_faulty.put(D_OBJ, innerD_Obj_faulty)
+
+
                 if (innerD_Obj_reporting.length() != 0) arrayObj_attributes_reporting.put(
-                    innerD_Obj_reporting
+                    reportingObject_reporting
                 )
+
                 if (innerD_Obj_faulty.length() != 0) arrayObj_attributes_faulty.put(
-                    innerD_Obj_faulty
+                    reportingObject_faulty
                 )
+
                 if (arrayObj_attributes_reporting.length() > 0) doReportingPublish = true
                 if (arrayObj_attributes_faulty.length() > 0) doFaultyPublish = true
 
@@ -972,30 +973,23 @@ class SDKClient private constructor(
                 //add object of attribute object to parent object.
                 outerD_Obj_reporting.put(D_OBJ, arrayObj_attributes_reporting)
                 outerD_Obj_Faulty.put(D_OBJ, arrayObj_attributes_faulty)
-                arrayObj_reporting.put(outerD_Obj_reporting)
-                arrayObj_Faulty.put(outerD_Obj_Faulty)
+
             }
-            //  reportingObject_reporting.put(CURRENT_DATE, time)
-            //  reportingObject_faulty.put(CURRENT_DATE, time)
+
+            Log.d("reporting", "::$outerD_Obj_reporting")
 
             //Reporting json string as below.
 //            {"cpId":"uei","dtg":"f76f806a-b0b6-4f34-bb15-11516d1e42ed","mt":"0","sdk":{"e":"qa","l":"M_android","v":"2.0"},"t":"2020-10-05T10:09:27.362Z","d":[{"id":"ddd2","dt":"2020-10-05T10:09:27.350Z","tg":"gateway","d":[{"Temp":"25","humidity":"0","abc":"abc","gyro":{"x":"0","y":"blue"}}]},{"id":"c1","dt":"2020-10-05T10:09:27.357Z","tg":"zg1","d":[{"Temperature":"0","Humidity":"50"}]},{"id":"c2","dt":"2020-10-05T10:09:27.362Z","tg":"zg2","d":[{"pressure":"500","vibration":"0","gyro":{"x":"5"}}]}]}
 
             //publish reporting data
-            /*if (doReportingPublish) publishMessage(
-                reportingObject_reporting.put(
-                    SDKClient.D_OBJ,
-                    arrayObj_reporting
-                ).toString(), false
+            if (doReportingPublish) publishMessage(
+                responseTopics.rpt, outerD_Obj_reporting.toString(), false
             )
 
             //publish faulty data
             if (doFaultyPublish) publishMessage(
-                reportingObject_faulty.put(
-                    SDKClient.D_OBJ,
-                    arrayObj_Faulty
-                ).toString(), false
-            )*/
+                responseTopics.flt, outerD_Obj_Faulty.toString(), false
+            )
         } catch (e: JSONException) {
             e.printStackTrace()
             iotSDKLogUtils!!.log(true, isDebug, "CM01_SD01", e.message!!)
