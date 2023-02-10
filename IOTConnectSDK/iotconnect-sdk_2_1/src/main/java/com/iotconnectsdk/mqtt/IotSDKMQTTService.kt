@@ -235,7 +235,7 @@ class IotSDKMQTTService private constructor(
                 val message = MqttMessage()
                 message.payload = msgPublish.toByteArray()
                 mqttAndroidClient?.publish(topics, message)
-                hubToSdkCallback.onSendMsg(msgPublish)
+                hubToSdkCallback.onSendMsgUI(msgPublish)
                 iotSDKLogUtils.log(
                     false, isDebug, "INFO_SD01",
                     context.getString(R.string.INFO_SD01) + " " + IotSDKUtils.currentDate

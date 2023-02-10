@@ -9,6 +9,8 @@ import com.google.gson.Gson
 import com.iotconnectsdk.beans.CommonResponseBean
 import com.iotconnectsdk.beans.SendAttributeBean
 import com.iotconnectsdk.beans.TumblingWindowBean
+import com.iotconnectsdk.enums.C2DMessageEnums
+import com.iotconnectsdk.enums.DeviceIdentityMessages
 import com.iotconnectsdk.interfaces.DeviceCallback
 import com.iotconnectsdk.interfaces.HubToSdkCallback
 import com.iotconnectsdk.interfaces.PublishMessageCallback
@@ -355,11 +357,15 @@ class SDKClient private constructor(
                 val syncServiceResponseData =
                     Gson().fromJson(response, IdentityServiceResponse::class.java)
 
-                if (syncServiceResponseData?.d != null) {
+                if (syncServiceResponseData != null && syncServiceResponseData?.d != null && syncServiceResponseData.d.p != null) {
                     //save the sync response to shared pref
                     IotSDKPreferences.getInstance(context!!)
                         ?.putStringData(IotSDKPreferences.SYNC_RESPONSE, response)
                     callMQTTService()
+                } else {
+                    val responseCodeMessage =
+                        validationUtils?.responseCodeMessage(syncServiceResponseData.d.ec)
+                    deviceCallback?.onReceiveMsg(responseCodeMessage)
                 }
             }
         } catch (e: java.lang.Exception) {
@@ -477,6 +483,63 @@ class SDKClient private constructor(
         }
     }
 
+
+    override fun onSendMsgUI(message: String?) {
+
+
+        if (message != null) {
+//            hubToSdkCallback.onSendMsg(message);
+            deviceCallback?.onReceiveMsg(message)
+        }
+    }
+
+
+    override fun onSendMsg() {
+        val response = getSyncResponse()
+
+        if (response?.d?.has?.attr == 1) {
+            publishMessage(
+                response.d.p.topics.di, JSONObject().put(
+                    MESSAGE_TYPE, DeviceIdentityMessages.GET_DEVICE_TEMPLATE_ATTRIBUTES.value
+                ).toString(), false
+            )
+        }
+
+        if ((response?.d?.has?.set == 1)) {
+            publishMessage(
+                response.d.p.topics.di, JSONObject().put(
+                    MESSAGE_TYPE, DeviceIdentityMessages.GET_DEVICE_TEMPLATE_SETTINGS_TWIN.value
+                ).toString(), false
+            )
+        }
+
+        if ((response?.d?.has?.r == 1)) {
+            publishMessage(
+                response.d.p.topics.di,
+                JSONObject().put(MESSAGE_TYPE, DeviceIdentityMessages.GET_EDGE_RULE.value)
+                    .toString(), false
+            )
+        }
+
+        if ((response?.d?.has?.d == 1)) {
+            publishMessage(
+                response.d.p.topics.di,
+                JSONObject().put(MESSAGE_TYPE, DeviceIdentityMessages.GET_CHILD_DEVICES.value)
+                    .toString(), false
+            )
+        }
+
+        if ((response?.d?.has?.ota == 1)) {
+            publishMessage(
+                response.d.p.topics.di,
+                JSONObject().put(MESSAGE_TYPE, DeviceIdentityMessages.GET_PENDING_OTA.value)
+                    .toString(), false
+            )
+        }
+
+    }
+
+
     override fun onReceiveMsg(message: String?) {
 
         if (message != null) {
@@ -488,51 +551,70 @@ class SDKClient private constructor(
                 val commonModel = gson.fromJson(message, CommonResponseBean::class.java)
 
                 if (commonModel?.d != null) {
-                    if (commonModel.d.ct == 201) {
+                    if (commonModel.d.ct == DeviceIdentityMessages.GET_DEVICE_TEMPLATE_ATTRIBUTES.value) {
                         IotSDKPreferences.getInstance(context!!)!!.putStringData(
                             IotSDKPreferences.ATTRIBUTE_RESPONSE, Gson().toJson(commonModel)
                         )
                     }
 
-                    if (commonModel.d.ct == 202) {
+                    if (commonModel.d.ct == DeviceIdentityMessages.GET_DEVICE_TEMPLATE_SETTINGS_TWIN.value) {
 
                     }
 
-                    if (commonModel.d.ct == 203) {
+                    if (commonModel.d.ct == DeviceIdentityMessages.GET_EDGE_RULE.value) {
 
                     }
 
-                    if (commonModel.d.ct == 204) {
+                    if (commonModel.d.ct == DeviceIdentityMessages.GET_CHILD_DEVICES.value) {
 
                     }
 
-                    if (commonModel.d.ct == 205) {
+                    if (commonModel.d.ct == DeviceIdentityMessages.GET_PENDING_OTA.value) {
 
                     }
                 } else {
                     val mainObject = JSONObject(message)
 
                     when (mainObject.getInt(CMD_TYPE)) {
-                        0 -> {
+                        C2DMessageEnums.DEVICE_COMMAND.value -> {
                             iotSDKLogUtils!!.log(
                                 false, isDebug, "INFO_CM01", context!!.getString(R.string.INFO_CM01)
                             )
                             deviceCallback?.onReceiveMsg(message)
                         }
-                        1 -> {
+                        C2DMessageEnums.OTA_COMMAND.value -> {
 
                         }
-                        2 -> {
+                        C2DMessageEnums.MODULE_COMMAND.value -> {
 
                         }
-                        3 -> {
+                        C2DMessageEnums.REFRESH_ATTRIBUTE.value -> {
 
                         }
-                        106, 107, 108, 109, 116 -> {
+
+                        C2DMessageEnums.REFRESH_SETTING_TWIN.value -> {
+
+                        }
+
+                        C2DMessageEnums.REFRESH_EDGE_RULE.value -> {
+
+                        }
+
+                        C2DMessageEnums.REFRESH_CHILD_DEVICE.value -> {
+
+                        }
+
+                        C2DMessageEnums.DATA_FREQUENCY_CHANGE.value -> {
+
+                        }
+
+                        C2DMessageEnums.DEVICE_DELETED.value,  C2DMessageEnums.DEVICE_DISABLED.value,
+                        C2DMessageEnums.DEVICE_RELEASED.value,  C2DMessageEnums.STOP_OPERATION.value,
+                        C2DMessageEnums.DEVICE_CONNECTION_STATUS.value -> {
                             iotSDKLogUtils?.log(
                                 false, isDebug, "INFO_CM16", context!!.getString(R.string.INFO_CM16)
                             )
-                            deviceCallback?.onReceiveMsg(message)
+                            dispose()
                         }
                     }
                 }
@@ -542,15 +624,6 @@ class SDKClient private constructor(
         }
 
 
-    }
-
-    override fun onSendMsg(message: String?) {
-
-
-        if (message != null) {
-//            hubToSdkCallback.onSendMsg(message);
-            deviceCallback?.onReceiveMsg(message)
-        }
     }
 
 
@@ -715,7 +788,7 @@ class SDKClient private constructor(
 
     private fun onDeviceConnectionStatus(isConnected: Boolean) {
         val strJson = SDKClientUtils.createCommandFormat(
-            IotSDKConstant.DEVICE_CONNECTION_STATUS, cpId, "", uniqueId, isConnected.toString(),
+            C2DMessageEnums.DEVICE_CONNECTION_STATUS.value, cpId, "", uniqueId, isConnected.toString(),
             false, ""
         )
         deviceCallback?.onReceiveMsg(strJson)
@@ -738,33 +811,6 @@ class SDKClient private constructor(
 
     }
 
-    override fun onSendMsg() {
-        val response = getSyncResponse()
-        if ((response?.d?.has?.d == 1)) {
-
-        }
-
-        if (response?.d?.has?.attr == 1) {
-            publishMessage(
-                response.d.p.topics.di, JSONObject().put(
-                    MESSAGE_TYPE, DeviceIdentityMessages.GET_DEVICE_TEMPLATE_ATTRIBUTES.value
-                ).toString(), false
-            )
-        }
-
-        if ((response?.d?.has?.set == 1)) {
-
-        }
-
-        if ((response?.d?.has?.r == 1)) {
-
-        }
-
-        if ((response?.d?.has?.ota == 1)) {
-
-        }
-
-    }
 
     /**
      * Send device data to server by calling publish method.

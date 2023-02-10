@@ -38,13 +38,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
-import com.iotconnectsdk.utils.IotSDKUtils;
-import com.softweb.iotconnectsdk.model.Attribute;
-import com.softweb.iotconnectsdk.model.AttributesModel;
 import com.softweb.iotconnectsdk.model.Certificate;
-import com.softweb.iotconnectsdk.model.D;
 import com.softweb.iotconnectsdk.model.D2CSendAckBean;
-import com.softweb.iotconnectsdk.model.Device;
+import com.softweb.iotconnectsdk.model.GetDeviceAttributes;
 import com.softweb.iotconnectsdk.model.OfflineStorage;
 import com.softweb.iotconnectsdk.model.SdkOptions;
 import com.softweb.iotconnectsdk.R;
@@ -173,7 +169,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                 }
             }
         } else if (v.getId() == R.id.btnSendData) {
-           // showDialog(FirmwareActivity.this);
+            // showDialog(FirmwareActivity.this);
             sendInputData();
         } else if (v.getId() == R.id.btnGetAllTwins) {
             if (sdkClient != null) {
@@ -184,7 +180,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                      * Input   :
                      * Output  :
                      */
-                   // sdkClient.getAllTwins();
+                    // sdkClient.getAllTwins();
                 } else {
                     Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
                 }
@@ -292,6 +288,13 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
      */
     private void sendInputData() {
 
+        JSONObject mainJson = new JSONObject();
+        try {
+            mainJson.put("dt", getCurrentTime());
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+
         JSONArray inputArray = new JSONArray();
 
         for (Map.Entry<String, List<TextInputLayout>> entry : inputMap.entrySet()) {
@@ -300,8 +303,8 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                 JSONObject valueObj = new JSONObject();
 
                 String keyValue = entry.getKey();
-                valueObj.put("uniqueId", keyValue);
-                valueObj.put("time", getCurrentTime());
+                // valueObj.put("uniqueId", keyValue);
+                valueObj.put("dt", getCurrentTime());
 
                 JSONObject dObj = new JSONObject();
                 JSONObject gyroObj = new JSONObject();
@@ -329,9 +332,11 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                     dObj.putOpt(objectKeyName, gyroObj);
                 }
 
-                valueObj.put("data", dObj);
+                valueObj.put("d", dObj);
 
                 inputArray.put(valueObj);
+
+                mainJson.put("d", inputArray);
             } catch (Exception e) {
                 Log.d(TAG, e.getMessage());
             }
@@ -345,8 +350,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
              * Output  :
              */
 
-
-            //sdkClient.sendData(inputArray.toString());
+            sdkClient.sendData(mainJson.toString());
         } else {
             Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
         }
@@ -381,22 +385,31 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
             etSubscribe.append("\n--- Device Command Received ---\n");
             etSubscribe.append(message + "");
 
-            String messageType = "";
 
             try {
-                JSONObject mainObject = new JSONObject(message);
+                String messageType = "";
+                String ackId = "";
+                int cmdType = -1;
+                JSONObject mainObject = null;
 
-                //Publish message call back received.
-                if (!mainObject.has("ct")) {
-                    return;
+                boolean jsonValid = isJSONValid(message);
+
+                if (jsonValid) {
+                    mainObject = new JSONObject(message);
+                    //Publish message call back received.
+                    if (!mainObject.has("ct")) {
+                        return;
+                    }
+
+                    cmdType = mainObject.getInt("ct");
+
+                    if (mainObject.has("ack")) {
+                        ackId = mainObject.getString("ack");
+                    }
                 }
 
-                String cmdType = mainObject.getString("ct");
-
-                String ackId = mainObject.getString("ack");
-
                 switch (cmdType) {
-                    case "0":
+                    case 0:
                         Log.d(TAG, "--- Device Command Received ---");
                         if (ackId != null && !ackId.isEmpty()) {
                             messageType = "5";
@@ -412,7 +425,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                              *     msgType = 5; // for "0x01" device command
                              */
 
-                            D2CSendAckBean d2CSendAckBean = new D2CSendAckBean(IotSDKUtils.getCurrentDate(), new D2CSendAckBean.Data(ackId, 0, 6, "", null));
+                            D2CSendAckBean d2CSendAckBean = new D2CSendAckBean(getCurrentTime(), new D2CSendAckBean.Data(ackId, 0, 6, "", null));
                             Gson gson = new Gson();
                             String jsonString = gson.toJson(d2CSendAckBean);
 
@@ -422,7 +435,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                                 Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
                         }
                         break;
-                    case "0x02":
+                    case 0x02:
                         Log.d(TAG, "--- Firmware OTA Command Received ---");
                         if (ackId != null && !ackId.isEmpty()) {
                             messageType = "11";
@@ -445,7 +458,8 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                                 Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();*/
                         }
                         break;
-                    case "116":
+
+                    case 116:
                           /*command type "0x16" for Device "Connection Status"
                           true = connected, false = disconnected*/
 
@@ -460,7 +474,10 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                         break;
 
                     default:
-                        break;
+                        hideDialog(FirmwareActivity.this);
+                        setStatusText(R.string.device_disconnected);
+                        Toast.makeText(FirmwareActivity.this, message, Toast.LENGTH_LONG).show();
+
                 }
 
             } catch (JSONException e) {
@@ -487,18 +504,19 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
              * Input   :
              * Output  :
              */
-           /* String data = sdkClient.getAttributes();
+
+            String data = sdkClient.getAttributes();
+            Log.d("attdata", "::" + data);
             if (data != null) {
                 btnSendData.setEnabled(true);
                 btnGetAllTwins.setEnabled(true);
                 createDynamicViews(data);
-            }*/
+            }
 
         } else {
             setStatusText(R.string.device_disconnected);
             tvConnStatus.setSelected(false);
             btnConnect.setText("Connect");
-
             btnSendData.setEnabled(false);
             btnGetAllTwins.setEnabled(false);
         }
@@ -556,39 +574,42 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
 
         try {
             Gson gson = new Gson();
-            AttributesModel[] attributesModelList = gson.fromJson(data, AttributesModel[].class);
+            GetDeviceAttributes model = gson.fromJson(data, GetDeviceAttributes.class);
 
-            for (AttributesModel model : attributesModelList) {
-                Device device = model.getDevice();
 
-                TextView textViewTitle = new TextView(this);
-                textViewTitle.setText("TAG : : " + device.getTg() + " : " + device.getId());
-                linearLayout.addView(textViewTitle);
+            // Device device = model.getDevice();
 
-                editTextInputList = new ArrayList<>();
-                List<Attribute> attributeList = model.getAttributes();
-                for (Attribute attribute : attributeList) {
+            //  TextView textViewTitle = new TextView(this);
+            //  textViewTitle.setText("TAG : : " + device.getTg() + " : " + device.getId());
+            //  linearLayout.addView(textViewTitle);
 
-                    // if for not empty "p":"gyro"
+
+            List<GetDeviceAttributes.D.Att> attributeList = model.getD().getAtt();
+            for (GetDeviceAttributes.D.Att attribute : attributeList) {
+
+                // if for not empty "p":"gyro"
+
+                List<GetDeviceAttributes.D.Att.D> d = attribute.getD();
+
+                for (GetDeviceAttributes.D.Att.D dObj : d) {
                     if (attribute.getP() != null && !attribute.getP().isEmpty()) {
-                        List<D> d = attribute.getD();
 
-                        for (D dObj : d) {
-                            TextInputLayout textInputLayout = (TextInputLayout) LayoutInflater.from(FirmwareActivity.this).inflate(R.layout.attribute_layout, null);
-                            linearLayout.addView(textInputLayout);
-                            editTextInputList.add(textInputLayout);
-                            textInputLayout.setHint(attribute.getP() + ":" + dObj.getLn());
-                        }
+                        TextInputLayout textInputLayout = (TextInputLayout) LayoutInflater.from(FirmwareActivity.this).inflate(R.layout.attribute_layout, null);
+                        linearLayout.addView(textInputLayout);
+                        editTextInputList.add(textInputLayout);
+                        textInputLayout.setHint(attribute.getP() + ":" + dObj.getLn());
+
 
                     } else {
                         TextInputLayout textInputLayout = (TextInputLayout) LayoutInflater.from(FirmwareActivity.this).inflate(R.layout.attribute_layout, null);
                         linearLayout.addView(textInputLayout);
                         editTextInputList.add(textInputLayout);
-                        textInputLayout.setHint(attribute.getLn());
+                        textInputLayout.setHint(dObj.getLn());
                     }
                 }
-                inputMap.put(device.getId(), editTextInputList);
             }
+            inputMap.put("", editTextInputList);
+
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -624,7 +645,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
              * Input   :
              * Output  :
              */
-             sdkClient.dispose();
+            sdkClient.dispose();
         }
     }
 
@@ -730,6 +751,21 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         if (activity != null && !activity.isFinishing() && progressDialog != null && progressDialog.isShowing()) {
             progressDialog.dismiss();
         }
+    }
+
+    public boolean isJSONValid(String message) {
+        try {
+            new JSONObject(message);
+        } catch (JSONException ex) {
+            // edited, to include @Arthur's comment
+            // e.g. in case JSONArray is valid as well...
+            try {
+                new JSONArray(message);
+            } catch (JSONException ex1) {
+                return false;
+            }
+        }
+        return true;
     }
 
 }

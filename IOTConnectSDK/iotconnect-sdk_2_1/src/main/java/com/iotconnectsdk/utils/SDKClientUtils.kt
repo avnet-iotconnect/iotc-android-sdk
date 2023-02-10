@@ -494,7 +494,7 @@ object SDKClientUtils {
     }
 
     fun createCommandFormat(
-        commandType: String?, cpId: String?, guid: String?, uniqueId: String?, command: String?,
+        commandType: Int, cpId: String?, guid: String?, uniqueId: String?, command: String?,
         ack: Boolean, ackId: String?
     ): String {
         // val cfj = CommandFormatJson()

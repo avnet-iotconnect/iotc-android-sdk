@@ -69,4 +69,15 @@
     <string name="INFO_OS04">Offline log file deleted</string>
     <string name="INFO_OS05">No offline data found</string>
 
+    <string name="tv_device_not_found">Device not found. Device is not whitelisted to platform</string>
+    <string name="tv_device_not_active">Device is not active</string>
+    <string name="tv_device_unassociated">Un-Associated. Device has not any template associated with it</string>
+    <string name="tv_device_not_acquired">Device is not acquired. Device is created but it is in release state</string>
+    <string name="tv_device_disabled">Device is disabled. It’s disabled from IoTHub by Platform Admin</string>
+    <string name="tv_company_not_found">Company not found as SID is not valid</string>
+    <string name="tv_subs_expired">Subscription is expired</string>
+    <string name="tv_conn_not_allow">Connection Not Allowed</string>
+    <string name="tv_invalid_boot_certificate">Invalid Bootstrap Certificate</string>
+    <string name="tv_invalid_opp_certificate">Invalid Operational Certificate</string>
+
 </resources>

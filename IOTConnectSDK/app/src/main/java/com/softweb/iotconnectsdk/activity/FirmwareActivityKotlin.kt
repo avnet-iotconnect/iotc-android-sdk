@@ -18,11 +18,8 @@ import com.google.gson.Gson
 import com.iotconnectsdk.SDKClient
 import com.iotconnectsdk.interfaces.DeviceCallback
 import com.iotconnectsdk.interfaces.TwinUpdateCallback
-import com.iotconnectsdk.utils.IotSDKUtils
-import com.iotconnectsdk.utils.IotSDKUtils.currentDate
 import com.softweb.iotconnectsdk.R
 import com.softweb.iotconnectsdk.model.*
-
 import kotlinx.android.synthetic.main.activity_firmware.*
 import org.json.JSONArray
 import org.json.JSONException
@@ -249,12 +246,20 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
      * Output  :
      */
     private fun sendInputData() {
+
+        val mainJson = JSONObject()
+        try {
+            mainJson.put("dt", getCurrentTime())
+        } catch (e: JSONException) {
+            throw RuntimeException(e)
+        }
+
         val inputArray = JSONArray()
         for ((keyValue, inputValue) in inputMap!!) {
             try {
                 val valueObj = JSONObject()
-                valueObj.put("uniqueId", keyValue)
-                valueObj.put("time", getCurrentTime())
+                //   valueObj.put("uniqueId", keyValue)
+                valueObj.put("dt", getCurrentTime())
                 val dObj = JSONObject()
                 val gyroObj = JSONObject()
                 var objectKeyName = ""
@@ -276,8 +281,10 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
                 if (gyroObj.length() != 0) {
                     dObj.putOpt(objectKeyName, gyroObj)
                 }
-                valueObj.put("data", dObj)
+
+                valueObj.put("d", dObj)
                 inputArray.put(valueObj)
+                mainJson.put("d", inputArray)
             } catch (e: Exception) {
                 Log.d(TAG, e.message!!)
             }
@@ -328,17 +335,27 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
             etSubscribe!!.append(message + "")
             var messageType = ""
             try {
-                val mainObject = JSONObject(message)
 
-                //Publish message call back received.
-                if (!mainObject.has("ct")) {
-                    return
+                var messageType = ""
+                var ackId = ""
+                var cmdType = -1
+                var mainObject: JSONObject? = null
+
+                val jsonValid: Boolean = isJSONValid(message)
+
+                if (jsonValid) {
+                    mainObject = JSONObject(message)
+                    //Publish message call back received.
+                    if (!mainObject.has("ct")) {
+                        return
+                    }
+                    cmdType = mainObject.getInt("ct")
+                    if (mainObject.has("ack")) {
+                        ackId = mainObject.getString("ack")
+                    }
                 }
-
-                val cmdType = mainObject.getString("ct")
-                val ackId = mainObject.getString("ack")
                 when (cmdType) {
-                    "0" -> {
+                    0 -> {
                         Log.d(TAG, "--- Device Command Received ---")
                         if (ackId != null && ackId.isNotEmpty()) {
                             messageType = "5"
@@ -357,7 +374,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
 
 
                             val d2CSendAckBean = D2CSendAckBean(
-                                currentDate, D2CSendAckBean.Data(ackId, 0, 6, "", null)
+                                getCurrentTime()!!, D2CSendAckBean.Data(ackId, 0, 6, "", null)
                             )
                             val gson = Gson()
                             val jsonString = gson.toJson(d2CSendAckBean)
@@ -366,18 +383,18 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
                                 sdkClient?.sendAck(jsonString, messageType)
                             else
                                 Toast.makeText(
-                                this@FirmwareActivityKotlin,
-                                getString(R.string.string_connection_not_found),
-                                Toast.LENGTH_LONG
-                            ).show()
+                                    this@FirmwareActivityKotlin,
+                                    getString(R.string.string_connection_not_found),
+                                    Toast.LENGTH_LONG
+                                ).show()
 
                         }
                     }
-                    "0x02" -> {
+                    0x02 -> {
                         Log.d(TAG, "--- Firmware OTA Command Received ---")
                         if (ackId != null && ackId.isNotEmpty()) {
                             messageType = "11"
-                            val obj = getAckObject(mainObject)
+                            val obj = getAckObject(mainObject!!)
                             obj!!.put("st", 7)
 
                             /*
@@ -398,7 +415,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
                             ).show()*/
                         }
                     }
-                    "116" -> {
+                    116 -> {
                         /*command type "0x16" for Device "Connection Status"
                           true = connected, false = disconnected*/Log.d(
                             TAG,
@@ -406,16 +423,24 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
                         )
                         Log.d(
                             TAG,
-                            "DeviceId ::: [" + mainObject.getString("uniqueId") + "] :: Device status :: " + mainObject.getString(
+                            "DeviceId ::: [" + mainObject?.getString(
+                                "uniqueId"
+                            ) + "] :: Device status :: " + mainObject?.getString(
                                 "command"
                             ) + "," + Date()
                         )
-                        if (mainObject.has("command")) {
-                            isConnected = mainObject.getBoolean("command")
-                            onConnectionStateChange(isConnected)
+                        if (mainObject != null) {
+                            if (mainObject.has("command")) {
+                                isConnected = mainObject.getBoolean("command")
+                                onConnectionStateChange(isConnected)
+                            }
                         }
                     }
                     else -> {
+                        hideDialog(this@FirmwareActivityKotlin)
+                        setStatusText(R.string.device_disconnected)
+                        Toast.makeText(this@FirmwareActivityKotlin, message, Toast.LENGTH_LONG)
+                            .show()
                     }
                 }
             } catch (e: JSONException) {
@@ -441,12 +466,14 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
              * Input   :
              * Output  :
              */
-            /*val data = sdkClient!!.attributes
+
+            val data = sdkClient!!.getAttributes()
+            Log.d("attdata", "::$data")
             if (data != null) {
                 btnSendData!!.isEnabled = true
                 btnGetAllTwins!!.isEnabled = true
                 createDynamicViews(data)
-            }*/
+            }
         } else {
             setStatusText(R.string.device_disconnected)
             tvConnStatus.isSelected = false
@@ -505,40 +532,38 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
         editTextInputList = ArrayList()
         try {
             val gson = Gson()
-            val attributesModelList = gson.fromJson(
-                data,
-                Array<AttributesModel>::class.java
-            )
-            for (model in attributesModelList) {
-                val device = model.device
-                val textViewTitle = TextView(this)
-                textViewTitle.text = "$TAG : : " + device.tg + " : " + device.id
-                llTemp!!.addView(textViewTitle)
-                editTextInputList = ArrayList()
-                val attributeList = model.attributes
-                for (attribute in attributeList) {
+            val model = gson.fromJson(data, GetDeviceAttributes::class.java)
+            //   for (model in attributesModelList) {
+            //  val device = model.device
+            //   val textViewTitle = TextView(this)
+            //   textViewTitle.text = "$TAG : : " + device.tg + " : " + device.id
+            //   llTemp!!.addView(textViewTitle)
 
-                    // if for not empty "p":"gyro"
+            val attributeList = model.d.att
+            for (attribute in attributeList) {
+
+                val d = attribute.d
+                // if for not empty "p":"gyro"
+                for (dObj in d) {
                     if (attribute.p != null && attribute.p.isNotEmpty()) {
-                        val d = attribute.d
-                        for (dObj in d) {
-                            val textInputLayout = LayoutInflater.from(this@FirmwareActivityKotlin)
-                                .inflate(R.layout.attribute_layout, null) as TextInputLayout
-                            llTemp!!.addView(textInputLayout)
-                            editTextInputList!!.add(textInputLayout)
-                            textInputLayout.hint = attribute.p + ":" + dObj.ln
-                        }
+                        val textInputLayout = LayoutInflater.from(this@FirmwareActivityKotlin)
+                            .inflate(R.layout.attribute_layout, null) as TextInputLayout
+                        llTemp!!.addView(textInputLayout)
+                        editTextInputList!!.add(textInputLayout)
+                        textInputLayout.hint = attribute.p + ":" + dObj.ln
+
                     } else {
                         val textInputLayout = LayoutInflater.from(this@FirmwareActivityKotlin)
                             .inflate(R.layout.attribute_layout, null) as TextInputLayout
                         llTemp!!.addView(textInputLayout)
                         editTextInputList!!.add(textInputLayout)
-                        textInputLayout.hint = attribute.ln
+                        textInputLayout.hint = dObj.ln
                     }
                 }
-                inputMap!!.put(device.id, editTextInputList!!)
-
             }
+            inputMap!!.put("", editTextInputList!!)
+
+            //   }
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -669,5 +694,20 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
         if (activity != null && !activity.isFinishing && progressDialog != null && progressDialog!!.isShowing) {
             progressDialog!!.dismiss()
         }
+    }
+
+    fun isJSONValid(message: String?): Boolean {
+        try {
+            JSONObject(message)
+        } catch (ex: JSONException) {
+            // edited, to include @Arthur's comment
+            // e.g. in case JSONArray is valid as well...
+            try {
+                JSONArray(message)
+            } catch (ex1: JSONException) {
+                return false
+            }
+        }
+        return true
     }
 }

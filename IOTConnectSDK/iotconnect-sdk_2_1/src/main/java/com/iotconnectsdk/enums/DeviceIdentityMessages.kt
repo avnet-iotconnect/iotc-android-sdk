@@ -1,4 +1,4 @@
-package com.iotconnectsdk.utils
+package com.iotconnectsdk.enums
 
 enum class DeviceIdentityMessages(val value: Int) {
     GET_DEVICE_TEMPLATE_ATTRIBUTES(201),
