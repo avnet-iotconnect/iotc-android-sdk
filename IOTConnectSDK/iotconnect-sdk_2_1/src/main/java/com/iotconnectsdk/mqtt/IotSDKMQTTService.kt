@@ -137,7 +137,7 @@ class IotSDKMQTTService private constructor(
             }
         })
         val mqttConnectOptions = MqttConnectOptions()
-        mqttConnectOptions.isAutomaticReconnect = true
+        mqttConnectOptions.isAutomaticReconnect = false
         mqttConnectOptions.isCleanSession = true
         mqttConnectOptions.userName = protocolBean.un
         if (protocolBean.pwd != null) {

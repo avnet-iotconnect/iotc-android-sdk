@@ -423,6 +423,11 @@ class SDKClient private constructor(
             ?.getDeviceInformation(IotSDKPreferences.SETTING_TWIN_RESPONSE)
     }
 
+    private fun geGatewayChildResponse(): CommonResponseBean? {
+        return IotSDKPreferences.getInstance(context!!)
+            ?.getDeviceInformation(IotSDKPreferences.CHILD_DEVICE_RESPONSE)
+    }
+
 
     /*Call publish method of IotSDKMQTTService class to publish to web.
      * 1.When device is not connected to network and offline storage is true from client, than save all published message to device memory.
@@ -528,11 +533,11 @@ class SDKClient private constructor(
         }
 
         if ((response?.d?.has?.d == 1)) {
-            /* publishMessage(
+             publishMessage(
                  response.d.p.topics.di,
                  JSONObject().put(MESSAGE_TYPE, DeviceIdentityMessages.GET_CHILD_DEVICES.value)
                      .toString(), false
-             )*/
+             )
         }
 
         if ((response?.d?.has?.ota == 1)) {
@@ -578,7 +583,9 @@ class SDKClient private constructor(
                     }
 
                     if (commonModel.d.ct == DeviceIdentityMessages.GET_CHILD_DEVICES.value) {
-
+                        IotSDKPreferences.getInstance(context!!)!!.putStringData(
+                            IotSDKPreferences.CHILD_DEVICE_RESPONSE, Gson().toJson(commonModel)
+                        )
                     }
 
                     if (commonModel.d.ct == DeviceIdentityMessages.GET_PENDING_OTA.value) {
@@ -625,7 +632,13 @@ class SDKClient private constructor(
                         }
 
                         C2DMessageEnums.REFRESH_CHILD_DEVICE.value -> {
-
+                            val response = getSyncResponse()
+                            publishMessage(
+                                response?.d?.p?.topics!!.di, JSONObject().put(
+                                    MESSAGE_TYPE,
+                                    DeviceIdentityMessages.GET_CHILD_DEVICES.value
+                                ).toString(), false
+                            )
                         }
 
                         C2DMessageEnums.DATA_FREQUENCY_CHANGE.value -> {

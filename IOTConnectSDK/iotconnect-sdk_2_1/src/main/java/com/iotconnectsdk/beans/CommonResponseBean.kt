@@ -12,6 +12,8 @@ data class CommonResponseBean(
         val att: List<GetAttributeBean>,
         @SerializedName("set")
         val set: List<GetSettingBean>,
+        @SerializedName("d")
+        val childDevice: List<GetChildDeviceBean>,
         @SerializedName("ct")
         val ct: Int, // 201
         @SerializedName("ec")

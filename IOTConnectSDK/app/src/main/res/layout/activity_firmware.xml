@@ -125,6 +125,8 @@
                         android:layout_height="wrap_content"
                         android:backgroundTint="@color/white"
                         android:hint="CpId"
+                        android:imeOptions="actionNext"
+                        android:inputType="text"
                         android:textSize="20sp" />
 
                 </com.google.android.material.textfield.TextInputLayout>
@@ -146,6 +148,8 @@
                         android:layout_height="wrap_content"
                         android:backgroundTint="@color/white"
                         android:hint="Unique Id"
+                        android:imeOptions="actionDone"
+                        android:inputType="text"
                         android:textSize="20sp" />
 
                 </com.google.android.material.textfield.TextInputLayout>
