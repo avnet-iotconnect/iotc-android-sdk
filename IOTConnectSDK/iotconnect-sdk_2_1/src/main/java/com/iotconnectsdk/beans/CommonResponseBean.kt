@@ -10,6 +10,8 @@ data class CommonResponseBean(
     data class D(
         @SerializedName("att")
         val att: List<GetAttributeBean>,
+        @SerializedName("set")
+        val set: List<GetSettingBean>,
         @SerializedName("ct")
         val ct: Int, // 201
         @SerializedName("ec")

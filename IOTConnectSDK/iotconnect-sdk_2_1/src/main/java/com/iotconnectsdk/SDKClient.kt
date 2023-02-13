@@ -333,7 +333,8 @@ class SDKClient private constructor(
     override fun onSuccessResponse(methodName: String?, response: String?) {
         try {
             if (methodName.equals(
-                    IotSDKUrls.DISCOVERY_SERVICE, ignoreCase = true
+                    IotSDKUrls.DISCOVERY_SERVICE,
+                    ignoreCase = true
                 ) && response != null
             ) {
                 val discoveryApiResponse = Gson().fromJson(
@@ -414,7 +415,12 @@ class SDKClient private constructor(
 
     private fun getAttributeResponse(): CommonResponseBean? {
         return IotSDKPreferences.getInstance(context!!)
-            ?.getAttributes(IotSDKPreferences.ATTRIBUTE_RESPONSE)
+            ?.getDeviceInformation(IotSDKPreferences.ATTRIBUTE_RESPONSE)
+    }
+
+    private fun getSettingsResponse(): CommonResponseBean? {
+        return IotSDKPreferences.getInstance(context!!)
+            ?.getDeviceInformation(IotSDKPreferences.SETTING_TWIN_RESPONSE)
     }
 
 
@@ -506,35 +512,35 @@ class SDKClient private constructor(
         }
 
         if ((response?.d?.has?.set == 1)) {
-            publishMessage(
+          /*  publishMessage(
                 response.d.p.topics.di, JSONObject().put(
                     MESSAGE_TYPE, DeviceIdentityMessages.GET_DEVICE_TEMPLATE_SETTINGS_TWIN.value
                 ).toString(), false
-            )
+            )*/
         }
 
         if ((response?.d?.has?.r == 1)) {
-            publishMessage(
-                response.d.p.topics.di,
-                JSONObject().put(MESSAGE_TYPE, DeviceIdentityMessages.GET_EDGE_RULE.value)
-                    .toString(), false
-            )
+            /* publishMessage(
+                 response.d.p.topics.di,
+                 JSONObject().put(MESSAGE_TYPE, DeviceIdentityMessages.GET_EDGE_RULE.value)
+                     .toString(), false
+             )*/
         }
 
         if ((response?.d?.has?.d == 1)) {
-            publishMessage(
-                response.d.p.topics.di,
-                JSONObject().put(MESSAGE_TYPE, DeviceIdentityMessages.GET_CHILD_DEVICES.value)
-                    .toString(), false
-            )
+            /* publishMessage(
+                 response.d.p.topics.di,
+                 JSONObject().put(MESSAGE_TYPE, DeviceIdentityMessages.GET_CHILD_DEVICES.value)
+                     .toString(), false
+             )*/
         }
 
         if ((response?.d?.has?.ota == 1)) {
-            publishMessage(
+            /*publishMessage(
                 response.d.p.topics.di,
                 JSONObject().put(MESSAGE_TYPE, DeviceIdentityMessages.GET_PENDING_OTA.value)
                     .toString(), false
-            )
+            )*/
         }
 
     }
@@ -552,13 +558,19 @@ class SDKClient private constructor(
 
                 if (commonModel?.d != null) {
                     if (commonModel.d.ct == DeviceIdentityMessages.GET_DEVICE_TEMPLATE_ATTRIBUTES.value) {
+                        //     Log.d("mainObject", "::$mainObjectLog")
                         IotSDKPreferences.getInstance(context!!)!!.putStringData(
                             IotSDKPreferences.ATTRIBUTE_RESPONSE, Gson().toJson(commonModel)
                         )
+
+                        onDeviceConnectionStatus(isConnected())
                     }
 
                     if (commonModel.d.ct == DeviceIdentityMessages.GET_DEVICE_TEMPLATE_SETTINGS_TWIN.value) {
-
+                        //   Log.d("mainObject1", "::$mainObjectLog")
+                        IotSDKPreferences.getInstance(context!!)!!.putStringData(
+                            IotSDKPreferences.SETTING_TWIN_RESPONSE, Gson().toJson(commonModel)
+                        )
                     }
 
                     if (commonModel.d.ct == DeviceIdentityMessages.GET_EDGE_RULE.value) {
@@ -589,11 +601,23 @@ class SDKClient private constructor(
 
                         }
                         C2DMessageEnums.REFRESH_ATTRIBUTE.value -> {
-
+                            val response = getSyncResponse()
+                            publishMessage(
+                                response?.d?.p?.topics!!.di, JSONObject().put(
+                                    MESSAGE_TYPE,
+                                    DeviceIdentityMessages.GET_DEVICE_TEMPLATE_ATTRIBUTES.value
+                                ).toString(), false
+                            )
                         }
 
                         C2DMessageEnums.REFRESH_SETTING_TWIN.value -> {
-
+                            val response = getSyncResponse()
+                            publishMessage(
+                                response?.d?.p?.topics!!.di, JSONObject().put(
+                                    MESSAGE_TYPE,
+                                    DeviceIdentityMessages.GET_DEVICE_TEMPLATE_SETTINGS_TWIN.value
+                                ).toString(), false
+                            )
                         }
 
                         C2DMessageEnums.REFRESH_EDGE_RULE.value -> {

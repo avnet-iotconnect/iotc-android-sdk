@@ -9,6 +9,8 @@ data class GetAttributeBean(
     val p: String,
     @SerializedName("dt")
     val dt: Int, // 0
+    @SerializedName("tg")
+    val tg: String,
     @SerializedName("d")
     val d: List<D>
 ) {
@@ -20,7 +22,9 @@ data class GetAttributeBean(
         @SerializedName("dv")
         val dv: String,
         @SerializedName("sq")
-        val sq: Int // 1
+        val sq: Int, // 1
+        @SerializedName("tg")
+        val tg: String
     )
 }
 

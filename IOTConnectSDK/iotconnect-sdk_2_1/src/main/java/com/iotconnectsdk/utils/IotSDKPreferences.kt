@@ -64,7 +64,7 @@ internal class IotSDKPreferences private constructor(context: Context) {
         return syncServiceResponse
     }
 
-    fun getAttributes(key: String?): CommonResponseBean? {
+    fun getDeviceInformation(key: String?): CommonResponseBean? {
         var attributeResponse = try {
             val jsonString = getStringData(key)
             Gson().fromJson(jsonString, CommonResponseBean::class.java)
@@ -73,6 +73,7 @@ internal class IotSDKPreferences private constructor(context: Context) {
         }
         return attributeResponse
     }
+
 
     fun saveList(key: String?, valueList: List<String?>?): Boolean {
         val value = Gson().toJson(valueList)
