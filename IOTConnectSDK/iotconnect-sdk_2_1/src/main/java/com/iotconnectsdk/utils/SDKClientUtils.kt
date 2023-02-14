@@ -1,11 +1,10 @@
 package com.iotconnectsdk.utils
 
 import android.content.Context
+import android.text.TextUtils
 import com.google.gson.Gson
 import com.iotconnectsdk.R
-import com.iotconnectsdk.beans.CommonResponseBean
-import com.iotconnectsdk.beans.Data
-import com.iotconnectsdk.beans.TumblingWindowBean
+import com.iotconnectsdk.beans.*
 import com.iotconnectsdk.utils.IotSDKConstant.ATTRIBUTE_INFO_UPDATE
 import com.iotconnectsdk.utils.IotSDKConstant.DEVICE_INFO_UPDATE
 import com.iotconnectsdk.utils.IotSDKConstant.M_ANDROID
@@ -80,9 +79,33 @@ object SDKClientUtils {
         return syncServiceRequest
     }
 
+
     fun getAttributesList(
-        attributesLists: List<SyncServiceResponse.DBeanXX.AttBean>, tag: String
-    ): JSONArray {
+        attributeResponse: CommonResponseBean,
+        childDeviceBean: GetChildDeviceBean
+    ): ArrayList<GetAttributeBean> {
+
+
+        val attributeList = ArrayList<GetAttributeBean>()
+        attributeResponse.d.att.forEach { singleAtt ->
+            if (!TextUtils.isEmpty(singleAtt.p.trim()) && !TextUtils.isEmpty(singleAtt.tg?.trim())) {
+                if (singleAtt.tg == childDeviceBean.tg) {
+                    attributeList.addAll(attributeResponse.d.att)
+                }
+            } else {
+                singleAtt.d.forEach { singleD ->
+                    if (singleAtt.tg == childDeviceBean.tg) {
+                        attributeList.addAll(attributeResponse.d.att)
+                    }
+                }
+
+            }
+        }
+        return attributeList
+    }
+    /* fun getAttributesList(
+         attributesLists: List<SyncServiceResponse.DBeanXX.AttBean>, tag: String
+     ): JSONArray {
 
         //CREATE ATTRIBUTES ARRAY and OBJECT, "attributes":[{"ln":"Temp","dt":"number","dv":"5 to 20, 25","tg":"gateway","tw":"60s"},{"p":"gyro","dt":"object","tg":"gateway","tw":"90s","d":[{"ln":"x","dt":"number","dv":"","tg":"gateway","tw":"90s"},{"ln":"y","dt":"string","dv":"red, gray,   blue","tg":"gateway","tw":"90s"},{"ln":"z","dt":"number","dv":"-5 to 5, 10","tg":"gateway","tw":"90s"}]}]
         val attributesArray = JSONArray()
@@ -112,7 +135,7 @@ object SDKClientUtils {
             }
         }
         return attributesArray
-    }
+    }*/
 
     fun getSdk(environment: String?, appVersion: String?): JSONObject {
         //sdk object
@@ -186,10 +209,13 @@ object SDKClientUtils {
                 for (j in dataBeanList.indices) {
                     val data = dataBeanList[j]
                     val ln = data.ln
-                   // val tg = data.tg
+                    // val tg = data.tg
                     val dv = data.dv
                     val dt = data.dt
-                    if (key.equals(ln, ignoreCase = true) /*&& tag.equals(tg, ignoreCase = true)*/) {
+                    if (key.equals(
+                            ln,
+                            ignoreCase = true
+                        ) /*&& tag.equals(tg, ignoreCase = true)*/) {
                         result = if (dt == 0 && value.isNotEmpty() && !isDigit(value)) {
                             1
                         } else {

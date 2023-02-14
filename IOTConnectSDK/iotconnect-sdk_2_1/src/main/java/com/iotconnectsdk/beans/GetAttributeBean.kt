@@ -10,7 +10,15 @@ data class GetAttributeBean(
     @SerializedName("dt")
     val dt: Int, // 0
     @SerializedName("tg")
-    val tg: String,
+    val tg: String? = null,
+    @SerializedName("dv")
+    val dv: String? = null,
+    @SerializedName("ln")
+    val ln: String? = null, // Temp
+    @SerializedName("sq")
+    val sq: Int? = null, // 1
+    @SerializedName("tw")
+    val tw: String? = null,
     @SerializedName("d")
     val d: List<D>
 ) {
@@ -24,7 +32,9 @@ data class GetAttributeBean(
         @SerializedName("sq")
         val sq: Int, // 1
         @SerializedName("tg")
-        val tg: String
+        val tg: String,
+        @SerializedName("tw")
+        val tw: String? = null
     )
 }
 

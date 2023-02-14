@@ -23,7 +23,10 @@ data class GetDeviceAttributes @JvmOverloads constructor(
             @SerializedName("dt")
             val dt: Int, // 0
             @SerializedName("p")
-            val p: String
+            val p: String,
+            @SerializedName("tg")
+            val tg: String,
+            var deviceId: String,
         ) {
             data class D @JvmOverloads constructor(
                 @SerializedName("dt")
@@ -33,7 +36,10 @@ data class GetDeviceAttributes @JvmOverloads constructor(
                 @SerializedName("ln")
                 val ln: String, // Temp
                 @SerializedName("sq")
-                val sq: Int // 1
+                val sq: Int, // 1
+                @SerializedName("tg")
+                val tg: String,
+                val deviceId: String=""
             )
         }
     }

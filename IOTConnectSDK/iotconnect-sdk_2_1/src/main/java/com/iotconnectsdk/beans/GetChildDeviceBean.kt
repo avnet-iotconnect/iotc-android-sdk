@@ -6,8 +6,8 @@ import com.google.gson.annotations.SerializedName
 
 data class GetChildDeviceBean(
     @SerializedName("tg")
-    val tg: String,
+    var tg: String?=null,
     @SerializedName("id")
-    val id: String,
+    var id: String?=null,
 )
 
