@@ -214,7 +214,13 @@ object SDKClientUtils {
                 for (j in dataBeanList.indices) {
                     val data = dataBeanList[j]
                     val ln = data.ln
-                    val tg = data.tg
+                    var tg: String
+                    if (data.tg != null) {
+                        tg = data.tg
+                    } else {
+                        tg = ""
+                    }
+
                     val dv = data.dv
                     val dt = data.dt
                     if (key.equals(ln, ignoreCase = true) && tag.equals(tg, ignoreCase = true)) {
