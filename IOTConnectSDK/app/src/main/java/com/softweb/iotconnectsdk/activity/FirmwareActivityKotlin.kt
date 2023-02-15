@@ -246,20 +246,12 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
      * Output  :
      */
     private fun sendInputData() {
-
-        val mainJson = JSONObject()
-        try {
-            mainJson.put("dt", getCurrentTime())
-        } catch (e: JSONException) {
-            throw RuntimeException(e)
-        }
-
         val inputArray = JSONArray()
         for ((keyValue, inputValue) in inputMap!!) {
             try {
                 val valueObj = JSONObject()
-                //   valueObj.put("uniqueId", keyValue)
-                valueObj.put("dt", getCurrentTime())
+                valueObj.put("uniqueId", keyValue)
+                valueObj.put("time", getCurrentTime())
                 val dObj = JSONObject()
                 val gyroObj = JSONObject()
                 var objectKeyName = ""
@@ -281,10 +273,8 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
                 if (gyroObj.length() != 0) {
                     dObj.putOpt(objectKeyName, gyroObj)
                 }
-
-                valueObj.put("d", dObj)
+                valueObj.put("data", dObj)
                 inputArray.put(valueObj)
-                mainJson.put("d", inputArray)
             } catch (e: Exception) {
                 Log.d(TAG, e.message!!)
             }
@@ -297,8 +287,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
              * Input   : Predefined data object
              * Output  :
              */
-
-            //sdkClient!!.sendData(inputArray.toString())
+            sdkClient!!.sendData(inputArray.toString())
         } else {
             Toast.makeText(
                 this@FirmwareActivityKotlin,
@@ -532,38 +521,40 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
         editTextInputList = ArrayList()
         try {
             val gson = Gson()
-            val model = gson.fromJson(data, GetDeviceAttributes::class.java)
-            //   for (model in attributesModelList) {
-            //  val device = model.device
-            //   val textViewTitle = TextView(this)
-            //   textViewTitle.text = "$TAG : : " + device.tg + " : " + device.id
-            //   llTemp!!.addView(textViewTitle)
+            val attributesModelList = gson.fromJson(
+                data,
+                Array<AttributesModel>::class.java
+            )
+            for (model in attributesModelList) {
+                val device = model.device
+                val textViewTitle = TextView(this)
+                textViewTitle.text = "$TAG : : " + device.tg + " : " + device.id
+                llTemp!!.addView(textViewTitle)
+                editTextInputList = ArrayList()
+                val attributeList = model.attributes
+                for (attribute in attributeList) {
 
-            val attributeList = model.d.att
-            for (attribute in attributeList) {
-
-                val d = attribute.d
-                // if for not empty "p":"gyro"
-                for (dObj in d) {
+                    // if for not empty "p":"gyro"
                     if (attribute.p != null && attribute.p.isNotEmpty()) {
-                        val textInputLayout = LayoutInflater.from(this@FirmwareActivityKotlin)
-                            .inflate(R.layout.attribute_layout, null) as TextInputLayout
-                        llTemp!!.addView(textInputLayout)
-                        editTextInputList!!.add(textInputLayout)
-                        textInputLayout.hint = attribute.p + ":" + dObj.ln
-
+                        val d = attribute.d
+                        for (dObj in d) {
+                            val textInputLayout = LayoutInflater.from(this@FirmwareActivityKotlin)
+                                .inflate(R.layout.attribute_layout, null) as TextInputLayout
+                            llTemp!!.addView(textInputLayout)
+                            editTextInputList!!.add(textInputLayout)
+                            textInputLayout.hint = attribute.p + ":" + dObj.ln
+                        }
                     } else {
                         val textInputLayout = LayoutInflater.from(this@FirmwareActivityKotlin)
                             .inflate(R.layout.attribute_layout, null) as TextInputLayout
                         llTemp!!.addView(textInputLayout)
                         editTextInputList!!.add(textInputLayout)
-                        textInputLayout.hint = dObj.ln
+                        textInputLayout.hint = attribute.ln
                     }
                 }
-            }
-            inputMap!!.put("", editTextInputList!!)
+                inputMap!!.put(device.id, editTextInputList!!)
 
-            //   }
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }

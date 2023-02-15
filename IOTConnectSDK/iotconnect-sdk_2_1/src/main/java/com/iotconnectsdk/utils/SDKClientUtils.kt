@@ -1,7 +1,6 @@
 package com.iotconnectsdk.utils
 
 import android.content.Context
-import android.text.TextUtils
 import com.google.gson.Gson
 import com.iotconnectsdk.R
 import com.iotconnectsdk.beans.*
@@ -80,39 +79,39 @@ object SDKClientUtils {
     }
 
 
-    fun getAttributesList(
-        attributeResponse: CommonResponseBean,
-        childDeviceBean: GetChildDeviceBean
-    ): ArrayList<GetAttributeBean> {
-
-
-        val attributeList = ArrayList<GetAttributeBean>()
-        attributeResponse.d.att.forEach { singleAtt ->
-            if (!TextUtils.isEmpty(singleAtt.p.trim()) && !TextUtils.isEmpty(singleAtt.tg?.trim())) {
-                if (singleAtt.tg == childDeviceBean.tg) {
-                    attributeList.addAll(attributeResponse.d.att)
-                }
-            } else {
-                singleAtt.d.forEach { singleD ->
-                    if (singleAtt.tg == childDeviceBean.tg) {
-                        attributeList.addAll(attributeResponse.d.att)
-                    }
-                }
-
-            }
-        }
-        return attributeList
-    }
     /* fun getAttributesList(
-         attributesLists: List<SyncServiceResponse.DBeanXX.AttBean>, tag: String
-     ): JSONArray {
+         attributeResponse: CommonResponseBean,
+         childDeviceBean: GetChildDeviceBean
+     ): ArrayList<GetAttributeBean> {
+
+
+         val attributeList = ArrayList<GetAttributeBean>()
+         attributeResponse.d.att.forEach { singleAtt ->
+             if (singleAtt.p.isNotEmpty()) {
+                 if (singleAtt.tg == childDeviceBean.tg) {
+                     attributeList.addAll(attributeResponse.d.att)
+                 }
+             } else {
+                 singleAtt.d.forEach { singleD ->
+                     if (singleD.tg == childDeviceBean.tg) {
+                         attributeList.addAll(attributeResponse.d.att)
+                     }
+                 }
+
+             }
+         }
+         return attributeList
+     }*/
+    fun getAttributesList(
+        attributesLists: List<GetAttributeBean>, tag: String?
+    ): JSONArray {
 
         //CREATE ATTRIBUTES ARRAY and OBJECT, "attributes":[{"ln":"Temp","dt":"number","dv":"5 to 20, 25","tg":"gateway","tw":"60s"},{"p":"gyro","dt":"object","tg":"gateway","tw":"90s","d":[{"ln":"x","dt":"number","dv":"","tg":"gateway","tw":"90s"},{"ln":"y","dt":"string","dv":"red, gray,   blue","tg":"gateway","tw":"90s"},{"ln":"z","dt":"number","dv":"-5 to 5, 10","tg":"gateway","tw":"90s"}]}]
         val attributesArray = JSONArray()
         for (attribute in attributesLists) {
 
 //           if for not empty "p":"gyro"
-            if (attribute.p != null && !attribute.p.isEmpty()) {
+            if (attribute.p != null && attribute.p.isNotEmpty()) {
                 if (tag == attribute.tg) {
                     try {
                         val attributeObj = JSONObject(Gson().toJson(attribute))
@@ -135,7 +134,7 @@ object SDKClientUtils {
             }
         }
         return attributesArray
-    }*/
+    }
 
     fun getSdk(environment: String?, appVersion: String?): JSONObject {
         //sdk object
@@ -184,13 +183,19 @@ object SDKClientUtils {
      *
      *@param uniqueId  device unique id.
      * */
-    fun getTag(uniqueId: String, dObj: SyncServiceResponse.DBeanXX): String {
+    fun getTag(uniqueId: String, dObj: CommonResponseBean.D?): String {
         var tag = ""
-        val values = dObj.d
-        for (data in values) {
-            if (uniqueId.equals(data.id, ignoreCase = true)) {
-                tag = data.tg
-                break
+        val values = dObj?.childDevice
+        if (values != null) {
+            for (data in values) {
+                if (uniqueId.equals(data.id, ignoreCase = true)) {
+                    if (data.tg != null) {
+                        tag = data.tg!!
+                    } else {
+                        tag = ""
+                    }
+                    break
+                }
             }
         }
         return tag
@@ -209,13 +214,10 @@ object SDKClientUtils {
                 for (j in dataBeanList.indices) {
                     val data = dataBeanList[j]
                     val ln = data.ln
-                    // val tg = data.tg
+                    val tg = data.tg
                     val dv = data.dv
                     val dt = data.dt
-                    if (key.equals(
-                            ln,
-                            ignoreCase = true
-                        ) /*&& tag.equals(tg, ignoreCase = true)*/) {
+                    if (key.equals(ln, ignoreCase = true) && tag.equals(tg, ignoreCase = true)) {
                         result = if (dt == 0 && value.isNotEmpty() && !isDigit(value)) {
                             1
                         } else {

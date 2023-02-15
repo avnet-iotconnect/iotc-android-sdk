@@ -38,8 +38,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
+import com.softweb.iotconnectsdk.model.Attribute;
+import com.softweb.iotconnectsdk.model.AttributesModel;
 import com.softweb.iotconnectsdk.model.Certificate;
+import com.softweb.iotconnectsdk.model.D;
 import com.softweb.iotconnectsdk.model.D2CSendAckBean;
+import com.softweb.iotconnectsdk.model.Device;
 import com.softweb.iotconnectsdk.model.GetDeviceAttributes;
 import com.softweb.iotconnectsdk.model.OfflineStorage;
 import com.softweb.iotconnectsdk.model.SdkOptions;
@@ -288,13 +292,6 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
      */
     private void sendInputData() {
 
-        JSONObject mainJson = new JSONObject();
-        try {
-            mainJson.put("dt", getCurrentTime());
-        } catch (JSONException e) {
-            throw new RuntimeException(e);
-        }
-
         JSONArray inputArray = new JSONArray();
 
         for (Map.Entry<String, List<TextInputLayout>> entry : inputMap.entrySet()) {
@@ -303,8 +300,8 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                 JSONObject valueObj = new JSONObject();
 
                 String keyValue = entry.getKey();
-                // valueObj.put("uniqueId", keyValue);
-                valueObj.put("dt", getCurrentTime());
+                valueObj.put("uniqueId", keyValue);
+                valueObj.put("time", getCurrentTime());
 
                 JSONObject dObj = new JSONObject();
                 JSONObject gyroObj = new JSONObject();
@@ -332,28 +329,24 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                     dObj.putOpt(objectKeyName, gyroObj);
                 }
 
-                valueObj.put("d", dObj);
+                valueObj.put("data", dObj);
 
                 inputArray.put(valueObj);
-
-                mainJson.put("d", inputArray);
             } catch (Exception e) {
                 Log.d(TAG, e.getMessage());
             }
         }
         // Device to Cloud data publish.
-        if (isConnected) {
+        if (isConnected)
             /*
              * Type    : Public data Method "sendData()"
              * Usage   : To publish the data on cloud D2C
              * Input   : Predefined data object
              * Output  :
              */
-
-            sdkClient.sendData(mainJson.toString());
-        } else {
+            sdkClient.sendData(inputArray.toString());
+        else
             Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
-        }
     }
 
     /*
@@ -574,42 +567,39 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
 
         try {
             Gson gson = new Gson();
-            GetDeviceAttributes model = gson.fromJson(data, GetDeviceAttributes.class);
+            AttributesModel[] attributesModelList = gson.fromJson(data, AttributesModel[].class);
 
+            for (AttributesModel model : attributesModelList) {
+                Device device = model.getDevice();
 
-            // Device device = model.getDevice();
+                TextView textViewTitle = new TextView(this);
+                textViewTitle.setText("TAG : : " + device.getTg() + " : " + device.getId());
+                linearLayout.addView(textViewTitle);
 
-            //  TextView textViewTitle = new TextView(this);
-            //  textViewTitle.setText("TAG : : " + device.getTg() + " : " + device.getId());
-            //  linearLayout.addView(textViewTitle);
+                editTextInputList = new ArrayList<>();
+                List<Attribute> attributeList = model.getAttributes();
+                for (Attribute attribute : attributeList) {
 
-
-            List<GetDeviceAttributes.D.Att> attributeList = model.getD().getAtt();
-            for (GetDeviceAttributes.D.Att attribute : attributeList) {
-
-                // if for not empty "p":"gyro"
-
-                List<GetDeviceAttributes.D.Att.D> d = attribute.getD();
-
-                for (GetDeviceAttributes.D.Att.D dObj : d) {
+                    // if for not empty "p":"gyro"
                     if (attribute.getP() != null && !attribute.getP().isEmpty()) {
+                        List<D> d = attribute.getD();
 
-                        TextInputLayout textInputLayout = (TextInputLayout) LayoutInflater.from(FirmwareActivity.this).inflate(R.layout.attribute_layout, null);
-                        linearLayout.addView(textInputLayout);
-                        editTextInputList.add(textInputLayout);
-                        textInputLayout.setHint(attribute.getP() + ":" + dObj.getLn());
-
+                        for (D dObj : d) {
+                            TextInputLayout textInputLayout = (TextInputLayout) LayoutInflater.from(FirmwareActivity.this).inflate(R.layout.attribute_layout, null);
+                            linearLayout.addView(textInputLayout);
+                            editTextInputList.add(textInputLayout);
+                            textInputLayout.setHint(attribute.getP() + ":" + dObj.getLn());
+                        }
 
                     } else {
                         TextInputLayout textInputLayout = (TextInputLayout) LayoutInflater.from(FirmwareActivity.this).inflate(R.layout.attribute_layout, null);
                         linearLayout.addView(textInputLayout);
                         editTextInputList.add(textInputLayout);
-                        textInputLayout.setHint(dObj.getLn());
+                        textInputLayout.setHint(attribute.getLn());
                     }
                 }
+                inputMap.put(device.getId(), editTextInputList);
             }
-            inputMap.put("", editTextInputList);
-
 
         } catch (Exception e) {
             e.printStackTrace();

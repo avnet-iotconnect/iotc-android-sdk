@@ -3,7 +3,6 @@ package com.iotconnectsdk
 import android.content.Context
 import android.content.IntentFilter
 import android.net.ConnectivityManager
-import android.text.TextUtils
 import android.util.Log
 import android.webkit.URLUtil
 import com.google.gson.Gson
@@ -45,6 +44,7 @@ class SDKClient private constructor(
 
     ) : WsResponseInterface, HubToSdkCallback, PublishMessageCallback, TwinUpdateCallback,
     NetworkStateReceiver.NetworkStateReceiverListener {
+
 
     private var validationUtils: ValidationUtils? = null
 
@@ -98,6 +98,8 @@ class SDKClient private constructor(
 
     private val UNIQUE_ID = "/uid/"
 
+    private val UNIQUE_ID_View = "uniqueId"
+
     private val CP_ID = "cpId"
 
     private val CURRENT_DATE = "dt"
@@ -122,7 +124,7 @@ class SDKClient private constructor(
 
     private val IS_DEBUG = "isDebug"
 
-    private val DATA = "d"
+    private val DATA = "data"
 
     private val TIME = "time"
 
@@ -663,15 +665,13 @@ class SDKClient private constructor(
 
 
     fun getAttributes(): String? {
-        var jsonString = ""
+
         val syncResponse = getSyncResponse()
         val attributeResponse = getAttributeResponse()
-
-
+        val mainArray = JSONArray()
         if (syncResponse?.d?.meta?.gtw != null) {
             val gatewayChildResponse = getGatewayChildResponse()
             val getChildDeviceBean = GetChildDeviceBean()
-            var getAttributesList: ArrayList<GetAttributeBean>
 
             getChildDeviceBean.tg = syncResponse.d.meta.gtw.tg
             getChildDeviceBean.id = uniqueId
@@ -680,68 +680,84 @@ class SDKClient private constructor(
             gatewayChildResponse?.d?.childDevice?.forEach { childDeviceBean ->
                 if (attributeResponse != null) {
 
-                    getAttributesList = getAttributesList(attributeResponse, childDeviceBean)
+
+                    //CREATE DEVICE OBJECT, "device":{"id":"dee02","tg":"gateway"}
+                    val deviceObj = JSONObject()
+                    deviceObj.put(DEVICE_ID, childDeviceBean.id)
+                    deviceObj.put(DEVICE_TAG, childDeviceBean.tg)
 
 
-                    val attributeModel = GetAttToView.D().apply {
-                        val devicesModel = GetAttToView.D.Device().apply {
-                            tg = childDeviceBean.tg
-                            id = childDeviceBean.id
-                        }
-                        attributes = getAttributesList
-                        device = devicesModel
+                    //ADD TO MAIN OBJECT
+                    val mainObj = JSONObject()
+                    mainObj.put(DEVICE, deviceObj)
+                    mainObj.put(
+                        ATTRIBUTES, getAttributesList(attributeResponse.d!!.att, childDeviceBean.tg)
+                    )
+
+                    //ADD MAIN BOJ TO ARRAY.
+                    mainArray.put(mainObj)
+
+                    //Attributes data not found
+                    if (mainArray.length() == 0) {
+                        iotSDKLogUtils!!.log(
+                            true,
+                            isDebug,
+                            "ERR_GA02",
+                            context!!.getString(R.string.ERR_GA02)
+                        )
+                    } else {
+                        iotSDKLogUtils!!.log(
+                            false,
+                            isDebug,
+                            "INFO_GA01",
+                            context!!.getString(R.string.INFO_GA01)
+                        )
                     }
+
+
                 }
             }
 
+        } else {
+            if (attributeResponse != null) {
 
-        }
-
-
-        /*  if (syncResponse?.d?.meta?.gtw != null) {
-              attributeResponse?.d?.att?.forEach { singleAtt ->
-                  singleAtt.d.forEach { singleD ->
-                      if (TextUtils.isEmpty(singleAtt.p.trim()) && TextUtils.isEmpty(singleAtt.tg?.trim())) {
-                          if (syncResponse.d.meta.gtw.tg == singleD.tg) {
-                              if (uniqueId != null) {
-                                  singleD.deviceId = uniqueId
-                                  singleAtt.deviceId = uniqueId
-                              }
-                          } else {
-                              gatewayChildResponse?.d?.childDevice?.forEach { childDevice ->
-                                  if (singleD.tg == childDevice.tg) {
-                                      singleD.deviceId = childDevice.id!!
-                                      singleAtt.deviceId = childDevice.id!!
-                                  }
-                              }
-                          }
-                      } else {
-                          if (syncResponse.d.meta.gtw.tg == singleAtt.tg) {
-                              if (uniqueId != null) {
-                                  singleD.deviceId = uniqueId
-                                  singleAtt.deviceId = uniqueId
-                              }
-                          }
-                      }
-                  }
-
-              }
-          }*/
-
-        if (attributeResponse != null) {
-            // val data = response.att
-            try {
-
-                val gson = Gson()
-                jsonString = gson.toJson(attributeResponse)
+                //CREATE DEVICE OBJECT, "device":{"id":"dee02","tg":"gateway"}
+                val deviceObj = JSONObject()
+                deviceObj.put(DEVICE_ID, uniqueId)
+                deviceObj.put(DEVICE_TAG, "")
 
 
-            } catch (e: java.lang.Exception) {
-                iotSDKLogUtils!!.log(true, isDebug, "ERR_GA01", e.message!!)
-                e.printStackTrace()
+                //ADD TO MAIN OBJECT
+                val mainObj = JSONObject()
+                mainObj.put(DEVICE, deviceObj)
+                mainObj.put(
+                    ATTRIBUTES, getAttributesList(attributeResponse.d!!.att, null)
+                )
+
+                //ADD MAIN BOJ TO ARRAY.
+                mainArray.put(mainObj)
+
+                //Attributes data not found
+                if (mainArray.length() == 0) {
+                    iotSDKLogUtils!!.log(
+                        true,
+                        isDebug,
+                        "ERR_GA02",
+                        context!!.getString(R.string.ERR_GA02)
+                    )
+                } else {
+                    iotSDKLogUtils!!.log(
+                        false,
+                        isDebug,
+                        "INFO_GA01",
+                        context!!.getString(R.string.INFO_GA01)
+                    )
+                }
+
+
             }
         }
-        return jsonString
+        return mainArray.toString()
     }
 
 
@@ -909,7 +925,7 @@ class SDKClient private constructor(
     private fun publishDeviceInputData(jsonData: String?) {
 
         val response = getSyncResponse()
-        var df = 0
+        /*var df = 0
         if (response != null) {
             df = response.d.meta.df
         }
@@ -923,10 +939,10 @@ class SDKClient private constructor(
             } else {
                 savedTime = savedTime + df
             }
-        }
-        if (response?.d != null) {
+        }*/
+        if (response != null) {
             if (jsonData != null) {
-                publishDeviceInputData(response.d.p.topics, jsonData, getAttributeResponse())
+                publishDeviceInputData(response, jsonData, getAttributeResponse())
             }
         }
     }
@@ -935,14 +951,13 @@ class SDKClient private constructor(
      * @param inputJsonStr input json from user.
      * */
     private fun publishDeviceInputData(
-        responseTopics: IdentityServiceResponse.D.P.Topics, mainJson: String,
+        syncResponse: IdentityServiceResponse?, inputJsonStr: String,
         dObj: CommonResponseBean?
     ) {
         try {
 
-            val inputJsonStr = JSONObject(mainJson).getJSONArray("d")
-            val jsonArray = inputJsonStr as JSONArray
-            // val jsonArray = JSONArray(inputJsonStr)
+            val jsonArray = JSONArray(inputJsonStr)
+
             var doFaultyPublish = false
             var doReportingPublish = false
 
@@ -953,20 +968,34 @@ class SDKClient private constructor(
 
             var outerD_Obj_reporting: JSONObject? = null
             var outerD_Obj_Faulty: JSONObject? = null
+
+
+            val gatewayChildResponse = getGatewayChildResponse()
+            val getChildDeviceBean = GetChildDeviceBean()
+
+            getChildDeviceBean.tg = syncResponse?.d?.meta?.gtw?.tg
+            getChildDeviceBean.id = uniqueId
+            gatewayChildResponse?.d?.childDevice?.add(getChildDeviceBean)
+
+
             for (i in 0 until jsonArray.length()) {
 
-                // val uniqueId = jsonArray.getJSONObject(i).getString(UNIQUE_ID)
+                val uniqueId = jsonArray.getJSONObject(i).getString(UNIQUE_ID_View)
                 val dataObj = jsonArray.getJSONObject(i).getJSONObject(DATA)
                 val dataJsonKey = dataObj.keys()
-                //  val tag = SDKClientUtils.getTag(uniqueId, dObj)
+
+                val tag = SDKClientUtils.getTag(uniqueId, gatewayChildResponse?.d)
+
                 outerD_Obj_reporting = JSONObject()
-                //  outerD_Obj_reporting.put(ID, uniqueId)
+                outerD_Obj_reporting.put(ID, uniqueId)
                 outerD_Obj_reporting.put(DT, IotSDKUtils.currentDate)
-                //   outerD_Obj_reporting.put(TG, tag)
+                outerD_Obj_reporting.put(TG, tag)
+
                 outerD_Obj_Faulty = JSONObject()
-                // outerD_Obj_Faulty.put(ID, uniqueId)
+                outerD_Obj_Faulty.put(ID, uniqueId)
                 outerD_Obj_Faulty.put(DT, IotSDKUtils.currentDate)
-                //    outerD_Obj_Faulty.put(TG, tag)
+                outerD_Obj_Faulty.put(TG, tag)
+
                 val innerD_Obj_reporting = JSONObject()
                 val innerD_Obj_faulty = JSONObject()
 
@@ -981,6 +1010,7 @@ class SDKClient private constructor(
                     ) {
                         val gyroObj_reporting = JSONObject()
                         val gyroObj_faulty = JSONObject()
+
                         val innerObj = dataObj.getJSONObject(key)
                         val innerJsonKey = innerObj.keys()
 
@@ -990,7 +1020,7 @@ class SDKClient private constructor(
                             val InnerKey = innerJsonKey.next()
                             val InnerKValue = innerObj.getString(InnerKey)
                             val gyroValidationValue =
-                                compareForInputValidation(InnerKey, InnerKValue, "", dObj)
+                                compareForInputValidation(InnerKey, InnerKValue, tag, dObj)
                             if (gyroValidationValue == 0) {
                                 gyroObj_reporting.put(InnerKey, InnerKValue)
                             } else {
@@ -1004,7 +1034,7 @@ class SDKClient private constructor(
                         )
                         if (gyroObj_faulty.length() != 0) innerD_Obj_faulty.put(key, gyroObj_faulty)
                     } else {
-                        val othersValidation = compareForInputValidation(key, value, "", dObj)
+                        val othersValidation = compareForInputValidation(key, value, tag, dObj)
                         if (othersValidation == 0) {
                             innerD_Obj_reporting.put(key, value)
                         } else {
@@ -1048,12 +1078,12 @@ class SDKClient private constructor(
 
             //publish reporting data
             if (doReportingPublish) publishMessage(
-                responseTopics.rpt, outerD_Obj_reporting.toString(), false
+                syncResponse?.d?.p?.topics!!.rpt, outerD_Obj_reporting.toString(), false
             )
 
             //publish faulty data
             if (doFaultyPublish) publishMessage(
-                responseTopics.flt, outerD_Obj_Faulty.toString(), false
+                syncResponse?.d?.p?.topics!!.flt, outerD_Obj_Faulty.toString(), false
             )
         } catch (e: JSONException) {
             e.printStackTrace()

@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName
 
 data class CommonResponseBean(
     @SerializedName("d")
-    val d: D
+    val d: D?=null
 ) {
     data class D(
         @SerializedName("att")
