@@ -906,8 +906,8 @@ class SDKClient private constructor(
             }
             return
         }
-        /* if (!validationUtils!!.isValidInputFormat(jsonData!!, uniqueId!!))
-             return*/
+         if (!validationUtils!!.isValidInputFormat(jsonData!!, uniqueId!!))
+             return
         if (!idEdgeDevice) { // simple device.
             publishDeviceInputData(jsonData)
         } else { //Edge device
@@ -987,14 +987,14 @@ class SDKClient private constructor(
                 val tag = SDKClientUtils.getTag(uniqueId, gatewayChildResponse?.d)
 
                 outerD_Obj_reporting = JSONObject()
-                outerD_Obj_reporting.put(ID, uniqueId)
+                //  outerD_Obj_reporting.put(ID, uniqueId)
                 outerD_Obj_reporting.put(DT, IotSDKUtils.currentDate)
-                outerD_Obj_reporting.put(TG, tag)
+                //    outerD_Obj_reporting.put(TG, tag)
 
                 outerD_Obj_Faulty = JSONObject()
-                outerD_Obj_Faulty.put(ID, uniqueId)
+                //    outerD_Obj_Faulty.put(ID, uniqueId)
                 outerD_Obj_Faulty.put(DT, IotSDKUtils.currentDate)
-                outerD_Obj_Faulty.put(TG, tag)
+                //  outerD_Obj_Faulty.put(TG, tag)
 
                 val innerD_Obj_reporting = JSONObject()
                 val innerD_Obj_faulty = JSONObject()
@@ -1047,22 +1047,28 @@ class SDKClient private constructor(
 
 
                 reportingObject_reporting.put(DT, IotSDKUtils.currentDate)
+                reportingObject_reporting.put(ID, uniqueId)
+                reportingObject_reporting.put(TG, tag)
+
                 reportingObject_reporting.put(D_OBJ, innerD_Obj_reporting)
 
                 reportingObject_faulty.put(DT, IotSDKUtils.currentDate)
+                reportingObject_faulty.put(ID, uniqueId)
+                reportingObject_faulty.put(TG, tag)
+
                 reportingObject_faulty.put(D_OBJ, innerD_Obj_faulty)
 
 
-                if (innerD_Obj_reporting.length() != 0) arrayObj_attributes_reporting.put(
-                    reportingObject_reporting
-                )
+                if (innerD_Obj_reporting.length() != 0)
+                    arrayObj_attributes_reporting.put(reportingObject_reporting)
 
-                if (innerD_Obj_faulty.length() != 0) arrayObj_attributes_faulty.put(
-                    reportingObject_faulty
-                )
+                if (innerD_Obj_faulty.length() != 0)
+                    arrayObj_attributes_faulty.put(reportingObject_faulty)
 
-                if (arrayObj_attributes_reporting.length() > 0) doReportingPublish = true
-                if (arrayObj_attributes_faulty.length() > 0) doFaultyPublish = true
+                if (arrayObj_attributes_reporting.length() > 0)
+                    doReportingPublish = true
+                if (arrayObj_attributes_faulty.length() > 0)
+                    doFaultyPublish = true
 
 
                 //add object of attribute object to parent object.
