@@ -334,22 +334,37 @@ class SDKClient private constructor(
     * */
     override fun onSuccessResponse(methodName: String?, response: String?) {
         try {
-            if (methodName.equals(IotSDKUrls.DISCOVERY_SERVICE, ignoreCase = true) && response != null) {
-                val discoveryApiResponse = Gson().fromJson(response, DiscoveryApiResponse::class.java)
+            if (methodName.equals(
+                    IotSDKUrls.DISCOVERY_SERVICE,
+                    ignoreCase = true
+                ) && response != null
+            ) {
+                val discoveryApiResponse =
+                    Gson().fromJson(response, DiscoveryApiResponse::class.java)
                 if (discoveryApiResponse != null && discoveryApiResponse.d.bu != null) {
                     //BaseUrl received to sync the device information.
-                    iotSDKLogUtils!!.log(false, isDebug, "INFO_IN07", context!!.getString(R.string.INFO_IN07))
+                    iotSDKLogUtils!!.log(
+                        false,
+                        isDebug,
+                        "INFO_IN07",
+                        context!!.getString(R.string.INFO_IN07)
+                    )
                     if (!validationUtils!!.validateBaseUrl(discoveryApiResponse)) return
                     val baseUrl: String = discoveryApiResponse.d.bu + UNIQUE_ID + uniqueId
                     IotSDKPreferences.getInstance(context)
                         ?.putStringData(IotSDKPreferences.SYNC_API, baseUrl)
                     callSyncService()
-                }else{
-                    val responseCodeMessage = validationUtils?.responseCodeMessage(discoveryApiResponse.d.ec)
+                } else {
+                    val responseCodeMessage =
+                        validationUtils?.responseCodeMessage(discoveryApiResponse.d.ec)
                     deviceCallback?.onReceiveMsg(responseCodeMessage)
                     sdkClient = null
                 }
-            } else if (methodName.equals(IotSDKUrls.SYNC_SERVICE, ignoreCase = true) && response != null) {
+            } else if (methodName.equals(
+                    IotSDKUrls.SYNC_SERVICE,
+                    ignoreCase = true
+                ) && response != null
+            ) {
                 val syncServiceResponseData =
                     Gson().fromJson(response, IdentityServiceResponse::class.java)
 
@@ -359,7 +374,8 @@ class SDKClient private constructor(
                         ?.putStringData(IotSDKPreferences.SYNC_RESPONSE, response)
                     callMQTTService()
                 } else {
-                    val responseCodeMessage = validationUtils?.responseCodeMessage(syncServiceResponseData.d.ec)
+                    val responseCodeMessage =
+                        validationUtils?.responseCodeMessage(syncServiceResponseData.d.ec)
                     deviceCallback?.onReceiveMsg(responseCodeMessage)
                     sdkClient = null
                 }
@@ -899,8 +915,8 @@ class SDKClient private constructor(
             }
             return
         }
-         if (!validationUtils!!.isValidInputFormat(jsonData!!, uniqueId!!))
-             return
+        if (!validationUtils!!.isValidInputFormat(jsonData!!, uniqueId!!))
+            return
         if (!idEdgeDevice) { // simple device.
             publishDeviceInputData(jsonData)
         } else { //Edge device
