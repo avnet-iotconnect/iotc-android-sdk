@@ -33,7 +33,7 @@ import java.util.*
 /**
  * class for SDKClient
  */
-class SDKClient private constructor(
+class SDKClient(
     private val context: Context?,
     private val cpId: String?,
     private val uniqueId: String?,
@@ -188,7 +188,9 @@ class SDKClient private constructor(
         }
     }
 
-
+    /**
+     * Register Broadcast Receiver  for network state changes
+     */
     private fun registerNetworkState() {
         try {
             networkStateReceiver = NetworkStateReceiver()
@@ -201,6 +203,9 @@ class SDKClient private constructor(
         }
     }
 
+    /**
+     *
+     */
     private fun connect() {
         directoryPath = ""
         this.reCheckingCountTime = 0
@@ -573,6 +578,7 @@ class SDKClient private constructor(
                 val commonModel = gson.fromJson(message, CommonResponseBean::class.java)
 
                 if (commonModel?.d != null) {
+
                     if (commonModel.d.ct == DeviceIdentityMessages.GET_DEVICE_TEMPLATE_ATTRIBUTES.value) {
                         //     Log.d("mainObject", "::$mainObjectLog")
                         IotSDKPreferences.getInstance(context!!)!!.putStringData(
@@ -671,7 +677,6 @@ class SDKClient private constructor(
 
 
     }
-
 
     fun getAttributes(): String? {
 
