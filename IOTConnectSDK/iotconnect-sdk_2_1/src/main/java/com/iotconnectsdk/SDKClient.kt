@@ -578,35 +578,32 @@ class SDKClient(
                 val commonModel = gson.fromJson(message, CommonResponseBean::class.java)
 
                 if (commonModel?.d != null) {
+                    when (commonModel.d.ct) {
+                        DeviceIdentityMessages.GET_DEVICE_TEMPLATE_ATTRIBUTES.value -> {
+                            //     Log.d("mainObject", "::$mainObjectLog")
+                            IotSDKPreferences.getInstance(context!!)!!.putStringData(
+                                IotSDKPreferences.ATTRIBUTE_RESPONSE, Gson().toJson(commonModel)
+                            )
 
-                    if (commonModel.d.ct == DeviceIdentityMessages.GET_DEVICE_TEMPLATE_ATTRIBUTES.value) {
-                        //     Log.d("mainObject", "::$mainObjectLog")
-                        IotSDKPreferences.getInstance(context!!)!!.putStringData(
-                            IotSDKPreferences.ATTRIBUTE_RESPONSE, Gson().toJson(commonModel)
-                        )
+                            onDeviceConnectionStatus(isConnected())
+                        }
+                        DeviceIdentityMessages.GET_DEVICE_TEMPLATE_SETTINGS_TWIN.value -> {
+                            //   Log.d("mainObject1", "::$mainObjectLog")
+                            IotSDKPreferences.getInstance(context!!)!!.putStringData(
+                                IotSDKPreferences.SETTING_TWIN_RESPONSE, Gson().toJson(commonModel)
+                            )
+                        }
+                        DeviceIdentityMessages.GET_EDGE_RULE.value -> {
 
-                        onDeviceConnectionStatus(isConnected())
-                    }
+                        }
+                        DeviceIdentityMessages.GET_CHILD_DEVICES.value -> {
+                            IotSDKPreferences.getInstance(context!!)!!.putStringData(
+                                IotSDKPreferences.CHILD_DEVICE_RESPONSE, Gson().toJson(commonModel)
+                            )
+                        }
+                        DeviceIdentityMessages.GET_PENDING_OTA.value -> {
 
-                    if (commonModel.d.ct == DeviceIdentityMessages.GET_DEVICE_TEMPLATE_SETTINGS_TWIN.value) {
-                        //   Log.d("mainObject1", "::$mainObjectLog")
-                        IotSDKPreferences.getInstance(context!!)!!.putStringData(
-                            IotSDKPreferences.SETTING_TWIN_RESPONSE, Gson().toJson(commonModel)
-                        )
-                    }
-
-                    if (commonModel.d.ct == DeviceIdentityMessages.GET_EDGE_RULE.value) {
-
-                    }
-
-                    if (commonModel.d.ct == DeviceIdentityMessages.GET_CHILD_DEVICES.value) {
-                        IotSDKPreferences.getInstance(context!!)!!.putStringData(
-                            IotSDKPreferences.CHILD_DEVICE_RESPONSE, Gson().toJson(commonModel)
-                        )
-                    }
-
-                    if (commonModel.d.ct == DeviceIdentityMessages.GET_PENDING_OTA.value) {
-
+                        }
                     }
                 } else {
                     val mainObject = JSONObject(message)
