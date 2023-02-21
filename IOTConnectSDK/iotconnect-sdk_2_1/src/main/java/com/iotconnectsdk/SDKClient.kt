@@ -449,6 +449,9 @@ class SDKClient(
      * 1.When device is not connected to network and offline storage is true from client, than save all published message to device memory.
      * */
     private fun publishMessage(topics: String, publishMessage: String, isUpdate: Boolean) {
+
+        Log.d("publishMessage", "::$publishMessage")
+
         try {
             if (validationUtils!!.networkConnectionCheck()) {
                 if (!isUpdate) {
@@ -972,14 +975,16 @@ class SDKClient(
             var doFaultyPublish = false
             var doReportingPublish = false
 
-            val reportingObject_reporting = JSONObject()
+            var reportingObject_reporting: JSONObject? = null
             // 0 for reporting.
-            val reportingObject_faulty = JSONObject()
+            var reportingObject_faulty: JSONObject? = null
             // 1 for faulty.
 
-            var outerD_Obj_reporting: JSONObject? = null
-            var outerD_Obj_Faulty: JSONObject? = null
+            val outerD_Obj_reporting = JSONObject()
+            val outerD_Obj_Faulty = JSONObject()
 
+            val arrayObj_attributes_reporting = JSONArray()
+            val arrayObj_attributes_faulty = JSONArray()
 
             val gatewayChildResponse = getGatewayChildResponse()
             val getChildDeviceBean = GetChildDeviceBean()
@@ -997,15 +1002,20 @@ class SDKClient(
 
                 val tag = SDKClientUtils.getTag(uniqueId, gatewayChildResponse?.d)
 
-                outerD_Obj_reporting = JSONObject()
+                //  outerD_Obj_reporting = JSONObject()
                 //  outerD_Obj_reporting.put(ID, uniqueId)
-                outerD_Obj_reporting.put(DT, IotSDKUtils.currentDate)
+
                 //    outerD_Obj_reporting.put(TG, tag)
 
-                outerD_Obj_Faulty = JSONObject()
+                //   outerD_Obj_Faulty = JSONObject()
                 //    outerD_Obj_Faulty.put(ID, uniqueId)
-                outerD_Obj_Faulty.put(DT, IotSDKUtils.currentDate)
+
                 //  outerD_Obj_Faulty.put(TG, tag)
+
+                reportingObject_reporting = JSONObject()
+                // 0 for reporting.
+                reportingObject_faulty = JSONObject()
+                // 1 for faulty.
 
                 val innerD_Obj_reporting = JSONObject()
                 val innerD_Obj_faulty = JSONObject()
@@ -1015,9 +1025,8 @@ class SDKClient(
                 while (dataJsonKey.hasNext()) {
                     val key = dataJsonKey.next()
                     val value = dataObj.getString(key)
-                    if (value.replace("\\s".toRegex(), "").isNotEmpty() && JSONTokener(
-                            value
-                        ).nextValue() is JSONObject
+                    if (value.replace("\\s".toRegex(), "")
+                            .isNotEmpty() && JSONTokener(value).nextValue() is JSONObject
                     ) {
                         val gyroObj_reporting = JSONObject()
                         val gyroObj_faulty = JSONObject()
@@ -1040,10 +1049,10 @@ class SDKClient(
                         }
 
                         //add gyro object to parent d object.
-                        if (gyroObj_reporting.length() != 0) innerD_Obj_reporting.put(
-                            key, gyroObj_reporting
-                        )
-                        if (gyroObj_faulty.length() != 0) innerD_Obj_faulty.put(key, gyroObj_faulty)
+                        if (gyroObj_reporting.length() != 0)
+                            innerD_Obj_reporting.put(key, gyroObj_reporting)
+                        if (gyroObj_faulty.length() != 0)
+                            innerD_Obj_faulty.put(key, gyroObj_faulty)
                     } else {
                         val othersValidation = compareForInputValidation(key, value, tag, dObj)
                         if (othersValidation == 0) {
@@ -1053,9 +1062,6 @@ class SDKClient(
                         }
                     }
                 }
-                val arrayObj_attributes_reporting = JSONArray()
-                val arrayObj_attributes_faulty = JSONArray()
-
 
                 reportingObject_reporting.put(DT, IotSDKUtils.currentDate)
                 reportingObject_reporting.put(ID, uniqueId)
@@ -1082,13 +1088,15 @@ class SDKClient(
                     doFaultyPublish = true
 
 
-                //add object of attribute object to parent object.
-                outerD_Obj_reporting.put(D_OBJ, arrayObj_attributes_reporting)
-                outerD_Obj_Faulty.put(D_OBJ, arrayObj_attributes_faulty)
-
             }
+            //add object of attribute object to parent object.
 
-            Log.d("reporting", "::$outerD_Obj_reporting")
+            outerD_Obj_reporting.put(DT, IotSDKUtils.currentDate)
+            outerD_Obj_reporting.put(D_OBJ, arrayObj_attributes_reporting)
+
+            outerD_Obj_Faulty.put(DT, IotSDKUtils.currentDate)
+            outerD_Obj_Faulty.put(D_OBJ, arrayObj_attributes_faulty)
+
 
             //Reporting json string as below.
 //            {"cpId":"uei","dtg":"f76f806a-b0b6-4f34-bb15-11516d1e42ed","mt":"0","sdk":{"e":"qa","l":"M_android","v":"2.0"},"t":"2020-10-05T10:09:27.362Z","d":[{"id":"ddd2","dt":"2020-10-05T10:09:27.350Z","tg":"gateway","d":[{"Temp":"25","humidity":"0","abc":"abc","gyro":{"x":"0","y":"blue"}}]},{"id":"c1","dt":"2020-10-05T10:09:27.357Z","tg":"zg1","d":[{"Temperature":"0","Humidity":"50"}]},{"id":"c2","dt":"2020-10-05T10:09:27.362Z","tg":"zg2","d":[{"pressure":"500","vibration":"0","gyro":{"x":"5"}}]}]}
