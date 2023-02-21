@@ -18,7 +18,7 @@ import org.json.JSONObject
 /**
  * Service class for MQTT data upload to cloud
  */
-class IotSDKMQTTService private constructor(
+internal class IotSDKMQTTService private constructor(
     private val context: Context, private val protocolBean: IdentityServiceResponse.D.P,
     private val hubToSdkCallback: HubToSdkCallback,
     private val publishMessageCallback: PublishMessageCallback,

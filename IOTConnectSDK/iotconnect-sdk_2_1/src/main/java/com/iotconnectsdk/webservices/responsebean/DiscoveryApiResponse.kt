@@ -3,7 +3,7 @@ package com.iotconnectsdk.webservices.responsebean
 
 import com.google.gson.annotations.SerializedName
 
-data class DiscoveryApiResponse(
+internal data class DiscoveryApiResponse(
     @SerializedName("d")
     val d: D,
     @SerializedName("message")

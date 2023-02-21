@@ -3,7 +3,7 @@ package com.iotconnectsdk.beans
 
 import com.google.gson.annotations.SerializedName
 
-data class SendAttributeBean(
+internal data class SendAttributeBean(
     @SerializedName("dt")
     val dt: String, // 2023-02-08T14:26:53.477Z
     @SerializedName("d")
