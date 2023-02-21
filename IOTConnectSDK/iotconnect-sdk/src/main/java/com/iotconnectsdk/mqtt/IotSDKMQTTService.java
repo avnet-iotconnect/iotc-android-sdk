@@ -91,14 +91,14 @@ public class IotSDKMQTTService {
         mqttAndroidClient.setCallback(new MqttCallbackExtended() {
             @Override
             public void connectComplete(boolean reconnect, String serverURI) {
-                if (reconnect) {
+                //if (reconnect) {
                     // Because Clean Session is true, we need to re-subscribe
                     if (subscriptionTopic != null) {
                         subscribeToTopic();
                     }
-                } else {
+                /*} else {
 //                    addToHistory("Connected to: " + serverURI);
-                }
+                }*/
             }
 
             @Override
