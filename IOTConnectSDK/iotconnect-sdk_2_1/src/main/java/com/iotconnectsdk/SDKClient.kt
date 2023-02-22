@@ -892,10 +892,15 @@ class SDKClient(
             iotSDKLogUtils!!.log(
                 false, isDebug, "INFO_IN02", context!!.getString(R.string.INFO_IN02)
             )
+
         } else {
             iotSDKLogUtils!!.log(
                 false, isDebug, "INFO_IN03", context!!.getString(R.string.INFO_IN03)
             )
+            if (mqttService != null) {
+                mqttService?.disconnectClient()
+                mqttService?.clearInstance() //destroy singleton object.
+            }
         }
 
         setConnected(isConnected)
@@ -918,6 +923,7 @@ class SDKClient(
             isConnected.toString(), false, ""
         )
         deviceCallback?.onReceiveMsg(strJson)
+
     }
 
     override fun twinUpdateCallback(data: JSONObject?) {
