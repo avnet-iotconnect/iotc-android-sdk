@@ -45,8 +45,7 @@ internal class IotSDKMQTTService private constructor(
 
     private val TWIN_SUBTOPIC_CONTAINT = "\$iothub/twin/"
 
-    private var subscriptionTopic: String? =
-        null // = "devices/520uta-sdk003/messages/devicebound/#";
+    private var subscriptionTopic: String? = null // = "devices/520uta-sdk003/messages/devicebound/#";
 
     private var publishTopic: String? = null // = "devices/520uta-sdk003/messages/events/";
 
@@ -115,9 +114,7 @@ internal class IotSDKMQTTService private constructor(
                         mainObj.put(DESIRED, JSONObject(String(message.payload)))
                         mainObj.put(UNIQUE_ID, uniqueId)
                         twinCallbackMessage.twinUpdateCallback(mainObj)
-                    } else if (topic.contains(
-                            TWIN_SUB_TOPIC_BLANK_MSG.substring(
-                                0, TWIN_SUB_TOPIC_BLANK_MSG.length - 1
+                    } else if (topic.contains(TWIN_SUB_TOPIC_BLANK_MSG.substring(0, TWIN_SUB_TOPIC_BLANK_MSG.length - 1
                             )
                         )
                     ) {
