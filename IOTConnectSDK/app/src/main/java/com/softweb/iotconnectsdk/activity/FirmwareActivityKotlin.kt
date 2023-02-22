@@ -327,6 +327,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
 
                 var messageType = ""
                 var ackId = ""
+                var childId = ""
                 var cmdType = -1
                 var mainObject: JSONObject? = null
 
@@ -339,8 +340,13 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
                         return
                     }
                     cmdType = mainObject.getInt("ct")
+
                     if (mainObject.has("ack")) {
                         ackId = mainObject.getString("ack")
+                    }
+
+                    if (mainObject.has("id")) {
+                        childId = mainObject.getString("id")
                     }
                 }
                 when (cmdType) {
@@ -363,7 +369,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
 
 
                             val d2CSendAckBean = D2CSendAckBean(
-                                getCurrentTime()!!, D2CSendAckBean.Data(ackId, 0, 6, "", null)
+                                getCurrentTime()!!, D2CSendAckBean.Data(ackId, 0, 6, "", childId)
                             )
                             val gson = Gson()
                             val jsonString = gson.toJson(d2CSendAckBean)
