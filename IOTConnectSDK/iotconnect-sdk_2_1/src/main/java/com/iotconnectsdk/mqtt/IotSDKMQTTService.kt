@@ -90,14 +90,14 @@ internal class IotSDKMQTTService private constructor(
         )
         mqttAndroidClient?.setCallback(object : MqttCallbackExtended {
             override fun connectComplete(reconnect: Boolean, serverURI: String) {
-                if (reconnect) {
+            //    if (reconnect) {
                     // Because Clean Session is true, we need to re-subscribe
                     if (subscriptionTopic != null) {
                         subscribeToTopic()
                     }
-                } else {
+                /*} else {
 //                    addToHistory("Connected to: " + serverURI);
-                }
+                }*/
             }
 
             override fun connectionLost(cause: Throwable?) {
