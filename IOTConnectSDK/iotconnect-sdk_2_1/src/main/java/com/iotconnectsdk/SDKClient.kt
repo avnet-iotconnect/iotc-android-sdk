@@ -17,6 +17,7 @@ import com.iotconnectsdk.interfaces.PublishMessageCallback
 import com.iotconnectsdk.interfaces.TwinUpdateCallback
 import com.iotconnectsdk.mqtt.IotSDKMQTTService
 import com.iotconnectsdk.utils.*
+import com.iotconnectsdk.utils.IotSDKUtils.getCurrentTime
 import com.iotconnectsdk.utils.SDKClientUtils.compareForInputValidation
 import com.iotconnectsdk.utils.SDKClientUtils.createTextFile
 import com.iotconnectsdk.utils.SDKClientUtils.getAttributesList
@@ -108,6 +109,8 @@ class SDKClient(
     private val ID = "id"
 
     private val DT = "dt"
+
+    private val DF = "df"
 
     private val TG = "tg"
 
@@ -424,74 +427,6 @@ class SDKClient(
     }
 
 
-    /*Call publish method of IotSDKMQTTService class to publish to web.
-     * 1.When device is not connected to network and offline storage is true from client, than save all published message to device memory.
-     * */
-    private fun publishMessage(topics: String, publishMessage: String, isUpdate: Boolean) {
-
-        Log.d("publishMessage", "::$publishMessage")
-
-        try {
-            if (validationUtils!!.networkConnectionCheck()) {
-                if (!isUpdate) {
-                    mqttService!!.publishMessage(topics, publishMessage)
-                } else {
-                    mqttService!!.updateTwin(publishMessage)
-                }
-            } else if (!isSaveToOffline) { // save message to offline.
-                var fileToWrite: String? = null
-                val sdkPreferences = IotSDKPreferences.getInstance(
-                    context!!
-                )
-                val fileNamesList = sdkPreferences!!.getList(IotSDKPreferences.TEXT_FILE_NAME)
-                if (fileNamesList.isEmpty()) { //create new file when file list is empty.
-                    fileToWrite =
-                        createTextFile(context, directoryPath, fileCount, iotSDKLogUtils, isDebug)
-                } else {
-
-                    /*1.check file with "current" prefix.
-                     * 2.get the text file size and compare with defined size.
-                     * 3.When text file size is more than defined size than create new file and write to that file.
-                     * */
-                    if (!fileNamesList.isEmpty()) {
-                        for (textFile in fileNamesList) {
-                            if (textFile!!.contains(TEXT_FILE_PREFIX)) {
-                                fileToWrite = textFile
-                                val file = File(
-                                    File(context.filesDir, directoryPath), "$textFile.txt"
-                                )
-                                if (fileSizeToCreateInMb != 0 && SDKClientUtils.getFileSizeInKB(
-                                        file
-                                    ) >= fileSizeToCreateInMb
-                                ) {
-                                    //create new text file.
-                                    fileToWrite = createTextFile(
-                                        context, directoryPath, fileCount, iotSDKLogUtils, isDebug
-                                    )
-                                }
-                                break
-                            }
-                        }
-                    }
-                }
-                try {
-                    iotSDKLogUtils!!.writePublishedMessage(
-                        directoryPath!!, fileToWrite!!, publishMessage
-                    )
-                } catch (e: java.lang.Exception) {
-                    iotSDKLogUtils!!.log(
-                        true, isDebug, "ERR_OS02", context.getString(R.string.ERR_OS02) + e.message
-                    )
-                }
-                iotSDKLogUtils!!.log(
-                    false, isDebug, "INFO_OS020", context.getString(R.string.INFO_OS02)
-                )
-            }
-        } catch (e: java.lang.Exception) {
-            iotSDKLogUtils!!.log(true, isDebug, "ERR_OS01", e.message!!)
-        }
-    }
-
     /*
     * Callback to show message in UI
     * */
@@ -676,8 +611,16 @@ class SDKClient(
                         }
 
                         /*The device needs to update the frequency received in this message*/
-                        C2DMessageEnums.DATA_FREQUENCY_CHANGE.value -> {
 
+                        C2DMessageEnums.DATA_FREQUENCY_CHANGE.value -> {
+                            if (context != null) {
+                                val response = getSyncResponse()
+                                response?.d?.meta?.df = mainObject.getInt(DF)
+                                IotSDKPreferences.getInstance(context)?.putStringData(
+                                    IotSDKPreferences.SYNC_RESPONSE,
+                                    Gson().toJson(response)
+                                )
+                            }
                         }
 
                         /*The device must stop all communication and release the MQTT connection*/
@@ -707,6 +650,75 @@ class SDKClient(
 
 
     }
+
+    /*Call publish method of IotSDKMQTTService class to publish to web.
+   * 1.When device is not connected to network and offline storage is true from client, than save all published message to device memory.
+   * */
+    private fun publishMessage(topics: String, publishMessage: String, isUpdate: Boolean) {
+
+        Log.d("publishMessage", "::$publishMessage")
+
+        try {
+            if (validationUtils!!.networkConnectionCheck()) {
+                if (!isUpdate) {
+                    mqttService!!.publishMessage(topics, publishMessage)
+                } else {
+                    mqttService!!.updateTwin(publishMessage)
+                }
+            } else if (!isSaveToOffline) { // save message to offline.
+                var fileToWrite: String? = null
+                val sdkPreferences = IotSDKPreferences.getInstance(
+                    context!!
+                )
+                val fileNamesList = sdkPreferences!!.getList(IotSDKPreferences.TEXT_FILE_NAME)
+                if (fileNamesList.isEmpty()) { //create new file when file list is empty.
+                    fileToWrite =
+                        createTextFile(context, directoryPath, fileCount, iotSDKLogUtils, isDebug)
+                } else {
+
+                    /*1.check file with "current" prefix.
+                     * 2.get the text file size and compare with defined size.
+                     * 3.When text file size is more than defined size than create new file and write to that file.
+                     * */
+                    if (!fileNamesList.isEmpty()) {
+                        for (textFile in fileNamesList) {
+                            if (textFile!!.contains(TEXT_FILE_PREFIX)) {
+                                fileToWrite = textFile
+                                val file = File(
+                                    File(context.filesDir, directoryPath), "$textFile.txt"
+                                )
+                                if (fileSizeToCreateInMb != 0 && SDKClientUtils.getFileSizeInKB(
+                                        file
+                                    ) >= fileSizeToCreateInMb
+                                ) {
+                                    //create new text file.
+                                    fileToWrite = createTextFile(
+                                        context, directoryPath, fileCount, iotSDKLogUtils, isDebug
+                                    )
+                                }
+                                break
+                            }
+                        }
+                    }
+                }
+                try {
+                    iotSDKLogUtils!!.writePublishedMessage(
+                        directoryPath!!, fileToWrite!!, publishMessage
+                    )
+                } catch (e: java.lang.Exception) {
+                    iotSDKLogUtils!!.log(
+                        true, isDebug, "ERR_OS02", context.getString(R.string.ERR_OS02) + e.message
+                    )
+                }
+                iotSDKLogUtils!!.log(
+                    false, isDebug, "INFO_OS020", context.getString(R.string.INFO_OS02)
+                )
+            }
+        } catch (e: java.lang.Exception) {
+            iotSDKLogUtils!!.log(true, isDebug, "ERR_OS01", e.message!!)
+        }
+    }
+
 
     /*Method creates json string to be given to framework.
     *[{"device":{"id":"ch1","tg":"ch"},"attributes":[{"dt":1,"dv":"5 to 10","ln":"Humidity","sq":2,"tg":"ch"},{"dt":1,"dv":"","ln":"Lumosity","sq":4,"tg":"ch"}]},{"device":{"id":"","tg":"p"},"attributes":[{"dt":1,"dv":"5 to 10","ln":"Temp","sq":1,"tg":"p"},{"d":[{"dt":1,"dv":"","ln":"x","sq":1,"tg":"p"},{"dt":1,"dv":"","ln":"y","sq":2,"tg":"p"}],"dt":11,"p":"Gyroscope","tg":"p"}]}]

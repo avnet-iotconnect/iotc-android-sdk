@@ -24,6 +24,7 @@ internal class IotSDKPreferences private constructor(context: Context) {
         val EDGE_RULE_RESPONSE = "edge_rule_response"
         val CHILD_DEVICE_RESPONSE = "child_device_response"
         val PENDING_OTA_RESPONSE = "ota_response"
+        val DATA_FREQUENCY_CHANGE = "data_freq_change"
 
         val TEXT_FILE_NAME = "text_file"
 
@@ -54,8 +55,7 @@ internal class IotSDKPreferences private constructor(context: Context) {
     }
 
     fun getSyncResponse(key: String?): IdentityServiceResponse? {
-        var syncServiceResponse: IdentityServiceResponse? = null
-        syncServiceResponse = try {
+        val syncServiceResponse = try {
             val jsonString = getStringData(key)
             Gson().fromJson(jsonString, IdentityServiceResponse::class.java)
         } catch (e: Exception) {
@@ -65,7 +65,7 @@ internal class IotSDKPreferences private constructor(context: Context) {
     }
 
     fun getDeviceInformation(key: String?): CommonResponseBean? {
-        var attributeResponse = try {
+        val attributeResponse = try {
             val jsonString = getStringData(key)
             Gson().fromJson(jsonString, CommonResponseBean::class.java)
         } catch (e: Exception) {
