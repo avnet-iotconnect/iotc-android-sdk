@@ -201,7 +201,7 @@ internal class IotSDKMQTTService private constructor(
         }
     }
 
-    fun allTwins() {
+    fun getAllTwins() {
         if (mqttAndroidClient != null && mqttAndroidClient!!.isConnected) {
             try {
                 val message = MqttMessage()

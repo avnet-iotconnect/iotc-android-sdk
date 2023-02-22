@@ -6,7 +6,9 @@ import android.net.ConnectivityManager
 import android.util.Log
 import android.webkit.URLUtil
 import com.google.gson.Gson
-import com.iotconnectsdk.beans.*
+import com.iotconnectsdk.beans.CommonResponseBean
+import com.iotconnectsdk.beans.GetChildDeviceBean
+import com.iotconnectsdk.beans.TumblingWindowBean
 import com.iotconnectsdk.enums.C2DMessageEnums
 import com.iotconnectsdk.enums.DeviceIdentityMessages
 import com.iotconnectsdk.interfaces.DeviceCallback
@@ -15,7 +17,6 @@ import com.iotconnectsdk.interfaces.PublishMessageCallback
 import com.iotconnectsdk.interfaces.TwinUpdateCallback
 import com.iotconnectsdk.mqtt.IotSDKMQTTService
 import com.iotconnectsdk.utils.*
-import com.iotconnectsdk.utils.IotSDKUtils.getCurrentTime
 import com.iotconnectsdk.utils.SDKClientUtils.compareForInputValidation
 import com.iotconnectsdk.utils.SDKClientUtils.createTextFile
 import com.iotconnectsdk.utils.SDKClientUtils.getAttributesList
@@ -536,11 +537,11 @@ class SDKClient(
         }
 
         if ((response?.d?.has?.set == 1)) {
-            /*  publishMessage(
+              publishMessage(
                   response.d.p.topics.di, JSONObject().put(
                       MESSAGE_TYPE, DeviceIdentityMessages.GET_DEVICE_TEMPLATE_SETTINGS_TWIN.value
                   ).toString(), false
-              )*/
+              )
         }
 
         if ((response?.d?.has?.r == 1)) {
@@ -775,6 +776,38 @@ class SDKClient(
     }
 
 
+    fun getAllTwins() {
+        if (isDispose) {
+            iotSDKLogUtils!!.log(true, isDebug, "ERR_TP04", context!!.getString(R.string.ERR_TP04))
+            return
+        }
+        if (mqttService != null) {
+            iotSDKLogUtils!!.log(
+                false,
+                isDebug,
+                "INFO_TP02",
+                context!!.getString(R.string.INFO_TP02)
+            )
+            mqttService?.getAllTwins()
+        }
+    }
+
+    fun updateTwin(key: String?, value: String?) {
+        if (isDispose) {
+            iotSDKLogUtils!!.log(true, isDebug, "ERR_TP01", context!!.getString(R.string.ERR_TP01))
+            return
+        }
+        if (!validationUtils!!.validateKeyValue(key!!, value!!)) return
+        try {
+            if (mqttService != null)
+                publishMessage("",JSONObject().put(key, value).toString(), true)
+        } catch (e: JSONException) {
+            iotSDKLogUtils!!.log(true, isDebug, "ERR_TP01", e.message!!)
+            e.printStackTrace()
+        }
+    }
+
+
     /**
      * send acknowledgment
      *
@@ -888,7 +921,12 @@ class SDKClient(
     }
 
     override fun twinUpdateCallback(data: JSONObject?) {
-
+        try {
+            data?.put(UNIQUE_ID_View, uniqueId)
+            twinUpdateCallback?.twinUpdateCallback(data)
+        } catch (e: JSONException) {
+            e.printStackTrace()
+        }
     }
 
     override fun networkAvailable() {

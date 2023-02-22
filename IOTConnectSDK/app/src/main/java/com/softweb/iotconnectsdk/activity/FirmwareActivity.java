@@ -184,7 +184,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                      * Input   :
                      * Output  :
                      */
-                    // sdkClient.getAllTwins();
+                    sdkClient.getAllTwins();
                 } else {
                     Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
                 }
@@ -707,7 +707,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                         Object value = jsonObject.get(key);
 
                         if (sdkClient != null && isConnected) {
-                            //  sdkClient.updateTwin(key, "" + value);
+                            sdkClient.updateTwin(key, "" + value);
                         }
 
                         break;

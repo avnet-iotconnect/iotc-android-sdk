@@ -136,7 +136,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
                              * Input   :
                              * Output  :
                              */
-                        //sdkClient!!.getAllTwins()
+                        sdkClient?.getAllTwins()
                     } else {
                         Toast.makeText(
                             this@FirmwareActivityKotlin,
@@ -653,7 +653,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
                     try {
                         val value = jsonObject[key]
                         if (sdkClient != null && isConnected) {
-                            // sdkClient!!.updateTwin(key, "" + value)
+                             sdkClient?.updateTwin(key, "" + value)
                         }
                         break
                     } catch (e: JSONException) {
