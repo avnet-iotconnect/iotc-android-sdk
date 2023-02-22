@@ -382,6 +382,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
             try {
                 String messageType = "";
                 String ackId = "";
+                String childId = "";
                 int cmdType = -1;
                 JSONObject mainObject = null;
 
@@ -398,6 +399,10 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
 
                     if (mainObject.has("ack")) {
                         ackId = mainObject.getString("ack");
+                    }
+
+                    if (mainObject.has("id")) {
+                        childId = mainObject.getString("id");
                     }
                 }
 
@@ -418,7 +423,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                              *     msgType = 5; // for "0x01" device command
                              */
 
-                            D2CSendAckBean d2CSendAckBean = new D2CSendAckBean(getCurrentTime(), new D2CSendAckBean.Data(ackId, 0, 6, "", null));
+                            D2CSendAckBean d2CSendAckBean = new D2CSendAckBean(getCurrentTime(), new D2CSendAckBean.Data(ackId, 0, 6, "", childId));
                             Gson gson = new Gson();
                             String jsonString = gson.toJson(d2CSendAckBean);
 

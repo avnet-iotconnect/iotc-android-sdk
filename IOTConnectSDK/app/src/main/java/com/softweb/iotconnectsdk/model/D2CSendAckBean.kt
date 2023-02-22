@@ -20,6 +20,6 @@ data class D2CSendAckBean @JvmOverloads constructor(
         @SerializedName("msg")
         val msg: String,
         @SerializedName("cid")
-        val cid: String?=null
+        val cid: String? = null
     )
 }
