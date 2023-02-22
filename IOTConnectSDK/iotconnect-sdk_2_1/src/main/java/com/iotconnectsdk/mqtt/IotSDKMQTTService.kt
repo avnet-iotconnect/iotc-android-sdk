@@ -100,7 +100,7 @@ internal class IotSDKMQTTService private constructor(
                 }
             }
 
-            override fun connectionLost(cause: Throwable) {
+            override fun connectionLost(cause: Throwable?) {
                 hubToSdkCallback.onConnectionStateChange(false)
             }
 
