@@ -911,8 +911,15 @@ class SDKClient(
      *
      * */
     private fun unregisterReceiver() {
-        networkStateReceiver!!.removeListener(this)
-        context?.unregisterReceiver(networkStateReceiver)
+
+        try {
+            networkStateReceiver!!.removeListener(this)
+            context?.unregisterReceiver(networkStateReceiver)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+
     }
 
     override fun onConnectionStateChange(isConnected: Boolean) {
@@ -925,10 +932,7 @@ class SDKClient(
             iotSDKLogUtils!!.log(
                 false, isDebug, "INFO_IN03", context!!.getString(R.string.INFO_IN03)
             )
-            if (mqttService != null) {
-                mqttService?.disconnectClient()
-                mqttService?.clearInstance() //destroy singleton object.
-            }
+            dispose()
         }
 
         setConnected(isConnected)

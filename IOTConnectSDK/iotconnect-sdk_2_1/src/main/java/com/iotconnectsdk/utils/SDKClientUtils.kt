@@ -1,9 +1,13 @@
 package com.iotconnectsdk.utils
 
 import android.content.Context
+import android.util.Log
 import com.google.gson.Gson
 import com.iotconnectsdk.R
-import com.iotconnectsdk.beans.*
+import com.iotconnectsdk.beans.CommonResponseBean
+import com.iotconnectsdk.beans.Data
+import com.iotconnectsdk.beans.GetAttributeBean
+import com.iotconnectsdk.beans.TumblingWindowBean
 import com.iotconnectsdk.utils.IotSDKConstant.ATTRIBUTE_INFO_UPDATE
 import com.iotconnectsdk.utils.IotSDKConstant.DEVICE_INFO_UPDATE
 import com.iotconnectsdk.utils.IotSDKConstant.M_ANDROID
@@ -224,16 +228,31 @@ object SDKClientUtils {
                     val dv = data.dv
                     val dt = data.dt
                     if (key.equals(ln, ignoreCase = true) && tag.equals(tg, ignoreCase = true)) {
-                        result = if (dt == 0 && value.isNotEmpty() && !isDigit(value)) {
-                            1
-                        } else {
-                            compareWithInput(value, dv)
-                        }
+                        result = validateDataType(dt, value, dv)
+
                         break@outerloop
                     }
                 }
             }
         }
+        return result
+    }
+
+    private fun validateDataType(dt: Int, value: String, dv: String): Int {
+        var result = 0
+
+        Log.d("dtValue", "::" + dt)
+
+        if (dt == 1 || dt == 2 || dt == 3 || dt == 8) {
+            if (value.isNotEmpty() && !isDigit(value)) {
+                result = 1
+            } else {
+                result = compareWithInput(value, dv)
+            }
+        } else {
+            result = compareWithInput(value, dv)
+        }
+
         return result
     }
 
@@ -522,9 +541,11 @@ object SDKClientUtils {
     }
 
     fun isDigit(value: String): Boolean {
-        var value = value
-        value = value.replace("\\s".toRegex(), "")
-        return value.matches("\\d+(?:\\.\\d+)?".toRegex())
+        return value.all { char -> char.isDigit() }
+
+        /*   var value = value
+           value = value.replace("\\s".toRegex(), "")
+           return value.matches("\\d+(?:\\.\\d+)?".toRegex())*/
     }
 
     fun createCommandFormat(
