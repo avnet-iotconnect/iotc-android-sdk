@@ -3,14 +3,12 @@ package com.iotconnectsdk.mqtt
 import android.content.Context
 import android.util.Log
 import com.iotconnectsdk.R
-import com.iotconnectsdk.SDKClient
 import com.iotconnectsdk.interfaces.HubToSdkCallback
 import com.iotconnectsdk.interfaces.PublishMessageCallback
 import com.iotconnectsdk.interfaces.TwinUpdateCallback
 import com.iotconnectsdk.utils.IotSDKLogUtils
-import com.iotconnectsdk.utils.IotSDKUtils
+import com.iotconnectsdk.utils.DateTimeUtils
 import com.iotconnectsdk.webservices.responsebean.IdentityServiceResponse
-import com.iotconnectsdk.webservices.responsebean.SyncServiceResponse
 import org.eclipse.paho.android.service.MqttAndroidClient
 import org.eclipse.paho.client.mqttv3.*
 import org.json.JSONObject
@@ -218,7 +216,7 @@ internal class IotSDKMQTTService private constructor(
                 mqttAndroidClient!!.publish(TWIN_PUB_TOPIC, message)
                 iotSDKLogUtils.log(
                     false, isDebug, "INFO_TP01",
-                    context.getString(R.string.INFO_TP01) + " " + IotSDKUtils.currentDate
+                    context.getString(R.string.INFO_TP01) + " " + DateTimeUtils.currentDate
                 )
             } catch (e: MqttException) {
                 e.printStackTrace()
@@ -235,12 +233,12 @@ internal class IotSDKMQTTService private constructor(
                 hubToSdkCallback.onSendMsgUI(msgPublish)
                 iotSDKLogUtils.log(
                     false, isDebug, "INFO_SD01",
-                    context.getString(R.string.INFO_SD01) + " " + IotSDKUtils.currentDate
+                    context.getString(R.string.INFO_SD01) + " " + DateTimeUtils.currentDate
                 )
             } else {
                 iotSDKLogUtils.log(
                     true, isDebug, "ERR_SD10",
-                    context.getString(R.string.ERR_SD10) + " : " + IotSDKUtils.currentDate
+                    context.getString(R.string.ERR_SD10) + " : " + DateTimeUtils.currentDate
                 )
             }
         } catch (e: MqttException) {

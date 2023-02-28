@@ -17,10 +17,9 @@ import com.iotconnectsdk.interfaces.PublishMessageCallback
 import com.iotconnectsdk.interfaces.TwinUpdateCallback
 import com.iotconnectsdk.mqtt.IotSDKMQTTService
 import com.iotconnectsdk.utils.*
-import com.iotconnectsdk.utils.IotSDKUtils.getCurrentTime
-import com.iotconnectsdk.utils.SDKClientUtils.compareForInputValidation
 import com.iotconnectsdk.utils.SDKClientUtils.createTextFile
 import com.iotconnectsdk.utils.SDKClientUtils.getAttributesList
+import com.iotconnectsdk.utils.ValidationTelemetryUtils.compareForInputValidationNew
 import com.iotconnectsdk.webservices.CallWebServices
 import com.iotconnectsdk.webservices.interfaces.WsResponseInterface
 import com.iotconnectsdk.webservices.responsebean.DiscoveryApiResponse
@@ -1112,7 +1111,7 @@ class SDKClient(
                             val InnerKey = innerJsonKey.next()
                             val InnerKValue = innerObj.getString(InnerKey)
                             val gyroValidationValue =
-                                compareForInputValidation(InnerKey, InnerKValue, tag, dObj)
+                                compareForInputValidationNew(InnerKey, InnerKValue, tag, dObj)
                             if (gyroValidationValue == 0) {
                                 gyroObj_reporting.put(InnerKey, InnerKValue)
                             } else {
@@ -1126,7 +1125,7 @@ class SDKClient(
                         if (gyroObj_faulty.length() != 0)
                             innerD_Obj_faulty.put(key, gyroObj_faulty)
                     } else {
-                        val othersValidation = compareForInputValidation(key, value, tag, dObj)
+                        val othersValidation = compareForInputValidationNew(key, value, tag, dObj)
                         if (othersValidation == 0) {
                             innerD_Obj_reporting.put(key, value)
                         } else {
@@ -1135,13 +1134,13 @@ class SDKClient(
                     }
                 }
 
-                reportingObject_reporting.put(DT, IotSDKUtils.currentDate)
+                reportingObject_reporting.put(DT, DateTimeUtils.currentDate)
                 reportingObject_reporting.put(ID, uniqueId)
                 reportingObject_reporting.put(TG, tag)
 
                 reportingObject_reporting.put(D_OBJ, innerD_Obj_reporting)
 
-                reportingObject_faulty.put(DT, IotSDKUtils.currentDate)
+                reportingObject_faulty.put(DT, DateTimeUtils.currentDate)
                 reportingObject_faulty.put(ID, uniqueId)
                 reportingObject_faulty.put(TG, tag)
 
@@ -1163,10 +1162,10 @@ class SDKClient(
             }
             //add object of attribute object to parent object.
 
-            outerD_Obj_reporting.put(DT, IotSDKUtils.currentDate)
+            outerD_Obj_reporting.put(DT, DateTimeUtils.currentDate)
             outerD_Obj_reporting.put(D_OBJ, arrayObj_attributes_reporting)
 
-            outerD_Obj_Faulty.put(DT, IotSDKUtils.currentDate)
+            outerD_Obj_Faulty.put(DT, DateTimeUtils.currentDate)
             outerD_Obj_Faulty.put(D_OBJ, arrayObj_attributes_faulty)
 
 

@@ -14,7 +14,7 @@ class IotSDKLogUtils private constructor(
 ) {
     fun log(isError: Boolean, isDebug: Boolean, code: String, msg: String) {
         if (isDebug) {
-            val currentDate: String = IotSDKUtils.currentDate
+            val currentDate: String = DateTimeUtils.currentDate
             val LOG = "[" + code + "] " + currentDate + " [" + cpId + "_" + uniqueId + "]: " + msg
             //   Log.d("", LOG);
             writeLogFile(isError, LOG)

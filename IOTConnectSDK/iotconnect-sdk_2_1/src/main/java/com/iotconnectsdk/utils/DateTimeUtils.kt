@@ -4,7 +4,7 @@ import android.annotation.SuppressLint
 import java.text.SimpleDateFormat
 import java.util.*
 
-internal object IotSDKUtils {
+internal object DateTimeUtils {
     /*   public static String getAppVersion() {
 //            PackageInfo pInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
         String versionName = com.iotconnectsdk.BuildConfig.VERSION_NAME;

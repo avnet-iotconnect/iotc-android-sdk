@@ -8,19 +8,15 @@ import com.iotconnectsdk.beans.CommonResponseBean
 import com.iotconnectsdk.beans.Data
 import com.iotconnectsdk.beans.GetAttributeBean
 import com.iotconnectsdk.beans.TumblingWindowBean
-import com.iotconnectsdk.utils.IotSDKConstant.ATTRIBUTE_INFO_UPDATE
-import com.iotconnectsdk.utils.IotSDKConstant.DEVICE_INFO_UPDATE
-import com.iotconnectsdk.utils.IotSDKConstant.M_ANDROID
-import com.iotconnectsdk.utils.IotSDKConstant.PASSWORD_INFO_UPDATE
-import com.iotconnectsdk.utils.IotSDKConstant.RULE_INFO_UPDATE
-import com.iotconnectsdk.utils.IotSDKConstant.SETTING_INFO_UPDATE
-import com.iotconnectsdk.webservices.requestbean.SyncServiceRequest
+import com.iotconnectsdk.utils.ValidationTelemetryUtils.M_ANDROID
+
 import com.iotconnectsdk.webservices.responsebean.SyncServiceResponse
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 import org.json.JSONTokener
 import java.io.File
+import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 
 object SDKClientUtils {
@@ -47,65 +43,6 @@ object SDKClientUtils {
     private const val EDGE_DEVICE_MESSAGE_TYPE = 2
     private const val TEXT_FILE_PREFIX = "current"
 
-    fun getSyncServiceRequest(
-        cpId: String?, uniqueId: String?, cmdType: String?
-    ): SyncServiceRequest {
-        val syncServiceRequest = SyncServiceRequest()
-        syncServiceRequest.cpId = cpId
-        syncServiceRequest.uniqueId = uniqueId
-        val optionBean = SyncServiceRequest.OptionBean()
-        optionBean.isAttribute = false
-        optionBean.isDevice = false
-        optionBean.isProtocol = false
-        optionBean.isSetting = false
-        optionBean.isSdkConfig = false
-        optionBean.isRule = false
-        if (cmdType == null) {
-            optionBean.isAttribute = true
-            optionBean.isDevice = true
-            optionBean.isProtocol = true
-            optionBean.isSetting = true
-            optionBean.isSdkConfig = true
-            optionBean.isRule = true
-        } else if (cmdType.equals(ATTRIBUTE_INFO_UPDATE, ignoreCase = true)) {
-            optionBean.isAttribute = true
-        } else if (cmdType.equals(DEVICE_INFO_UPDATE, ignoreCase = true)) {
-            optionBean.isDevice = true
-        } else if (cmdType.equals(PASSWORD_INFO_UPDATE, ignoreCase = true)) {
-            optionBean.isProtocol = true
-        } else if (cmdType.equals(SETTING_INFO_UPDATE, ignoreCase = true)) {
-            optionBean.isSetting = true
-        } else if (cmdType.equals(RULE_INFO_UPDATE, ignoreCase = true)) {
-            optionBean.isRule = true
-        }
-        syncServiceRequest.option = optionBean
-        return syncServiceRequest
-    }
-
-
-    /* fun getAttributesList(
-         attributeResponse: CommonResponseBean,
-         childDeviceBean: GetChildDeviceBean
-     ): ArrayList<GetAttributeBean> {
-
-
-         val attributeList = ArrayList<GetAttributeBean>()
-         attributeResponse.d.att.forEach { singleAtt ->
-             if (singleAtt.p.isNotEmpty()) {
-                 if (singleAtt.tg == childDeviceBean.tg) {
-                     attributeList.addAll(attributeResponse.d.att)
-                 }
-             } else {
-                 singleAtt.d.forEach { singleD ->
-                     if (singleD.tg == childDeviceBean.tg) {
-                         attributeList.addAll(attributeResponse.d.att)
-                     }
-                 }
-
-             }
-         }
-         return attributeList
-     }*/
     fun getAttributesList(
         attributesLists: List<GetAttributeBean>, tag: String?
     ): JSONArray {
@@ -366,6 +303,7 @@ object SDKClientUtils {
         }
     }
 
+
     fun updateEdgeDeviceGyroObj(
         key: String, innerKey: String, value: String,
         edgeDeviceAttributeGyroMap: Map<String?, List<TumblingWindowBean?>?>
@@ -407,7 +345,7 @@ object SDKClientUtils {
         edgeDeviceAttributeMap: Map<String?, TumblingWindowBean?>, uniqueId: String, cpId: String?,
         environment: String?, appVersion: String?, dtg: String?
     ): JSONObject? {
-        val currentTime = IotSDKUtils.currentDate
+        val currentTime = DateTimeUtils.currentDate
         val mainObj = getEdgeDevicePublishMainObj(
             currentTime, dtg, cpId, environment, appVersion, EDGE_DEVICE_MESSAGE_TYPE
         )
@@ -543,9 +481,17 @@ object SDKClientUtils {
     fun isDigit(value: String): Boolean {
         return value.all { char -> char.isDigit() }
 
-        /*   var value = value
+         /*  var value = value
            value = value.replace("\\s".toRegex(), "")
            return value.matches("\\d+(?:\\.\\d+)?".toRegex())*/
+    }
+
+    fun isLetter(value: String): Boolean {
+        return value.all { char -> char.isLetter() }
+
+        /*  var value = value
+          value = value.replace("\\s".toRegex(), "")
+          return value.matches("\\d+(?:\\.\\d+)?".toRegex())*/
     }
 
     fun createCommandFormat(
