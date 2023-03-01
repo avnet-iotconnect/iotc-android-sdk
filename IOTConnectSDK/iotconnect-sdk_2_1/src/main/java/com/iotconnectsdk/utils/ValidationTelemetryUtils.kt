@@ -7,8 +7,10 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.ResolverStyle
 import java.util.*
+import java.util.regex.Pattern
 
 internal object ValidationTelemetryUtils {
+
 
     const val M_ANDROID = "M_android"
 
@@ -88,10 +90,14 @@ internal object ValidationTelemetryUtils {
             return validateBit(value, dv)
         } else if (dt == DATA_TYPE_BOOLEAN) {
             return validateBoolean(value, dv)
-        }else if (dt == DATA_TYPE_TIME) {
+        } else if (dt == DATA_TYPE_TIME) {
             return validateTime(value, dv)
-        }else if (dt == DATA_TYPE_DATE) {
-            return validateDate(value, dv)
+        } else if (dt == DATA_TYPE_DATE) {
+            return validateDate(value, dv, dt)
+        } else if (dt == DATA_TYPE_DATETIME) {
+            return validateDate(value, dv, dt)
+        } else if (dt == DATA_TYPE_LATLONG) {
+            return validateLatLong(value, dv)
         }
 
         return ERR
@@ -277,7 +283,7 @@ internal object ValidationTelemetryUtils {
                 if (rngwithto.size == 0 && rngwithnum.size > 0) {
                     FAULTY
                 } else if (availableList.contains(REPORTING)) {
-                   REPORTING
+                    REPORTING
                 } else {
                     if (availableList.contains(FAULTY)) FAULTY else REPORTING
                 }
@@ -287,15 +293,23 @@ internal object ValidationTelemetryUtils {
         }
     }
 
-    private fun validateDate(value: String?, range: String): Int {
+    private fun validateDate(value: String?, range: String, dt: Int): Int {
         var range: String? = range
+        var formatter: DateTimeFormatter? = null
+
         return try {
             if ((value == null || value.isEmpty()) && (range == null || range.isEmpty())) {
                 return REPORTING
             }
-            val formatter = DateTimeFormatter.ofPattern("uuuu-MM-dd").withResolverStyle(
-                ResolverStyle.STRICT
-            )
+
+            if (dt == DATA_TYPE_DATE) {
+                formatter = DateTimeFormatter.ofPattern("uuuu-MM-dd")
+                    .withResolverStyle(ResolverStyle.STRICT)
+            } else if (dt == DATA_TYPE_DATETIME) {
+                formatter = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'hh:mm:ss.SSS'Z'")
+                    .withResolverStyle(ResolverStyle.STRICT)
+            }
+
             val date = LocalDate.parse(value, formatter)
             var start: LocalDate?
             var end: LocalDate?
@@ -339,12 +353,26 @@ internal object ValidationTelemetryUtils {
                     }
                 }
                 if (rngwithto.size == 0 && rngwithnum.size > 0) {
-                   FAULTY
+                    FAULTY
                 } else if (availableList.contains(REPORTING)) {
                     REPORTING
                 } else {
                     if (availableList.contains(FAULTY)) FAULTY else REPORTING
                 }
+            }
+        } catch (e: java.lang.Exception) {
+            FAULTY
+        }
+    }
+
+    private fun validateLatLong(value: String, dataValidation: String): Int {
+        return try {
+            if (Pattern.compile("\\[\\d*\\.?\\d*\\,\\d*\\.?\\d*\\]", Pattern.MULTILINE)
+                    .matcher(value).find()
+            ) {
+                REPORTING
+            } else {
+                FAULTY
             }
         } catch (e: java.lang.Exception) {
             FAULTY
