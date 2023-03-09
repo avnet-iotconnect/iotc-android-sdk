@@ -17,6 +17,7 @@ import com.iotconnectsdk.interfaces.PublishMessageCallback
 import com.iotconnectsdk.interfaces.TwinUpdateCallback
 import com.iotconnectsdk.mqtt.IotSDKMQTTService
 import com.iotconnectsdk.utils.*
+import com.iotconnectsdk.utils.DateTimeUtils.getCurrentTime
 import com.iotconnectsdk.utils.SDKClientUtils.createTextFile
 import com.iotconnectsdk.utils.SDKClientUtils.getAttributesList
 import com.iotconnectsdk.utils.ValidationTelemetryUtils.compareForInputValidationNew
@@ -1020,7 +1021,7 @@ class SDKClient(
     private fun publishDeviceInputData(jsonData: String?) {
 
         val response = getSyncResponse()
-        /*var df = 0
+        var df = 0
         if (response != null) {
             df = response.d.meta.df
         }
@@ -1034,7 +1035,7 @@ class SDKClient(
             } else {
                 savedTime = savedTime + df
             }
-        }*/
+        }
         if (response != null) {
             if (jsonData != null) {
                 publishDeviceInputData(response, jsonData, getAttributeResponse())
