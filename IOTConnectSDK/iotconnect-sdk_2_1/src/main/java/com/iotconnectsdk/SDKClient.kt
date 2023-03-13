@@ -18,7 +18,9 @@ import com.iotconnectsdk.interfaces.TwinUpdateCallback
 import com.iotconnectsdk.mqtt.IotSDKMQTTService
 import com.iotconnectsdk.utils.*
 import com.iotconnectsdk.utils.DateTimeUtils.getCurrentTime
+import com.iotconnectsdk.utils.EdgeDeviceUtils.publishEdgeDeviceInputData
 import com.iotconnectsdk.utils.SDKClientUtils.createTextFile
+import com.iotconnectsdk.utils.SDKClientUtils.deleteTextFile
 import com.iotconnectsdk.utils.SDKClientUtils.getAttributesList
 import com.iotconnectsdk.utils.ValidationTelemetryUtils.compareForInputValidationNew
 import com.iotconnectsdk.webservices.CallWebServices
@@ -29,8 +31,13 @@ import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 import org.json.JSONTokener
+import java.io.BufferedReader
 import java.io.File
+import java.io.FileReader
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
+import kotlin.collections.ArrayList
 
 /**
  * class for SDKClient
@@ -121,11 +128,11 @@ class SDKClient(
     private val EDGE_DEVICE_RULE_MATCH_MESSAGE_TYPE = 3
 
     //for Edge Device
-    private val edgeDeviceTimersList: List<Timer>? = null
+    private var edgeDeviceTimersList: ArrayList<Timer>? = null
 
-    private val edgeDeviceAttributeMap: Map<String, TumblingWindowBean>? = null
+    private var edgeDeviceAttributeMap: MutableMap<String, TumblingWindowBean>? =null
 
-    private val edgeDeviceAttributeGyroMap: Map<String, List<TumblingWindowBean>>? = null
+    private var edgeDeviceAttributeGyroMap: MutableMap<String, List<TumblingWindowBean>>? = null
 
     private val publishObjForRuleMatchEdgeDevice: JSONObject? = null
 
@@ -185,7 +192,7 @@ class SDKClient(
 
     private fun connect() {
         directoryPath = ""
-        this.reCheckingCountTime = 0
+        reCheckingCountTime = 0
         commandType = null
         isDispose = false
         idEdgeDevice = false
@@ -414,6 +421,13 @@ class SDKClient(
 
     /*get the saved Settings response from shared preference.
   * */
+    private fun getEdgeRuleResponse(): CommonResponseBean? {
+        return IotSDKPreferences.getInstance(context!!)
+            ?.getDeviceInformation(IotSDKPreferences.EDGE_RULE_RESPONSE)
+    }
+
+    /*get the saved Settings response from shared preference.
+ * */
     private fun getSettingsResponse(): CommonResponseBean? {
         return IotSDKPreferences.getInstance(context!!)
             ?.getDeviceInformation(IotSDKPreferences.SETTING_TWIN_RESPONSE)
@@ -462,11 +476,11 @@ class SDKClient(
         }
 
         if ((response?.d?.has?.r == 1)) {
-            /* publishMessage(
-                 response.d.p.topics.di,
-                 JSONObject().put(MESSAGE_TYPE, DeviceIdentityMessages.GET_EDGE_RULE.value)
-                     .toString(), false
-             )*/
+            publishMessage(
+                response.d.p.topics.di,
+                JSONObject().put(MESSAGE_TYPE, DeviceIdentityMessages.GET_EDGE_RULE.value)
+                    .toString(), false
+            )
         }
 
         if ((response?.d?.has?.d == 1)) {
@@ -505,8 +519,18 @@ class SDKClient(
 
                 if (commonModel?.d != null) {
                     when (commonModel.d.ct) {
-                        /*{"d":{"att":[{"p":"","dt":0,"tg":"","d":[{"ln":"Temp","dt":1,"dv":"5 to 10","sq":1,"tg":"p"},{"ln":"Humidity","dt":1,"dv":"5 to 10","sq":2,"tg":"ch"},{"ln":"Lumosity","dt":1,"dv":"","sq":4,"tg":"ch"}]},{"p":"Gyroscope","dt":11,"tg":"p","d":[{"ln":"x","dt":1,"dv":"","sq":1,"tg":"p"},{"ln":"y","dt":1,"dv":"","sq":2,"tg":"p"}]}],"ct":201,"ec":0,"dt":"2023-02-22T10:41:18.6947577Z"}}*/
+                        /*{"d":{"att":[{"p":"","dt":0,"tg":"","d":[{"ln":"Temp","dt":1,"dv":"5 to 10","sq":1,"tg":"p","tw":"60s"},{"ln":"Humidity","dt":1,"dv":"5 to 10","sq":2,"tg":"ch","tw":"60s"},{"ln":"Lumosity","dt":1,"dv":"","sq":4,"tg":"ch","tw":"60s"}]},{"p":"Gyroscope","dt":11,"tg":"p","d":[{"ln":"x","dt":1,"dv":"","sq":1,"tg":"p","tw":"60s"},{"ln":"y","dt":1,"dv":"","sq":2,"tg":"p","tw":"60s"}]}],"ct":201,"ec":0,"dt":"2023-02-22T10:41:18.6947577Z"}}*/
                         DeviceIdentityMessages.GET_DEVICE_TEMPLATE_ATTRIBUTES.value -> {
+                            val response = getSyncResponse()
+                            if (response?.d?.meta?.edge == 1) {
+                                idEdgeDevice = true
+                                try {
+                                   processEdgeDeviceTWTimer(commonModel)
+                                } catch (e: Exception) {
+                                    iotSDKLogUtils!!.log(true, isDebug, "ERR_EE01", e.message!!)
+                                }
+                            }
+
                             IotSDKPreferences.getInstance(context!!)!!.putStringData(
                                 IotSDKPreferences.ATTRIBUTE_RESPONSE, Gson().toJson(commonModel)
                             )
@@ -524,7 +548,9 @@ class SDKClient(
                         }
 
                         DeviceIdentityMessages.GET_EDGE_RULE.value -> {
-
+                            IotSDKPreferences.getInstance(context!!)!!.putStringData(
+                                IotSDKPreferences.EDGE_RULE_RESPONSE, Gson().toJson(commonModel)
+                            )
                         }
 
                         /*
@@ -596,7 +622,13 @@ class SDKClient(
 
                         /*The device must send a message of type 203 to get updated Edge rules*/
                         C2DMessageEnums.REFRESH_EDGE_RULE.value -> {
-
+                            val response = getSyncResponse()
+                            publishMessage(
+                                response?.d?.p?.topics!!.di, JSONObject().put(
+                                    MESSAGE_TYPE,
+                                    DeviceIdentityMessages.GET_EDGE_RULE.value
+                                ).toString(), false
+                            )
                         }
 
                         /*The device must send a message of type 204 to get updated child devices*/
@@ -974,16 +1006,173 @@ class SDKClient(
     }
 
     override fun networkAvailable() {
+        try {
+            if (!isSaveToOffline) {
 
+                //check is there any text file name.
+                if (IotSDKPreferences.getInstance(context!!)!!
+                        .getList(IotSDKPreferences.TEXT_FILE_NAME).isEmpty()
+                ) {
+                    iotSDKLogUtils!!.log(
+                        false,
+                        isDebug,
+                        "INFO_OS05",
+                        context.getString(R.string.INFO_OS05)
+                    )
+                    return
+                }
+
+                //check device if there any file stored for offline storage.
+                val directory = File(context.filesDir, directoryPath)
+                if (directory.exists()) {
+                    val contents = directory.listFiles()
+                    if (contents.size > 0) {
+//                        publishOfflineData();
+                        checkIsDeviceOnline()
+                    }
+                }
+            }
+        } catch (e: java.lang.Exception) {
+            iotSDKLogUtils!!.log(true, isDebug, "ERR_OS01", e.message!!)
+            e.printStackTrace()
+        }
     }
 
     override fun networkUnavailable() {
+        timerStop(timerCheckDeviceState)
+        if (!isSaveToOffline) {
+            timerStop(timerOfflineSync)
+        }
+    }
 
+    private var timerOfflineSync: Timer? = null
+    private var syncOfflineData = true
+    private val OFFLINE_DATA = "od"
+
+    /*Start timer for publish "df" value interval
+     * */
+    private fun publishOfflineData() {
+        try {
+            syncOfflineData = true
+            val finalOfflineData = CopyOnWriteArrayList<String>()
+            finalOfflineData.addAll(readTextFile()!!)
+            if (finalOfflineData.isEmpty()) return
+
+            //start timer to sync offline data.
+            timerOfflineSync = Timer()
+            val timerTaskObj: TimerTask = object : TimerTask() {
+                override fun run() {
+                    //read next text file, when previous list is done sync.
+                    if (finalOfflineData.isEmpty()) {
+                        finalOfflineData.addAll(readTextFile()!!)
+                    }
+                    syncOfflineData = if (syncOfflineData) {
+                        if (!finalOfflineData.isEmpty()) {
+                            for (i in finalOfflineData.indices) {
+                                val data = finalOfflineData[i]
+                                try {
+                                    val dataObj = JSONObject(data)
+                                    //                                    dataObj.put(OFFLINE_DATA, 1);
+
+                                    //publish offline data.
+                                    // mqttService!!.publishMessage(dataObj.toString())
+                                } catch (e: JSONException) {
+                                    iotSDKLogUtils!!.log(true, isDebug, "ERR_OS01", e.message!!)
+                                    e.printStackTrace()
+                                }
+                                finalOfflineData.removeAt(i)
+                            }
+                        }
+                        false
+                    } else {
+                        true
+                    }
+                }
+            }
+            timerOfflineSync!!.schedule(timerTaskObj, 0, 10000)
+        } catch (e: java.lang.Exception) {
+            iotSDKLogUtils!!.log(true, isDebug, "ERR_OS01", e.message!!)
+            e.printStackTrace()
+        }
+    }
+
+    fun readTextFile(): CopyOnWriteArrayList<String>? {
+        val offlineData = CopyOnWriteArrayList<String>()
+        try {
+            val preferences = IotSDKPreferences.getInstance(
+                context!!
+            )
+            val fileNamesList = preferences!!.getList(IotSDKPreferences.TEXT_FILE_NAME)
+            if (fileNamesList.isEmpty()) {
+                //shared preference is empty than stop sync timer.
+                timerStop(timerOfflineSync)
+                return offlineData
+            }
+            val bufferedReader = BufferedReader(
+                FileReader(
+                    File(
+                        File(
+                            context.filesDir, directoryPath
+                        ), fileNamesList[0] + ".txt"
+                    )
+                )
+            )
+            var read: String
+            //            StringBuilder builder = new StringBuilder("");
+            while (bufferedReader.readLine().also { read = it } != null) {
+//                builder.append(read);
+                offlineData.add(read)
+            }
+            bufferedReader.close()
+
+            //delete text file after reading all records.
+            if (deleteTextFile(
+                    fileNamesList as ArrayList<String?>,
+                    context,
+                    directoryPath,
+                    iotSDKLogUtils,
+                    isDebug
+                )
+            ) {
+                iotSDKLogUtils!!.log(
+                    false,
+                    isDebug,
+                    "INFO_OS04",
+                    context.getString(R.string.INFO_OS04)
+                )
+            }
+        } catch (e: java.lang.Exception) {
+            iotSDKLogUtils!!.log(
+                true,
+                isDebug,
+                "ERR_OS03",
+                context!!.getString(R.string.ERR_OS03) + e.message
+            )
+            e.printStackTrace()
+        }
+        return offlineData
     }
 
 
     override fun onFailedResponse(message: String?) {
 
+    }
+
+    /*Check is device got connected on network available time, than publish offline data.
+     * */
+    private var timerCheckDeviceState: Timer? = null
+
+    private fun checkIsDeviceOnline() {
+        timerCheckDeviceState = Timer()
+        val timerTaskObj: TimerTask = object : TimerTask() {
+            override fun run() {
+                if (isConnected()) {
+                    timerStop(timerCheckDeviceState)
+                    publishOfflineData()
+                }
+            }
+        }
+        timerCheckDeviceState!!.schedule(timerTaskObj, 0, 2000)
     }
 
 
@@ -1007,7 +1196,7 @@ class SDKClient(
         if (!idEdgeDevice) { // simple device.
             publishDeviceInputData(jsonData)
         } else { //Edge device
-            //  processEdgeDeviceInputData(jsonData)
+            //processEdgeDeviceInputData(jsonData)
         }
     }
 
@@ -1185,6 +1374,133 @@ class SDKClient(
         } catch (e: JSONException) {
             e.printStackTrace()
             iotSDKLogUtils!!.log(true, isDebug, "CM01_SD01", e.message!!)
+        }
+    }
+
+
+    /*process data for edge device timer start.
+     *
+     * @param response      Sync service response.
+     * */
+    private fun processEdgeDeviceTWTimer(response: CommonResponseBean) {
+        val attributeList = response.d?.att
+        edgeDeviceAttributeMap = ConcurrentHashMap()
+        edgeDeviceAttributeGyroMap = ConcurrentHashMap()
+        edgeDeviceTimersList = ArrayList()
+        if (attributeList != null) {
+            for (bean in attributeList) {
+                if (bean.p != null && !bean.p.isEmpty()) {
+                    // if for not empty "p":"gyro"
+                    val gyroAttributeList: MutableList<TumblingWindowBean> = ArrayList()
+                    val listD = bean.d
+                    for (beanX in listD) {
+                        val attributeLn = beanX.ln
+
+                        //check attribute input type is numeric or not, ignore the attribute if it is not numeric.
+                        if (beanX.dt != 1) {
+                            val twb = TumblingWindowBean()
+                            twb.attributeName = attributeLn
+                            gyroAttributeList.add(twb)
+                        }
+                    }
+                    (edgeDeviceAttributeGyroMap as ConcurrentHashMap<String, List<TumblingWindowBean>>).put(
+                        bean.p,
+                        gyroAttributeList
+                    )
+                    edgeDeviceTWTimerStart(bean.tw, bean.p, bean.tg)
+                } else {
+                    val listD = bean.d
+                    for (beanX in listD) {
+                        val ln = beanX.ln
+                        val tag = beanX.tg
+
+                        //check attribute input type is numeric or not, ignore the attribute if it is not numeric.
+
+                        if (beanX.dt != 1) edgeDeviceTWTimerStart(beanX.tw, ln, tag)
+                    }
+                }
+            }
+        }
+    }
+
+    /*Start timer for Edge device attributes (humidity,temp,gyro etc...), each attribute has it's own timer.
+     *with delay of Tumbling window ("tw":"10s") time in seconds.
+     *
+     * @param  twTime       Tumbling window ("tw":"10s") time in seconds
+     * @param  ln           attribute name humidity,temp,gyro etc...
+     * @param  tag          attribute tag
+     */
+    private fun edgeDeviceTWTimerStart(twTime: String?, ln: String?, tag: String?) {
+        val tw = twTime?.replace("[^\\d.]".toRegex(), "")?.toInt()
+        if (ln != null) {
+            edgeDeviceAttributeMap?.put(ln, TumblingWindowBean())
+        }
+        val timerTumblingWindow = Timer()
+        edgeDeviceTimersList?.add(timerTumblingWindow)
+        val timerTask: TimerTask = object : TimerTask() {
+            override fun run() {
+             //   val dtg: String = getSyncResponse().getD().getDtg()
+                val publishObj = publishEdgeDeviceInputData(
+                    ln,
+                    tag,
+                  edgeDeviceAttributeGyroMap,
+                   edgeDeviceAttributeMap,
+                    uniqueId,
+                    cpId,
+                    environment,
+                    appVersion,
+                    ""
+                )
+
+                //check publish object is not empty of data. check to inner "d":[] object. Example below json string inner "d":[] object is empty.
+                //{"cpId":"uei","dtg":"b55d6d86-5320-4b26-8df2-b65e3221385e","t":"2021-01-11T02:36:19.644Z","mt":2,"sdk":{"e":"qa","l":"M_android","v":"2.0"},"d":[{"id":"AAA02","dt":"2021-01-11T02:36:19.644Z","tg":"","d":[]}]}
+                var isPublish = true
+                try {
+                    val dArray = publishObj!!.getJSONArray(D_OBJ)
+                    for (i in 0 until dArray.length()) {
+                        val innerDObj = dArray.getJSONObject(i).getJSONArray(D_OBJ)
+                        if (innerDObj.length() <= 0) {
+                            isPublish = false
+                        }
+                    }
+
+                    //return on "d":[] object is empty.
+                    if (!isPublish) return
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                    return
+                }
+                if (publishObj != null) {
+                   // publishMessage(publishObj.toString(), false)
+                }
+            }
+        }
+        if (tw != null) {
+            timerTumblingWindow.scheduleAtFixedRate(
+                timerTask,
+                (tw * 1000).toLong(),
+                (tw * 1000).toLong()
+            )
+        }
+    }
+
+
+    /*Stop timer for Edge device attributes (humidity,temp,gyro etc...).
+     * Clear the list and map collection.
+     * */
+
+    private fun edgeDeviceTimerStop() {
+        edgeDeviceAttributeMap?.clear()
+        edgeDeviceAttributeGyroMap?.clear()
+        if (edgeDeviceTimersList != null) for (timer in edgeDeviceTimersList!!) {
+            timerStop(timer)
+        }
+    }
+
+    private fun timerStop(timer: Timer?) {
+        if (timer != null) {
+            timer.cancel()
+            timer.purge()
         }
     }
 
