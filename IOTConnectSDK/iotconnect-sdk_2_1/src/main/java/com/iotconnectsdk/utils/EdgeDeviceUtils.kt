@@ -16,7 +16,7 @@ object EdgeDeviceUtils {
     private const val ENVIRONMENT = "e"
     private const val SDK_OBJ = "sdk"
     private const val DTG = "dtg"
-    private const val CURRENT_DATE = "t"
+    private const val CURRENT_DATE = "dt"
     private const val DEVICE_ID = "id"
     private const val DT = "dt"
     private const val DEVICE_TAG = "tg"
@@ -27,15 +27,17 @@ object EdgeDeviceUtils {
 
     fun updateEdgeDeviceGyroObj(
         key: String, innerKey: String, value: String,
-        edgeDeviceAttributeGyroMap: Map<String?, List<TumblingWindowBean?>?>
+        edgeDeviceAttributeGyroMap: MutableMap<String, List<TumblingWindowBean>>?
     ) {
-        for ((key1, tlbList) in edgeDeviceAttributeGyroMap) {
-            if (key1 == key) {
-                val inputValue = value.toInt()
-                if (tlbList != null) {
-                    for (bean in tlbList) {
-                        if (innerKey == bean?.attributeName) {
-                            setObjectValue(bean, inputValue)
+        if (edgeDeviceAttributeGyroMap != null) {
+            for ((key1, tlbList) in edgeDeviceAttributeGyroMap) {
+                if (key1 == key) {
+                    val inputValue = value.toInt()
+                    if (tlbList != null) {
+                        for (bean in tlbList) {
+                            if (innerKey == bean?.attributeName) {
+                                setObjectValue(bean, inputValue)
+                            }
                         }
                     }
                 }
@@ -44,13 +46,15 @@ object EdgeDeviceUtils {
     }
 
     fun updateEdgeDeviceObj(
-        key: String, value: String, edgeDeviceAttributeMap: Map<String?, TumblingWindowBean?>
+        key: String, value: String, edgeDeviceAttributeMap: MutableMap<String, TumblingWindowBean>?
     ) {
-        for ((key1, tlb) in edgeDeviceAttributeMap) {
-            if (key1 == key) {
-                val inputValue = value.toInt()
-                if (tlb != null) {
-                   setObjectValue(tlb, inputValue)
+        if (edgeDeviceAttributeMap != null) {
+            for ((key1, tlb) in edgeDeviceAttributeMap) {
+                if (key1 == key) {
+                    val inputValue = value.toInt()
+                    if (tlb != null) {
+                        setObjectValue(tlb, inputValue)
+                    }
                 }
             }
         }
@@ -61,20 +65,22 @@ object EdgeDeviceUtils {
     * @Param attributeName     Attribute name (humidity etc...)
     * */
     fun publishEdgeDeviceInputData(
-        attributeName: String?, tag: String?,
+        attributeName: String?, tag: String,
         edgeDeviceAttributeGyroMap: MutableMap<String, List<TumblingWindowBean>>?,
         edgeDeviceAttributeMap: MutableMap<String, TumblingWindowBean>?, uniqueId: String?, cpId: String?,
         environment: String?, appVersion: String?, dtg: String?
     ): JSONObject? {
         val currentTime = DateTimeUtils.currentDate
         val mainObj = getEdgeDevicePublishMainObj(
-            currentTime, dtg, cpId, environment, appVersion, EDGE_DEVICE_MESSAGE_TYPE
+            currentTime/*, dtg, cpId, environment, appVersion, EDGE_DEVICE_MESSAGE_TYPE*/
         )
         val dArray = JSONArray()
-        val dArrayObject = getEdgeDevicePublishDObj(currentTime, tag!!, uniqueId!!)
+        val dArrayObject = getEdgeDevicePublishDObj(currentTime, tag, uniqueId!!)
         val dInnerArray = JSONArray()
+        val dInnerArrayNew = JSONObject()
         val gyroObj = JSONObject()
         val dInnerArrayObject = JSONObject()
+       // val dInnerArrayObjectNew
         //for gyro object
         if (edgeDeviceAttributeGyroMap != null) {
             for ((key, twbList) in edgeDeviceAttributeGyroMap) {
@@ -92,9 +98,9 @@ object EdgeDeviceUtils {
                         }
                         if (dInnerArrayObject.length() > 0) {
                             gyroObj.put(attributeName, dInnerArrayObject)
-                            dInnerArray.put(gyroObj)
+                           // dInnerArray.put(gyroObj)
                         }
-                        dArrayObject.put(D_OBJ, dInnerArray)
+                        dArrayObject.put(D_OBJ, gyroObj)
                         dArray.put(dArrayObject)
                         mainObj.put(D_OBJ, dArray)
                         return mainObj
@@ -113,9 +119,9 @@ object EdgeDeviceUtils {
                         val attributeArray = getEdgeDevicePublishAttributes(twb!!)
                         if (attributeArray.length() > 0) {
                             dInnerArrayObject.put(attributeName, attributeArray)
-                            dInnerArray.put(dInnerArrayObject)
+                           // dInnerArray.put(dInnerArrayObject)
                         }
-                        dArrayObject.put(D_OBJ, dInnerArray)
+                        dArrayObject.put(D_OBJ, dInnerArrayObject)
                         dArray.put(dArrayObject)
                         mainObj.put(D_OBJ, dArray)
                     } catch (e: JSONException) {
@@ -132,16 +138,16 @@ object EdgeDeviceUtils {
     }
 
     fun getEdgeDevicePublishMainObj(
-        currentTime: String?, dtg: String?, cpId: String?, environment: String?,
-        appVersion: String?, messageType: Int
+        currentTime: String?/*, dtg: String?, cpId: String?, environment: String?,
+        appVersion: String?, messageType: Int*/
     ): JSONObject {
         val mainObj = JSONObject()
         try {
-            mainObj.put(CP_ID, cpId)
-            mainObj.put(DTG, dtg)
-            mainObj.put(CURRENT_DATE, currentTime)
-            mainObj.put(MESSAGE_TYPE, messageType)
-            mainObj.put(SDK_OBJ, SDKClientUtils.getSdk(environment, appVersion))
+          //  mainObj.put(CP_ID, cpId)
+          //  mainObj.put(DTG, dtg)
+            mainObj.put(DT, currentTime)
+           // mainObj.put(MESSAGE_TYPE, messageType)
+        //  mainObj.put(SDK_OBJ, SDKClientUtils.getSdk(environment, appVersion))
         } catch (e: JSONException) {
             e.printStackTrace()
         }

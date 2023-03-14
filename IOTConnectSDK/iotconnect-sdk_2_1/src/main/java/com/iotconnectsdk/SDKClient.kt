@@ -19,6 +19,8 @@ import com.iotconnectsdk.mqtt.IotSDKMQTTService
 import com.iotconnectsdk.utils.*
 import com.iotconnectsdk.utils.DateTimeUtils.getCurrentTime
 import com.iotconnectsdk.utils.EdgeDeviceUtils.publishEdgeDeviceInputData
+import com.iotconnectsdk.utils.EdgeDeviceUtils.updateEdgeDeviceGyroObj
+import com.iotconnectsdk.utils.EdgeDeviceUtils.updateEdgeDeviceObj
 import com.iotconnectsdk.utils.SDKClientUtils.createTextFile
 import com.iotconnectsdk.utils.SDKClientUtils.deleteTextFile
 import com.iotconnectsdk.utils.SDKClientUtils.getAttributesList
@@ -37,7 +39,6 @@ import java.io.FileReader
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
-import kotlin.collections.ArrayList
 
 /**
  * class for SDKClient
@@ -130,11 +131,11 @@ class SDKClient(
     //for Edge Device
     private var edgeDeviceTimersList: ArrayList<Timer>? = null
 
-    private var edgeDeviceAttributeMap: MutableMap<String, TumblingWindowBean>? =null
+    private var edgeDeviceAttributeMap: MutableMap<String, TumblingWindowBean>? = null
 
     private var edgeDeviceAttributeGyroMap: MutableMap<String, List<TumblingWindowBean>>? = null
 
-    private val publishObjForRuleMatchEdgeDevice: JSONObject? = null
+    private var publishObjForRuleMatchEdgeDevice: JSONObject? = null
 
     private var networkStateReceiver: NetworkStateReceiver? = null
 
@@ -525,7 +526,7 @@ class SDKClient(
                             if (response?.d?.meta?.edge == 1) {
                                 idEdgeDevice = true
                                 try {
-                                   processEdgeDeviceTWTimer(commonModel)
+                                    processEdgeDeviceTWTimer(response, commonModel)
                                 } catch (e: Exception) {
                                     iotSDKLogUtils!!.log(true, isDebug, "ERR_EE01", e.message!!)
                                 }
@@ -1196,7 +1197,7 @@ class SDKClient(
         if (!idEdgeDevice) { // simple device.
             publishDeviceInputData(jsonData)
         } else { //Edge device
-            //processEdgeDeviceInputData(jsonData)
+            processEdgeDeviceInputData(jsonData)
         }
     }
 
@@ -1378,11 +1379,119 @@ class SDKClient(
     }
 
 
+    /*Process the edge device input data from client.
+     *
+     * @param  jsonData
+     * */
+    fun processEdgeDeviceInputData(jsonData: String?) {
+        val syncResponse = getSyncResponse()
+        val attributeResponse = getAttributeResponse()
+        publishObjForRuleMatchEdgeDevice = null
+        if (syncResponse != null) {
+            try {
+                val jsonArray = JSONArray(jsonData)
+
+                val gatewayChildResponse = getGatewayChildResponse()
+                val getChildDeviceBean = GetChildDeviceBean()
+
+                getChildDeviceBean.tg = syncResponse?.d?.meta?.gtw?.tg
+                getChildDeviceBean.id = uniqueId
+                gatewayChildResponse?.d?.childDevice?.add(getChildDeviceBean)
+
+                for (i in 0 until jsonArray.length()) {
+                    val uniqueId = jsonArray.getJSONObject(i).getString(UNIQUE_ID_View)
+                    val dataObj = jsonArray.getJSONObject(i).getJSONObject(DATA)
+                    val dataJsonKey = dataObj.keys()
+                    val tag = SDKClientUtils.getTag(uniqueId, gatewayChildResponse?.d)
+                    while (dataJsonKey.hasNext()) {
+                        val key = dataJsonKey.next()
+                        val value = dataObj.getString(key)
+                        if (!value.replace("\\s".toRegex(), "")
+                                .isEmpty() && JSONTokener(value).nextValue() is JSONObject
+                        ) {
+                            val AttObj = JSONObject()
+
+                            // get value for
+                            // "gyro": {"x":"7","y":"8","z":"9"}
+                            val innerObj = dataObj.getJSONObject(key)
+                            val innerJsonKey = innerObj.keys()
+                            while (innerJsonKey.hasNext()) {
+                                val innerKey = innerJsonKey.next()
+                                val innerKValue = innerObj.getString(innerKey)
+
+                                //check for input validation dv=data validation dv="data validation". {"ln":"x","dt":0,"dv":"10to20","tg":"","sq":1,"agt":63,"tw":"40s"}
+                                val validation: Int = compareForInputValidationNew(
+                                    innerKey,
+                                    innerKValue,
+                                    tag,
+                                    attributeResponse
+                                )
+
+                                //ignore string value for edge device.
+                                if (SDKClientUtils.isDigit(innerKValue) && validation != 1) {
+                                    updateEdgeDeviceGyroObj(
+                                        key,
+                                        innerKey,
+                                        innerKValue,
+                                        edgeDeviceAttributeGyroMap
+                                    )
+                                    /* EvaluateRuleForEdgeDevice(
+                                         response.d.r,
+                                         key,
+                                         innerKey,
+                                         innerKValue,
+                                         jsonData,
+                                         AttObj
+                                     )*/
+                                }
+                            }
+                            //publish
+                            //  publishRuleEvaluatedData()
+                        } else {
+
+                            //check for input validation dv="data validation". {"ln":"abc","dt":0,"dv":"10","tg":"","sq":8,"agt":63,"tw":"60s"}
+                            val validation: Int = compareForInputValidationNew(
+                                key,
+                                value,
+                                tag,
+                                attributeResponse
+                            )
+
+                            //ignore string value for edge device.
+                            if (SDKClientUtils.isDigit(value) && validation != 1) {
+                                updateEdgeDeviceObj(
+                                    key,
+                                    value,
+                                    edgeDeviceAttributeMap
+                                )
+                                /*EvaluateRuleForEdgeDevice(
+                                    response.d.r,
+                                    key,
+                                    null,
+                                    value,
+                                    jsonData,
+                                    null
+                                )*/
+                            }
+                        }
+                    }
+                }
+            } catch (e: java.lang.Exception) {
+                iotSDKLogUtils!!.log(true, isDebug, "ERR_EE01", e.message!!)
+                e.printStackTrace()
+            }
+        }
+    }
+
+
     /*process data for edge device timer start.
      *
      * @param response      Sync service response.
      * */
-    private fun processEdgeDeviceTWTimer(response: CommonResponseBean) {
+    private fun processEdgeDeviceTWTimer(
+        syncResponse: IdentityServiceResponse,
+        response: CommonResponseBean
+    ) {
         val attributeList = response.d?.att
         edgeDeviceAttributeMap = ConcurrentHashMap()
         edgeDeviceAttributeGyroMap = ConcurrentHashMap()
@@ -1397,26 +1506,43 @@ class SDKClient(
                         val attributeLn = beanX.ln
 
                         //check attribute input type is numeric or not, ignore the attribute if it is not numeric.
-                        if (beanX.dt != 1) {
-                            val twb = TumblingWindowBean()
-                            twb.attributeName = attributeLn
-                            gyroAttributeList.add(twb)
-                        }
+                        //if (beanX.dt != 1) {
+                        val twb = TumblingWindowBean()
+                        twb.attributeName = attributeLn
+                        gyroAttributeList.add(twb)
+                        //  }
                     }
                     (edgeDeviceAttributeGyroMap as ConcurrentHashMap<String, List<TumblingWindowBean>>).put(
                         bean.p,
                         gyroAttributeList
                     )
-                    edgeDeviceTWTimerStart(bean.tw, bean.p, bean.tg)
+
+                    var tg: String
+                    if (bean.tg != null) {
+                        tg = bean.tg
+                    } else {
+                        tg = ""
+                    }
+                    edgeDeviceTWTimerStart(syncResponse, bean.tw, bean.p, tg)
                 } else {
                     val listD = bean.d
                     for (beanX in listD) {
                         val ln = beanX.ln
-                        val tag = beanX.tg
+                        val tag: String
 
+                        if (beanX.tg != null) {
+                            tag = beanX.tg
+                        } else {
+                            tag = ""
+                        }
                         //check attribute input type is numeric or not, ignore the attribute if it is not numeric.
 
-                        if (beanX.dt != 1) edgeDeviceTWTimerStart(beanX.tw, ln, tag)
+                        /*if (beanX.dt != 1)*/ edgeDeviceTWTimerStart(
+                            syncResponse,
+                            beanX.tw,
+                            ln,
+                            tag
+                        )
                     }
                 }
             }
@@ -1430,7 +1556,12 @@ class SDKClient(
      * @param  ln           attribute name humidity,temp,gyro etc...
      * @param  tag          attribute tag
      */
-    private fun edgeDeviceTWTimerStart(twTime: String?, ln: String?, tag: String?) {
+    private fun edgeDeviceTWTimerStart(
+        syncResponse: IdentityServiceResponse,
+        twTime: String?,
+        ln: String?,
+        tag: String
+    ) {
         val tw = twTime?.replace("[^\\d.]".toRegex(), "")?.toInt()
         if (ln != null) {
             edgeDeviceAttributeMap?.put(ln, TumblingWindowBean())
@@ -1439,12 +1570,12 @@ class SDKClient(
         edgeDeviceTimersList?.add(timerTumblingWindow)
         val timerTask: TimerTask = object : TimerTask() {
             override fun run() {
-             //   val dtg: String = getSyncResponse().getD().getDtg()
+                //   val dtg: String = getSyncResponse().getD().getDtg()
                 val publishObj = publishEdgeDeviceInputData(
                     ln,
                     tag,
-                  edgeDeviceAttributeGyroMap,
-                   edgeDeviceAttributeMap,
+                    edgeDeviceAttributeGyroMap,
+                    edgeDeviceAttributeMap,
                     uniqueId,
                     cpId,
                     environment,
@@ -1458,11 +1589,13 @@ class SDKClient(
                 try {
                     val dArray = publishObj!!.getJSONArray(D_OBJ)
                     for (i in 0 until dArray.length()) {
-                        val innerDObj = dArray.getJSONObject(i).getJSONArray(D_OBJ)
+                        val innerDObj = dArray.getJSONObject(i).getJSONObject(D_OBJ)
                         if (innerDObj.length() <= 0) {
                             isPublish = false
                         }
                     }
+
+                    Log.d("publishMessage1", "::$publishObj")
 
                     //return on "d":[] object is empty.
                     if (!isPublish) return
@@ -1471,7 +1604,7 @@ class SDKClient(
                     return
                 }
                 if (publishObj != null) {
-                   // publishMessage(publishObj.toString(), false)
+                    publishMessage(syncResponse.d.p.topics.erpt, publishObj.toString(), false)
                 }
             }
         }
