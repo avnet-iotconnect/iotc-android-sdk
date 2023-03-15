@@ -1,5 +1,6 @@
 package com.iotconnectsdk
 
+import android.app.Activity
 import android.content.Context
 import android.content.IntentFilter
 import android.net.ConnectivityManager
@@ -145,7 +146,7 @@ class SDKClient(
 
     private var fileCount = 0
 
-    private val reCheckingTimer: Timer? = null
+    private var reCheckingTimer: Timer? = null
 
     private var reCheckingCountTime = 0
 
@@ -363,8 +364,41 @@ class SDKClient(
                         ?.putStringData(IotSDKPreferences.SYNC_RESPONSE, response)
                     callMQTTService()
                 } else {
+
+
+                    //Device information not found. While sync the device when get the response code 'rc' not equal to '0'
+                    val rc: Int = syncServiceResponseData.d.ec
+
                     val responseCodeMessage =
                         validationUtils?.responseCodeMessage(syncServiceResponseData.d.ec)
+
+
+                    if (rc == 1 || rc == 3 || rc == 4 || rc == 6) {
+                        if (reCheckingCountTime <= 3) {
+                            reChecking()
+                        } else {
+                            timerStop(reCheckingTimer)
+                            iotSDKLogUtils!!.log(
+                                true,
+                                isDebug,
+                                "ERR_IN10",
+                                context!!.getString(R.string.ERR_IN10)
+                            )
+                        }
+                        return
+                    } else if (rc != 0) {
+//                            onConnectionStateChange(false);
+                        iotSDKLogUtils!!.log(
+                            true,
+                            isDebug,
+                            "ERR_IN10",
+                            context!!.getString(R.string.ERR_IN10)
+                        )
+                        return
+                    } else {
+                        timerStop(reCheckingTimer)
+                    }
+
                     deviceCallback?.onReceiveMsg(responseCodeMessage)
                     sdkClient = null
                 }
@@ -525,6 +559,7 @@ class SDKClient(
                             val response = getSyncResponse()
                             if (response?.d?.meta?.edge == 1) {
                                 idEdgeDevice = true
+
                                 try {
                                     processEdgeDeviceTWTimer(response, commonModel)
                                 } catch (e: Exception) {
@@ -602,6 +637,9 @@ class SDKClient(
                         /*The device must send a message of type 201 to get updated attributes*/
                         C2DMessageEnums.REFRESH_ATTRIBUTE.value -> {
                             val response = getSyncResponse()
+
+                            if (idEdgeDevice) edgeDeviceTimerStop()
+
                             publishMessage(
                                 response?.d?.p?.topics!!.di, JSONObject().put(
                                     MESSAGE_TYPE,
@@ -927,15 +965,15 @@ class SDKClient(
      * */
     fun dispose() {
         isDispose = true
-        //edgeDeviceTimerStop()
+        edgeDeviceTimerStop()
 
         if (mqttService != null) {
             mqttService?.disconnectClient()
             mqttService?.clearInstance() //destroy singleton object.
         }
-        //  timerStop(reCheckingTimer)
-        // timerStop(timerCheckDeviceState)
-        // timerStop(timerOfflineSync)
+        timerStop(reCheckingTimer)
+        timerStop(timerCheckDeviceState)
+        timerStop(timerOfflineSync)
         unregisterReceiver()
         sdkClient = null
     }
@@ -1498,7 +1536,7 @@ class SDKClient(
         edgeDeviceTimersList = ArrayList()
         if (attributeList != null) {
             for (bean in attributeList) {
-                if (bean.p != null && !bean.p.isEmpty()) {
+                if (bean.p != null && bean.p.isNotEmpty()) {
                     // if for not empty "p":"gyro"
                     val gyroAttributeList: MutableList<TumblingWindowBean> = ArrayList()
                     val listD = bean.d
@@ -1510,20 +1548,19 @@ class SDKClient(
                         val twb = TumblingWindowBean()
                         twb.attributeName = attributeLn
                         gyroAttributeList.add(twb)
+
+                        var tg: String
+                        if (bean.tg != null) {
+                            tg = bean.tg
+                        } else {
+                            tg = ""
+                        }
+                        edgeDeviceTWTimerStart(syncResponse, beanX.tw, bean.p, tg,gyroAttributeList)
+
                         //  }
                     }
-                    (edgeDeviceAttributeGyroMap as ConcurrentHashMap<String, List<TumblingWindowBean>>).put(
-                        bean.p,
-                        gyroAttributeList
-                    )
 
-                    var tg: String
-                    if (bean.tg != null) {
-                        tg = bean.tg
-                    } else {
-                        tg = ""
-                    }
-                    edgeDeviceTWTimerStart(syncResponse, bean.tw, bean.p, tg)
+
                 } else {
                     val listD = bean.d
                     for (beanX in listD) {
@@ -1537,12 +1574,8 @@ class SDKClient(
                         }
                         //check attribute input type is numeric or not, ignore the attribute if it is not numeric.
 
-                        /*if (beanX.dt != 1)*/ edgeDeviceTWTimerStart(
-                            syncResponse,
-                            beanX.tw,
-                            ln,
-                            tag
-                        )
+                        /*if (beanX.dt != 1)*/
+                        edgeDeviceTWTimerStart(syncResponse, beanX.tw, ln, tag, null)
                     }
                 }
             }
@@ -1560,12 +1593,20 @@ class SDKClient(
         syncResponse: IdentityServiceResponse,
         twTime: String?,
         ln: String?,
-        tag: String
+        tag: String,
+        gyroAttributeList: MutableList<TumblingWindowBean>?
     ) {
         val tw = twTime?.replace("[^\\d.]".toRegex(), "")?.toInt()
         if (ln != null) {
             edgeDeviceAttributeMap?.put(ln, TumblingWindowBean())
         }
+
+        if (ln != null) {
+            if (gyroAttributeList != null) {
+                (edgeDeviceAttributeGyroMap as ConcurrentHashMap<String, List<TumblingWindowBean>>).put(ln, gyroAttributeList)
+            }
+        }
+
         val timerTumblingWindow = Timer()
         edgeDeviceTimersList?.add(timerTumblingWindow)
         val timerTask: TimerTask = object : TimerTask() {
@@ -1587,15 +1628,17 @@ class SDKClient(
                 //{"cpId":"uei","dtg":"b55d6d86-5320-4b26-8df2-b65e3221385e","t":"2021-01-11T02:36:19.644Z","mt":2,"sdk":{"e":"qa","l":"M_android","v":"2.0"},"d":[{"id":"AAA02","dt":"2021-01-11T02:36:19.644Z","tg":"","d":[]}]}
                 var isPublish = true
                 try {
-                    val dArray = publishObj!!.getJSONArray(D_OBJ)
-                    for (i in 0 until dArray.length()) {
-                        val innerDObj = dArray.getJSONObject(i).getJSONObject(D_OBJ)
-                        if (innerDObj.length() <= 0) {
-                            isPublish = false
+                    val dArray = publishObj?.getJSONArray(D_OBJ)
+                    if (dArray != null) {
+                        for (i in 0 until dArray.length()) {
+                            val innerDObj = dArray.getJSONObject(i).getJSONObject(D_OBJ)
+                            if (innerDObj.length() <= 0) {
+                                isPublish = false
+                            }
                         }
+                        Log.d("publishMessage1", "::$publishObj")
                     }
 
-                    Log.d("publishMessage1", "::$publishObj")
 
                     //return on "d":[] object is empty.
                     if (!isPublish) return
@@ -1635,6 +1678,30 @@ class SDKClient(
             timer.cancel()
             timer.purge()
         }
+    }
+
+    /*re-checking the device connection after interval of 10 seconds for 3 times.
+     * in case of device connect button is clicked and than device creating process is done on web.
+     * */
+    private fun reChecking() {
+        iotSDKLogUtils!!.log(false, isDebug, "INFO_IN06", context!!.getString(R.string.INFO_IN06))
+        startReCheckingTimer()
+    }
+
+    /*start timer for re-checking the device connection.
+     * after 3 check of 10 second time interval it will be stop.
+     * or it can be stop on device found within time interval.
+     * */
+    private fun startReCheckingTimer() {
+        reCheckingTimer = Timer()
+        val timerTaskObj: TimerTask = object : TimerTask() {
+            override fun run() {
+                (context as Activity).runOnUiThread { callSyncService() }
+                reCheckingCountTime++
+                timerStop(reCheckingTimer)
+            }
+        }
+        reCheckingTimer!!.schedule(timerTaskObj, 10000, 10000)
     }
 
 }

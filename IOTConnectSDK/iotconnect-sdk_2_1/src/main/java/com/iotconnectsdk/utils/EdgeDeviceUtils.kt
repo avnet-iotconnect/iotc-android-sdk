@@ -77,10 +77,8 @@ object EdgeDeviceUtils {
         val dArray = JSONArray()
         val dArrayObject = getEdgeDevicePublishDObj(currentTime, tag, uniqueId!!)
         val dInnerArray = JSONArray()
-        val dInnerArrayNew = JSONObject()
         val gyroObj = JSONObject()
         val dInnerArrayObject = JSONObject()
-       // val dInnerArrayObjectNew
         //for gyro object
         if (edgeDeviceAttributeGyroMap != null) {
             for ((key, twbList) in edgeDeviceAttributeGyroMap) {
@@ -91,7 +89,7 @@ object EdgeDeviceUtils {
                             for (twb in twbList) {
                                 attributeArray = getEdgeDevicePublishAttributes(twb!!)
                                 if (attributeArray.length() > 0) {
-                                    dInnerArrayObject.put(twb.getAttributeName(), attributeArray)
+                                    dInnerArrayObject.put(twb.attributeName, attributeArray)
                                 }
                                 clearObject(twb)
                             }

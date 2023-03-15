@@ -11,12 +11,6 @@ data class GetAttributeBean(
     val dt: Int, // 0
     @SerializedName("tg")
     val tg: String? = null,
-    @SerializedName("dv")
-    val dv: String? = null,
-    @SerializedName("ln")
-    val ln: String? = null, // Temp
-    @SerializedName("sq")
-    val sq: Int? = null, // 1
     @SerializedName("tw")
     val tw: String? = null,
     @SerializedName("d")
