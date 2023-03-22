@@ -9,6 +9,7 @@ import android.webkit.URLUtil
 import com.google.gson.Gson
 import com.iotconnectsdk.beans.CommonResponseBean
 import com.iotconnectsdk.beans.GetChildDeviceBean
+import com.iotconnectsdk.beans.GetEdgeRuleBean
 import com.iotconnectsdk.beans.TumblingWindowBean
 import com.iotconnectsdk.enums.C2DMessageEnums
 import com.iotconnectsdk.enums.DeviceIdentityMessages
@@ -19,6 +20,11 @@ import com.iotconnectsdk.interfaces.TwinUpdateCallback
 import com.iotconnectsdk.mqtt.IotSDKMQTTService
 import com.iotconnectsdk.utils.*
 import com.iotconnectsdk.utils.DateTimeUtils.getCurrentTime
+import com.iotconnectsdk.utils.EdgeDeviceUtils.evaluateEdgeDeviceRuleValue
+import com.iotconnectsdk.utils.EdgeDeviceUtils.getAttName
+import com.iotconnectsdk.utils.EdgeDeviceUtils.getAttributeName
+import com.iotconnectsdk.utils.EdgeDeviceUtils.getEdgeDevicePublishMainObj
+import com.iotconnectsdk.utils.EdgeDeviceUtils.getPublishStringEdgeDevice
 import com.iotconnectsdk.utils.EdgeDeviceUtils.publishEdgeDeviceInputData
 import com.iotconnectsdk.utils.EdgeDeviceUtils.updateEdgeDeviceGyroObj
 import com.iotconnectsdk.utils.EdgeDeviceUtils.updateEdgeDeviceObj
@@ -454,7 +460,7 @@ class SDKClient(
             ?.getDeviceInformation(IotSDKPreferences.ATTRIBUTE_RESPONSE)
     }
 
-    /*get the saved Settings response from shared preference.
+    /*get the saved Edge response from shared preference.
   * */
     private fun getEdgeRuleResponse(): CommonResponseBean? {
         return IotSDKPreferences.getInstance(context!!)
@@ -1424,6 +1430,7 @@ class SDKClient(
     fun processEdgeDeviceInputData(jsonData: String?) {
         val syncResponse = getSyncResponse()
         val attributeResponse = getAttributeResponse()
+        val edgeResponse = getEdgeRuleResponse()
         publishObjForRuleMatchEdgeDevice = null
         if (syncResponse != null) {
             try {
@@ -1473,18 +1480,22 @@ class SDKClient(
                                         innerKValue,
                                         edgeDeviceAttributeGyroMap
                                     )
-                                    /* EvaluateRuleForEdgeDevice(
-                                         response.d.r,
-                                         key,
-                                         innerKey,
-                                         innerKValue,
-                                         jsonData,
-                                         AttObj
-                                     )*/
+                                    if (edgeResponse != null) {
+                                        if (jsonData != null) {
+                                            EvaluateRuleForEdgeDevice(
+                                                edgeResponse.d!!.edge,
+                                                key,
+                                                innerKey,
+                                                innerKValue,
+                                                jsonData,
+                                                AttObj
+                                            )
+                                        }
+                                    }
                                 }
                             }
                             //publish
-                            //  publishRuleEvaluatedData()
+                            publishRuleEvaluatedData()
                         } else {
 
                             //check for input validation dv="data validation". {"ln":"abc","dt":0,"dv":"10","tg":"","sq":8,"agt":63,"tw":"60s"}
@@ -1502,14 +1513,18 @@ class SDKClient(
                                     value,
                                     edgeDeviceAttributeMap
                                 )
-                                /*EvaluateRuleForEdgeDevice(
-                                    response.d.r,
-                                    key,
-                                    null,
-                                    value,
-                                    jsonData,
-                                    null
-                                )*/
+                                if (edgeResponse != null) {
+                                    if (jsonData != null) {
+                                        EvaluateRuleForEdgeDevice(
+                                            edgeResponse.d!!.edge,
+                                            key,
+                                            null,
+                                            value,
+                                            jsonData,
+                                            null
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
@@ -1555,7 +1570,13 @@ class SDKClient(
                         } else {
                             tg = ""
                         }
-                        edgeDeviceTWTimerStart(syncResponse, beanX.tw, bean.p, tg,gyroAttributeList)
+                        edgeDeviceTWTimerStart(
+                            syncResponse,
+                            beanX.tw,
+                            bean.p,
+                            tg,
+                            gyroAttributeList
+                        )
 
                         //  }
                     }
@@ -1603,7 +1624,10 @@ class SDKClient(
 
         if (ln != null) {
             if (gyroAttributeList != null) {
-                (edgeDeviceAttributeGyroMap as ConcurrentHashMap<String, List<TumblingWindowBean>>).put(ln, gyroAttributeList)
+                (edgeDeviceAttributeGyroMap as ConcurrentHashMap<String, List<TumblingWindowBean>>).put(
+                    ln,
+                    gyroAttributeList
+                )
             }
         }
 
@@ -1702,6 +1726,226 @@ class SDKClient(
             }
         }
         reCheckingTimer!!.schedule(timerTaskObj, 10000, 10000)
+    }
+
+    /* On edge device rule match, send below json format to firmware.
+   *{"cmdType":"0x01","data":{"cpid":"deviceData.cpId","guid":"deviceData.company","uniqueId":"device uniqueId","command":"json.cmd","ack":true,"ackId":null,"cmdType":"config.commandType.CORE_COMMAND, 0x01"}}
+   *
+   * */
+    private fun onEdgeDeviceRuleMatched(bean: GetEdgeRuleBean) {
+        val strJson = SDKClientUtils.createCommandFormat(
+            C2DMessageEnums.DEVICE_COMMAND.value,
+            cpId, bean.g, uniqueId, bean.cmd, true, ""
+        )
+        deviceCallback!!.onReceiveMsg(strJson)
+    }
+
+
+    /*Process edge device rule matched attribute and publish.
+     *
+     * @param    ruleBeansList      array list of rule  ("r":[{"g":"3A171114-4CC4-4A1C-924C-D3FCF84E4BD1","es":"514076B1-3C21-4849-A777-F423B1821FC7","con":"humidity = 15","att":[{"g":["AF644BEB-C615-4587-AE38-8EAE59248376"]}],"cmd":"reboot"}])
+     * @param    parentKey          parent attribute name (temp, gyro etc..)
+     * @param    innerKey           gyro object child key (x,y,z etc..)
+     * @param    inputValue         attribute input value
+     * @param    inputJsonString    json string from client input.
+     * @param    attObj             empty json object to collect rule matched gyro child attributes objects.
+     * * */
+    private fun EvaluateRuleForEdgeDevice(
+        ruleBeansList: List<GetEdgeRuleBean>,
+        parentKey: String,
+        innerKey: String?,
+        inputValue: String,
+        inputJsonString: String,
+        attObj: JSONObject?
+    ) {
+        try {
+            if (ruleBeansList != null) {
+                val value = inputValue.replace("\\s".toRegex(), "").toInt()
+                for (bean in ruleBeansList) {
+                    val con = bean.con
+                    val attKey: String? = getAttributeName(con)
+                    //match parent attribute name (eg. temp == temp OR gyro == gyro)
+                    if (attKey != null && parentKey == attKey) {
+
+//                        if (innerKey != null) {
+
+                        //for gyro type object. "gyro": {"x":"7","y":"8","z":"9"}
+                        if (innerKey != null && con.contains("#") && con.contains("AND")) { //ac1#vibration.x > 5 AND ac1#vibration.y > 10
+                            val param = con.split("AND".toRegex()).dropLastWhile { it.isEmpty() }
+                                .toTypedArray()
+                            for (i in param.indices) {
+                                val att = param[i]
+                                if (att.contains(".")) { //gyro#vibration.x > 5
+                                    val KeyValue =
+                                        att.split("\\.".toRegex()).dropLastWhile { it.isEmpty() }
+                                            .toTypedArray()
+                                    val parent = KeyValue[0].split("#".toRegex())
+                                        .dropLastWhile { it.isEmpty() }
+                                        .toTypedArray() //gyro#vibration
+                                    val parentAttName = parent[0] //gyro
+                                    val childAttName = parent[1] //vibration
+                                    setPublishJsonForRuleMatchedEdgeDevice(
+                                        KeyValue[1],
+                                        innerKey,
+                                        value,
+                                        attObj,
+                                        parentKey,
+                                        bean,
+                                        inputJsonString
+                                    )
+                                } else if (con.contains("#")) {
+                                    val parent =
+                                        att.split("#".toRegex()).dropLastWhile { it.isEmpty() }
+                                            .toTypedArray() //gyro#x > 5
+                                    val parentAttName = parent[0] //gyro
+                                    setPublishJsonForRuleMatchedEdgeDevice(
+                                        parent[1],
+                                        innerKey,
+                                        value,
+                                        attObj,
+                                        parentKey,
+                                        bean,
+                                        inputJsonString
+                                    )
+                                }
+                            }
+                        } else if (innerKey != null && con.contains("#")) { //gyro#x > 5  //  ac1#vibration.x > 5
+                            val parent = con.split("#".toRegex()).dropLastWhile { it.isEmpty() }
+                                .toTypedArray() //gyro#x > 5
+                            val parentAttName = parent[0] //gyro
+                            setPublishJsonForRuleMatchedEdgeDevice(
+                                parent[1],
+                                innerKey,
+                                value,
+                                attObj,
+                                parentKey,
+                                bean,
+                                inputJsonString
+                            )
+                        } else if (innerKey != null && con.contains(".") && con.contains("AND")) { //"gyro.x = 10 AND gyro.y > 10",
+                            val param = con.split("AND".toRegex()).dropLastWhile { it.isEmpty() }
+                                .toTypedArray()
+                            for (i in param.indices) {
+                                val KeyValue =
+                                    param[i].split("\\.".toRegex()).dropLastWhile { it.isEmpty() }
+                                        .toTypedArray() //gyro.x = 10
+                                setPublishJsonForRuleMatchedEdgeDevice(
+                                    KeyValue[1],
+                                    innerKey,
+                                    value,
+                                    attObj,
+                                    parentKey,
+                                    bean,
+                                    inputJsonString
+                                )
+                            }
+                        } else if (innerKey != null && con.contains(".")) { //gyro.x = 10
+                            val KeyValue = con.split("\\.".toRegex()).dropLastWhile { it.isEmpty() }
+                                .toTypedArray() //gyro.x = 10
+                            setPublishJsonForRuleMatchedEdgeDevice(
+                                KeyValue[1],
+                                innerKey,
+                                value,
+                                attObj,
+                                parentKey,
+                                bean,
+                                inputJsonString
+                            )
+                        } else if (innerKey == null) { // simple object like temp = 10. (not gyro type).
+                            if (evaluateEdgeDeviceRuleValue(con, value)) {
+                                onEdgeDeviceRuleMatched(bean)
+                                val cvAttObj = JSONObject()
+                                cvAttObj.put(parentKey, inputValue)
+                                val mainObj: JSONObject =
+                                    getEdgeDevicePublishMainObj(
+                                        DateTimeUtils.currentDate,
+                                        /*getDtg(),
+                                        cpId,
+                                        environment,
+                                        appVersion,
+                                        EDGE_DEVICE_RULE_MATCH_MESSAGE_TYPE*/
+                                    )
+                                val publishObj: JSONObject =
+                                    getPublishStringEdgeDevice(
+                                        uniqueId,
+                                        DateTimeUtils.currentDate,
+                                        bean,
+                                        inputJsonString,
+                                        cvAttObj,
+                                        mainObj
+                                    )!!
+                                //publish edge device rule matched data. Publish simple attribute data only. (temp > 10)
+                                if (publishObj != null) {
+                                    val syncResponse = getSyncResponse()
+                                    publishMessage(syncResponse?.d?.p?.topics?.erm!!,publishObj.toString(), false)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (e: java.lang.Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    /*Get dtg attribute from sync saved response.
+     * */
+   /* private fun getDtg(): String? {
+        return getSyncResponse().getD().getDtg()
+    }*/
+
+    /*Set the json data for publish for edge device only for gyro attributes.
+     * */
+    private fun setPublishJsonForRuleMatchedEdgeDevice(
+        childAttNameValue: String,
+        innerKey: String,
+        value: Int,
+        attObj: JSONObject?,
+        parentKey: String,
+        bean: GetEdgeRuleBean,
+        inputJsonString: String
+    ) {
+        //collect publish data for gyro type object.
+        try {
+
+//            String childAttNameValue = KeyValue[1]; //x > 5
+            val key: String = getAttName(childAttNameValue)!!
+            if (innerKey == key) { // compare x with x.
+                if (evaluateEdgeDeviceRuleValue(childAttNameValue, value)) {
+                    onEdgeDeviceRuleMatched(bean)
+                    attObj!!.put(key, value.toString() + "")
+                }
+            }
+            if (attObj!!.length() != 0) {
+                val cvAttObj = JSONObject()
+                cvAttObj.put(parentKey, attObj)
+                val mainObj: JSONObject = getEdgeDevicePublishMainObj(
+                    DateTimeUtils.currentDate,
+                  /*  getDtg(),
+                    cpId,
+                    environment,
+                    appVersion,
+                    EDGE_DEVICE_RULE_MATCH_MESSAGE_TYPE*/
+                )
+                publishObjForRuleMatchEdgeDevice = getPublishStringEdgeDevice(
+                    uniqueId, DateTimeUtils.currentDate, bean, inputJsonString, cvAttObj, mainObj
+                )
+            }
+        } catch (e: java.lang.Exception) {
+        }
+    }
+
+
+    /* 1.Publish edge device rule matched data with bellow json format.
+     * 2.This method publish gyro type attributes data.(//"gyro.x = 10 AND gyro.y > 10")
+     * {"cpId":"uei","dtg":"b55d6d86-5320-4b26-8df2-b65e3221385e","t":"2020-11-25T12:56:34.487Z","mt":3,"sdk":{"e":"qa","l":"M_android","v":"2.0"},"d":[{"id":"AAA02","dt":"2020-11-25T12:56:34.487Z","rg":"3A171114-4CC4-4A1C-924C-D3FCF84E4BD1","ct":"gyro.x = 10 AND gyro.y > 10 AND gyro.z < 10","sg":"514076B1-3C21-4849-A777-F423B1821FC7","d":[{"temp":"10","gyro":{"x":"10","y":"11","z":"9"}}],"cv":{"gyro":{"x":"10","y":"11","z":"9"}}}]}
+     * */
+    private fun publishRuleEvaluatedData() {
+        val syncResponse = getSyncResponse()
+        if (publishObjForRuleMatchEdgeDevice != null) publishMessage(syncResponse?.d?.p?.topics?.erm!!,
+            publishObjForRuleMatchEdgeDevice.toString(), false
+        )
     }
 
 }
