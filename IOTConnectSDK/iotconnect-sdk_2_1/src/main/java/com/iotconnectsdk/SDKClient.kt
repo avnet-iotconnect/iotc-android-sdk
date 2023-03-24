@@ -1451,8 +1451,7 @@ class SDKClient(
                     while (dataJsonKey.hasNext()) {
                         val key = dataJsonKey.next()
                         val value = dataObj.getString(key)
-                        if (!value.replace("\\s".toRegex(), "")
-                                .isEmpty() && JSONTokener(value).nextValue() is JSONObject
+                        if (value.replace("\\s".toRegex(), "").isNotEmpty() && JSONTokener(value).nextValue() is JSONObject
                         ) {
                             val AttObj = JSONObject()
 
