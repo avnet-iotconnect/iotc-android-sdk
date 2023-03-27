@@ -1033,11 +1033,17 @@ class SDKClient(
         * command = (true = connected, false = disconnected)
         * */
     private fun onDeviceConnectionStatus(isConnected: Boolean) {
-        val strJson = SDKClientUtils.createCommandFormat(
-            C2DMessageEnums.DEVICE_CONNECTION_STATUS.value, cpId, "", uniqueId,
-            isConnected.toString(), false, ""
-        )
-        deviceCallback?.onReceiveMsg(strJson)
+
+        try {
+            val strJson = SDKClientUtils.createCommandFormat(
+                C2DMessageEnums.DEVICE_CONNECTION_STATUS.value, cpId, "", uniqueId,
+                isConnected.toString(), false, ""
+            )
+            deviceCallback?.onReceiveMsg(strJson)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
 
     }
 
@@ -1451,7 +1457,8 @@ class SDKClient(
                     while (dataJsonKey.hasNext()) {
                         val key = dataJsonKey.next()
                         val value = dataObj.getString(key)
-                        if (value.replace("\\s".toRegex(), "").isNotEmpty() && JSONTokener(value).nextValue() is JSONObject
+                        if (value.replace("\\s".toRegex(), "")
+                                .isNotEmpty() && JSONTokener(value).nextValue() is JSONObject
                         ) {
                             val AttObj = JSONObject()
 
@@ -1630,6 +1637,17 @@ class SDKClient(
             }
         }
 
+        val gatewayChildResponse = getGatewayChildResponse()
+        val getChildDeviceBean = GetChildDeviceBean()
+
+        getChildDeviceBean.tg = syncResponse?.d?.meta?.gtw?.tg
+        getChildDeviceBean.id = uniqueId
+        gatewayChildResponse?.d?.childDevice?.add(getChildDeviceBean)
+
+        val id = gatewayChildResponse?.d?.childDevice?.find { it.tg == tag }?.id
+
+        Log.d("gatewayid", "::$id")
+
         val timerTumblingWindow = Timer()
         edgeDeviceTimersList?.add(timerTumblingWindow)
         val timerTask: TimerTask = object : TimerTask() {
@@ -1640,7 +1658,7 @@ class SDKClient(
                     tag,
                     edgeDeviceAttributeGyroMap,
                     edgeDeviceAttributeMap,
-                    uniqueId,
+                    id,
                     cpId,
                     environment,
                     appVersion,
@@ -1876,7 +1894,11 @@ class SDKClient(
                                 //publish edge device rule matched data. Publish simple attribute data only. (temp > 10)
                                 if (publishObj != null) {
                                     val syncResponse = getSyncResponse()
-                                    publishMessage(syncResponse?.d?.p?.topics?.erm!!,publishObj.toString(), false)
+                                    publishMessage(
+                                        syncResponse?.d?.p?.topics?.erm!!,
+                                        publishObj.toString(),
+                                        false
+                                    )
                                 }
                             }
                         }
@@ -1890,9 +1912,9 @@ class SDKClient(
 
     /*Get dtg attribute from sync saved response.
      * */
-   /* private fun getDtg(): String? {
-        return getSyncResponse().getD().getDtg()
-    }*/
+    /* private fun getDtg(): String? {
+         return getSyncResponse().getD().getDtg()
+     }*/
 
     /*Set the json data for publish for edge device only for gyro attributes.
      * */
@@ -1921,11 +1943,11 @@ class SDKClient(
                 cvAttObj.put(parentKey, attObj)
                 val mainObj: JSONObject = getEdgeDevicePublishMainObj(
                     DateTimeUtils.currentDate,
-                  /*  getDtg(),
-                    cpId,
-                    environment,
-                    appVersion,
-                    EDGE_DEVICE_RULE_MATCH_MESSAGE_TYPE*/
+                    /*  getDtg(),
+                      cpId,
+                      environment,
+                      appVersion,
+                      EDGE_DEVICE_RULE_MATCH_MESSAGE_TYPE*/
                 )
                 publishObjForRuleMatchEdgeDevice = getPublishStringEdgeDevice(
                     uniqueId, DateTimeUtils.currentDate, bean, inputJsonString, cvAttObj, mainObj
@@ -1942,7 +1964,8 @@ class SDKClient(
      * */
     private fun publishRuleEvaluatedData() {
         val syncResponse = getSyncResponse()
-        if (publishObjForRuleMatchEdgeDevice != null) publishMessage(syncResponse?.d?.p?.topics?.erm!!,
+        if (publishObjForRuleMatchEdgeDevice != null) publishMessage(
+            syncResponse?.d?.p?.topics?.erm!!,
             publishObjForRuleMatchEdgeDevice.toString(), false
         )
     }

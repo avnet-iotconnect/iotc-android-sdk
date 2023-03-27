@@ -224,12 +224,12 @@ object EdgeDeviceUtils {
                             .toTypedArray() //gyro#vibration
                         //                        String childAttName = parent[1]; //vibration
 //                        String keyAttName = KeyValue[1]; //x > 5
-                        return parent[0]
+                        return parent[1]
                     } else if (con.contains("#")) {                    //gyro#x > 5
                         val parent = att.split("#".toRegex()).dropLastWhile { it.isEmpty() }
                             .toTypedArray() //gyro#x > 5
                         //                        String childAttName = parent[1]; //x > 5
-                        return parent[0]
+                        return parent[1]
                     }
                 }
             } else if (con.contains("#")) {     //ac1#vibration.x > 5
@@ -239,8 +239,8 @@ object EdgeDeviceUtils {
                     .toTypedArray() //gyro#vibration
                 val parentAttName = parent[0] //gyro
                 val childAttName = parent[1] //vibration
-                val keyAttName = KeyValue[1] //x > 5
-                return getAttName(keyAttName)
+               // val keyAttName = KeyValue[1] //x > 5
+                return getAttName(childAttName)
             } else if (con.contains(".")) {
                 val keyValue =
                     con.split("\\.".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
