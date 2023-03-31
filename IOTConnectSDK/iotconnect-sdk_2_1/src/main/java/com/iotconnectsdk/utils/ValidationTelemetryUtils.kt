@@ -138,7 +138,9 @@ internal object ValidationTelemetryUtils {
         //if value is in comma separated value
 
         try {
-            if (rngwithnum.contains(value.toDouble())) {
+            if (SDKClientUtils.isLetter(value)) {
+                return validateVarchar(value, range)
+            } else if (rngwithnum.contains(value.toDouble())) {
                 return REPORTING
             } else {
                 //check value is in range
