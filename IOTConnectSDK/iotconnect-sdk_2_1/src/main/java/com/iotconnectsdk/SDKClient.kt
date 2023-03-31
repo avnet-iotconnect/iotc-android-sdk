@@ -1623,6 +1623,7 @@ class SDKClient(
         tag: String,
         gyroAttributeList: MutableList<TumblingWindowBean>?
     ) {
+        var id = ""
         val tw = twTime?.replace("[^\\d.]".toRegex(), "")?.toInt()
         if (ln != null) {
             edgeDeviceAttributeMap?.put(ln, TumblingWindowBean())
@@ -1637,14 +1638,21 @@ class SDKClient(
             }
         }
 
-        val gatewayChildResponse = getGatewayChildResponse()
-        val getChildDeviceBean = GetChildDeviceBean()
+        if (syncResponse?.d?.meta?.gtw != null) {
+            val gatewayChildResponse = getGatewayChildResponse()
+            val getChildDeviceBean = GetChildDeviceBean()
 
-        getChildDeviceBean.tg = syncResponse?.d?.meta?.gtw?.tg
-        getChildDeviceBean.id = uniqueId
-        gatewayChildResponse?.d?.childDevice?.add(getChildDeviceBean)
+            getChildDeviceBean.tg = syncResponse?.d?.meta?.gtw?.tg
+            getChildDeviceBean.id = uniqueId
+            gatewayChildResponse?.d?.childDevice?.add(getChildDeviceBean)
 
-        val id = gatewayChildResponse?.d?.childDevice?.find { it.tg == tag }?.id
+            id = gatewayChildResponse?.d?.childDevice?.find { it.tg == tag }?.id!!
+        } else {
+            if (uniqueId != null) {
+                id = uniqueId
+            }
+        }
+
 
         Log.d("gatewayid", "::$id")
 

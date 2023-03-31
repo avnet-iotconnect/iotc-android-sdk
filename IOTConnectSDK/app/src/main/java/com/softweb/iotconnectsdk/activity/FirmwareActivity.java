@@ -317,7 +317,18 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                         //for object type values.
                         objectKeyName = label.split(":")[0];
                         String lab = label.split(":")[1];
-                        gyroObj.put(lab, value);
+
+                        boolean keyExist = keyExists(dObj, objectKeyName);
+                        if (keyExist) {
+                            gyroObj.put(lab, value);
+                            dObj.putOpt(objectKeyName, gyroObj);
+                        } else {
+                            gyroObj = new JSONObject();
+                            gyroObj.put(lab, value);
+                            dObj.putOpt(objectKeyName, gyroObj);
+                        }
+
+
                     } else {
                         //for simple key values.
                         dObj.put(label, value);
@@ -325,9 +336,9 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                 }
 
                 // add object type values.
-                if (gyroObj.length() != 0) {
+                /*if (gyroObj.length() != 0) {
                     dObj.putOpt(objectKeyName, gyroObj);
-                }
+                }*/
 
                 valueObj.put("data", dObj);
 
@@ -347,6 +358,21 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
             sdkClient.sendData(inputArray.toString());
         else
             Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
+    }
+
+
+    public boolean keyExists(JSONObject object, String searchedKey) throws JSONException {
+        boolean exists = object.has(searchedKey);
+        if (!exists) {
+            Iterator<?> keys = object.keys();
+            while (keys.hasNext()) {
+                String key = (String) keys.next();
+                if (object.get(key) instanceof JSONObject) {
+                    exists = keyExists((JSONObject) object.get(key), searchedKey);
+                }
+            }
+        }
+        return exists;
     }
 
     /*
@@ -478,7 +504,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
 
                 }
 
-            } catch (JSONException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
@@ -722,7 +748,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                     }
                 }
             }
-        } catch (JSONException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
