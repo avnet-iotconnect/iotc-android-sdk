@@ -32,7 +32,7 @@ object EdgeDeviceUtils {
         if (edgeDeviceAttributeGyroMap != null) {
             for ((key1, tlbList) in edgeDeviceAttributeGyroMap) {
                 if (key1 == key) {
-                    val inputValue = value.toInt()
+                    val inputValue = value.toDouble()
                     if (tlbList != null) {
                         for (bean in tlbList) {
                             if (innerKey == bean?.attributeName) {
@@ -51,7 +51,7 @@ object EdgeDeviceUtils {
         if (edgeDeviceAttributeMap != null) {
             for ((key1, tlb) in edgeDeviceAttributeMap) {
                 if (key1 == key) {
-                    val inputValue = value.toInt()
+                    val inputValue = value.toDouble()
                     if (tlb != null) {
                         setObjectValue(tlb, inputValue)
                     }
@@ -169,7 +169,7 @@ object EdgeDeviceUtils {
     private fun getEdgeDevicePublishAttributes(twb: TumblingWindowBean): JSONArray {
         val attributeArray = JSONArray()
         try {
-            if (twb.getMin() !== 0 || twb.getMax() !== 0 || twb.getSum() !== 0 || twb.avg !== 0 || twb.getCount() !== 0 || twb.getLv() !== 0) {
+            if (twb.getMin() !== 0.0 || twb.getMax() !== 0.0 || twb.getSum() !== 0.0 || twb.avg !== 0.0 || twb.getCount() !== 0 || twb.getLv() !== 0.0) {
                 attributeArray.put(twb.getMin())
                 attributeArray.put(twb.getMax())
                 attributeArray.put(twb.getSum())
@@ -183,12 +183,12 @@ object EdgeDeviceUtils {
         return attributeArray
     }
 
-    fun setObjectValue(bean: TumblingWindowBean, inputValue: Int) {
-        val oldMin: Int = bean.getMin()
-        if (oldMin == 0 || inputValue < oldMin) bean.setMin(inputValue)
-        val oldMax: Int = bean.getMax()
+    fun setObjectValue(bean: TumblingWindowBean, inputValue: Double) {
+        val oldMin= bean.getMin()
+        if (oldMin == 0.0 || inputValue < oldMin) bean.setMin(inputValue)
+        val oldMax = bean.getMax()
         if (inputValue > oldMax) bean.setMax(inputValue)
-        val sum: Int = inputValue + bean.getSum()
+        val sum: Double = inputValue + bean.getSum()
         bean.setSum(sum)
         var count: Int = bean.getCount()
         count++
@@ -199,12 +199,12 @@ object EdgeDeviceUtils {
 
     private fun clearObject(twb: TumblingWindowBean) {
         //clear object on publish success.
-        twb.setMin(0)
-        twb.setMax(0)
-        twb.setSum(0)
-        twb.setAvg(0)
+        twb.setMin(0.0)
+        twb.setMax(0.0)
+        twb.setSum(0.0)
+        twb.setAvg(0.0)
         twb.setCount(0)
-        twb.setLv(0)
+        twb.setLv(0.0)
     }
 
     fun getAttributeName(con: String): String? {
@@ -297,7 +297,7 @@ object EdgeDeviceUtils {
         return att[0].replace("\\s".toRegex(), "")
     }
 
-    fun evaluateEdgeDeviceRuleValue(con: String, inputValue: Int): Boolean {
+    fun evaluateEdgeDeviceRuleValue(con: String, inputValue: Double): Boolean {
         try {
             if (con.contains(NOT_EQUAL_TO)) {
                 if (inputValue != getRuleValue(con, NOT_EQUAL_TO)) {
@@ -330,9 +330,9 @@ object EdgeDeviceUtils {
         return false
     }
 
-    private fun getRuleValue(con: String, operator: String): Int {
+    private fun getRuleValue(con: String, operator: String): Double {
         val att = con.split(operator.toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-        return att[1].replace("\\s".toRegex(), "").toInt()
+        return att[1].replace("\\s".toRegex(), "").toDouble()
     }
 
     /*create bellow json and publish on edge device rule matched.

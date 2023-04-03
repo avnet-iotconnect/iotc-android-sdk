@@ -290,7 +290,8 @@ object SDKClientUtils {
 
 
     fun isDigit(value: String): Boolean {
-        return value.all { char -> char.isDigit() }
+       // return value.all { char -> char.isDigit() }
+        return value.matches("^[0-9]*\\.?[0-9]+\$".toRegex())
 
          /*  var value = value
            value = value.replace("\\s".toRegex(), "")
@@ -299,6 +300,15 @@ object SDKClientUtils {
 
     fun isLetter(value: String): Boolean {
         return value.all { char -> char.isLetter() }
+
+        /*  var value = value
+          value = value.replace("\\s".toRegex(), "")
+          return value.matches("\\d+(?:\\.\\d+)?".toRegex())*/
+    }
+
+    fun isLetterOrDigit(value: String): Boolean {
+      //  return value.matches("^[a-zA-Z0-9!@#$&()\\-`.+,/\"]*$".toRegex())
+        return value.matches("[A-Za-z0-9\\!\\\"\\#\\$\\%\\&\\'\\(\\)\\*\\+\\,\\-\\.\\/\\:\\;\\<\\>\\=\\?\\@\\[\\]\\{\\}\\\\\\^\\_\\`\\~]+$".toRegex())
 
         /*  var value = value
           value = value.replace("\\s".toRegex(), "")

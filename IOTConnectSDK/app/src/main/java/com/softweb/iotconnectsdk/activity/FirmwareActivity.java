@@ -174,7 +174,11 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
             }
         } else if (v.getId() == R.id.btnSendData) {
             // showDialog(FirmwareActivity.this);
-            sendInputData();
+            try {
+                sendInputData();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         } else if (v.getId() == R.id.btnGetAllTwins) {
             if (sdkClient != null) {
                 if (isConnected) {

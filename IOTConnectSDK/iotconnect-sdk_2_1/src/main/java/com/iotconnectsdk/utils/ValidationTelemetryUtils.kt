@@ -125,7 +125,7 @@ internal object ValidationTelemetryUtils {
                     try {
                         rngwithnum.add(str.toDouble())
                     } catch (e: Exception) {
-                        if (SDKClientUtils.isLetter(value)) {
+                        if (SDKClientUtils.isLetterOrDigit(value)) {
                             return validateVarchar(value, range)
                         } else {
                             e.printStackTrace()
@@ -138,9 +138,9 @@ internal object ValidationTelemetryUtils {
         //if value is in comma separated value
 
         try {
-            if (SDKClientUtils.isLetter(value)) {
+           /* if (SDKClientUtils.isLetterOrDigit(value)) {
                 return validateVarchar(value, range)
-            } else if (rngwithnum.contains(value.toDouble())) {
+            } else*/ if (rngwithnum.contains(value.toDouble())) {
                 return REPORTING
             } else {
                 //check value is in range

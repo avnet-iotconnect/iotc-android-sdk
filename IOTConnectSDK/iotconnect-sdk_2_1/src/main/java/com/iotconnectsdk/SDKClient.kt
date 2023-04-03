@@ -1624,7 +1624,7 @@ class SDKClient(
         gyroAttributeList: MutableList<TumblingWindowBean>?
     ) {
         var id = ""
-        val tw = twTime?.replace("[^\\d.]".toRegex(), "")?.toInt()
+        val tw = twTime?.replace("[^\\d.]".toRegex(), "")?.toDouble()
         if (ln != null) {
             edgeDeviceAttributeMap?.put(ln, TumblingWindowBean())
         }
@@ -1785,7 +1785,7 @@ class SDKClient(
     ) {
         try {
             if (ruleBeansList != null) {
-                val value = inputValue.replace("\\s".toRegex(), "").toInt()
+                val value = inputValue.replace("\\s".toRegex(), "").toDouble()
                 for (bean in ruleBeansList) {
                     val con = bean.con
                     val attKey: String? = getAttributeName(con)
@@ -1929,7 +1929,7 @@ class SDKClient(
     private fun setPublishJsonForRuleMatchedEdgeDevice(
         childAttNameValue: String,
         innerKey: String,
-        value: Int,
+        value: Double,
         attObj: JSONObject?,
         parentKey: String,
         bean: GetEdgeRuleBean,
