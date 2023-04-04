@@ -291,7 +291,7 @@ object SDKClientUtils {
 
     fun isDigit(value: String): Boolean {
        // return value.all { char -> char.isDigit() }
-        return value.matches("^[0-9]*\\.?[0-9]+\$".toRegex())
+        return value.matches("^-?[0-9]*\\.?[0-9]+\$".toRegex())
 
          /*  var value = value
            value = value.replace("\\s".toRegex(), "")

@@ -972,14 +972,14 @@ class SDKClient(
     fun dispose() {
         isDispose = true
         edgeDeviceTimerStop()
+        timerStop(reCheckingTimer)
+        timerStop(timerCheckDeviceState)
+        timerStop(timerOfflineSync)
 
         if (mqttService != null) {
             mqttService?.disconnectClient()
             mqttService?.clearInstance() //destroy singleton object.
         }
-        timerStop(reCheckingTimer)
-        timerStop(timerCheckDeviceState)
-        timerStop(timerOfflineSync)
         unregisterReceiver()
         sdkClient = null
     }
@@ -1247,7 +1247,12 @@ class SDKClient(
         if (!idEdgeDevice) { // simple device.
             publishDeviceInputData(jsonData)
         } else { //Edge device
-            processEdgeDeviceInputData(jsonData)
+            try {
+                processEdgeDeviceInputData(jsonData)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
         }
     }
 
@@ -1535,7 +1540,7 @@ class SDKClient(
                         }
                     }
                 }
-            } catch (e: java.lang.Exception) {
+            } catch (e: Exception) {
                 iotSDKLogUtils!!.log(true, isDebug, "ERR_EE01", e.message!!)
                 e.printStackTrace()
             }

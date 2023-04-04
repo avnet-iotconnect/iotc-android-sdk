@@ -1,13 +1,20 @@
 package com.iotconnectsdk.utils
 
+import android.text.TextUtils
 import android.util.Log
 import com.iotconnectsdk.beans.CommonResponseBean
+import java.lang.Boolean
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.ResolverStyle
 import java.util.*
 import java.util.regex.Pattern
+import kotlin.Double
+import kotlin.Exception
+import kotlin.Int
+import kotlin.String
+import kotlin.Throws
 
 internal object ValidationTelemetryUtils {
 
@@ -81,11 +88,16 @@ internal object ValidationTelemetryUtils {
         Log.d("dtValue", "::" + dt)
 
         if (dt == DATA_TYPE_STRING) {
-            return validateNumber(value, dv)
-        } else if (value.isNullOrBlank() && !SDKClientUtils.isDigit(value)) {
+            return validateNumber(dt, value, dv)
+        } else if (TextUtils.isEmpty(value.trim())) {
             return FAULTY
         } else if (dt == DATA_TYPE_INTEGER || dt == DATA_TYPE_LONG || dt == DATA_TYPE_DECIMAL) {
-            return validateNumber(value, dv)
+            if (!SDKClientUtils.isDigit(value)) {
+                return FAULTY
+            } else {
+                return validateNumber(dt, value, dv)
+            }
+
         } else if (dt == DATA_TYPE_BIT) {
             return validateBit(value, dv)
         } else if (dt == DATA_TYPE_BOOLEAN) {
@@ -104,7 +116,7 @@ internal object ValidationTelemetryUtils {
     }
 
     @Throws(Exception::class)
-    private fun validateNumber(value: String, range: String): Int {
+    private fun validateNumber(dt: Int, value: String, range: String): Int {
 
         var range = range
         var start: Double
@@ -125,7 +137,7 @@ internal object ValidationTelemetryUtils {
                     try {
                         rngwithnum.add(str.toDouble())
                     } catch (e: Exception) {
-                        if (SDKClientUtils.isLetterOrDigit(value)) {
+                        if (SDKClientUtils.isLetter(value)) {
                             return validateVarchar(value, range)
                         } else {
                             e.printStackTrace()
@@ -138,38 +150,44 @@ internal object ValidationTelemetryUtils {
         //if value is in comma separated value
 
         try {
-           /* if (SDKClientUtils.isLetterOrDigit(value)) {
-                return validateVarchar(value, range)
-            } else*/ if (rngwithnum.contains(value.toDouble())) {
-                return REPORTING
-            } else {
-                //check value is in range
-                val `val` = value.toDouble()
-                val isRangeChecked = false
-                val availableList = ArrayList<Int>()
-                for (str in rngwithto) {
-                    if (str.isNotEmpty()) {
-                        val ary = str.split("to".toRegex()).dropLastWhile { it.isEmpty() }
-                            .toTypedArray()
-                        start = ary[0].toDouble()
-                        end = ary[1].toDouble()
-                        if (`val` < start || `val` > end) {
-                            availableList.add(FAULTY)
-                        } else {
-                            availableList.add(REPORTING)
-                        }
-                    }
-                }
-                if (rngwithto.size == 0 && rngwithnum.size > 0) {
-                    return FAULTY
-                } else if (availableList.contains(REPORTING)) {
+            /* if (SDKClientUtils.isLetter(value)) {
+                 return validateVarchar(value, range)
+             } else*/
+
+            if (SDKClientUtils.isDigit(value)) {
+                if (rngwithnum.contains(value.toDouble())) {
                     return REPORTING
                 } else {
-                    return if (availableList.contains(FAULTY))
-                        FAULTY
-                    else
-                        REPORTING
+                    //check value is in range
+                    val `val` = value.toDouble()
+                    val isRangeChecked = false
+                    val availableList = ArrayList<Int>()
+                    for (str in rngwithto) {
+                        if (str.isNotEmpty()) {
+                            val ary = str.split("to".toRegex()).dropLastWhile { it.isEmpty() }
+                                .toTypedArray()
+                            start = ary[0].toDouble()
+                            end = ary[1].toDouble()
+                            if (`val` < start || `val` > end) {
+                                availableList.add(FAULTY)
+                            } else {
+                                availableList.add(REPORTING)
+                            }
+                        }
+                    }
+                    if (rngwithto.size == 0 && rngwithnum.size > 0) {
+                        return FAULTY
+                    } else if (availableList.contains(REPORTING)) {
+                        return REPORTING
+                    } else {
+                        return if (availableList.contains(FAULTY))
+                            FAULTY
+                        else
+                            REPORTING
+                    }
                 }
+            } else {
+                return validateVarchar(value, range)
             }
         } catch (e: Exception) {
             return 1 // return faulty (input value is not an int type, so we can not campare with between.)
@@ -221,17 +239,22 @@ internal object ValidationTelemetryUtils {
                  return FAULTY
              }*/
             if (dataValidation != null && dataValidation.isNotEmpty()) {
-                return if (dataValidation == value) {
+                if (dataValidation == value) {
                     REPORTING
                 } else {
-                    FAULTY
+                    return FAULTY
                 }
+            } else if (value.equals("true", true) || (value.equals("false", true))) {
+                return REPORTING
+            } else {
+                return FAULTY
             }
-            REPORTING
         } catch (e: java.lang.Exception) {
-            FAULTY
+            return FAULTY
         }
+
     }
+
 
     private fun validateTime(value: String?, range: String): Int {
         var range: String? = range
