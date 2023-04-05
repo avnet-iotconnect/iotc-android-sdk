@@ -400,118 +400,124 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
     @Override
     public void onReceiveMsg(String message) {
         hideDialog(FirmwareActivity.this);
-        Log.d(TAG, "onReceiveMsg => " + message);
+        //  if (message != null && !message.isEmpty()) {
+        btnClear.setEnabled(true);
+        try {
+            Log.d(TAG, "onReceiveMsg => " + message);
+            //etSubscribe.append("\n--- Device Command Received ---\n");
 
-        if (!message.isEmpty()) {
-            btnClear.setEnabled(true);
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
 
-            etSubscribe.append("\n--- Device Command Received ---\n");
-            etSubscribe.append(message + "");
-
-
-            try {
-                String messageType = "";
-                String ackId = "";
-                String childId = "";
-                int cmdType = -1;
-                JSONObject mainObject = null;
-
-                boolean jsonValid = isJSONValid(message);
-
-                if (jsonValid) {
-                    mainObject = new JSONObject(message);
-                    //Publish message call back received.
-                    if (!mainObject.has("ct")) {
-                        return;
-                    }
-
-                    cmdType = mainObject.getInt("ct");
-
-                    if (mainObject.has("ack")) {
-                        ackId = mainObject.getString("ack");
-                    }
-
-                    if (mainObject.has("id")) {
-                        childId = mainObject.getString("id");
-                    }
-                }
-
-                switch (cmdType) {
-                    case 0:
-                        Log.d(TAG, "--- Device Command Received ---");
-                        if (ackId != null && !ackId.isEmpty()) {
-                            messageType = "5";
-
-                            /*
-                             * Type    : Public Method "sendAck()"
-                             * Usage   : Send device command received acknowledgment to cloud
-                             *
-                             * - status Type
-                             *     st = 6; // Device command Ack status
-                             *     st = 4; // Failed Ack
-                             * - Message Type
-                             *     msgType = 5; // for "0x01" device command
-                             */
-
-                            D2CSendAckBean d2CSendAckBean = new D2CSendAckBean(getCurrentTime(), new D2CSendAckBean.Data(ackId, 0, 6, "", childId));
-                            Gson gson = new Gson();
-                            String jsonString = gson.toJson(d2CSendAckBean);
-
-                            if (isConnected)
-                                sdkClient.sendAck(jsonString, messageType);
-                            else
-                                Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
-                        }
-                        break;
-                    case 0x02:
-                        Log.d(TAG, "--- Firmware OTA Command Received ---");
-                        if (ackId != null && !ackId.isEmpty()) {
-                            messageType = "11";
-                            JSONObject obj = getAckObject(mainObject);
-                            obj.put("st", 7);
-
-                            /*
-                             * Type    : Public Method "sendAck()"
-                             * Usage   : Send firmware command received acknowledgement to cloud
-                             * - status Type
-                             *     st = 7; // firmware OTA command Ack status
-                             *     st = 4; // Failed Ack
-                             * - Message Type
-                             *     msgType = 11; // for "0x02" Firmware command
-                             */
-
-                           /* if (isConnected)
-                                sdkClient.sendAck(obj, messageType);
-                            else
-                                Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();*/
-                        }
-                        break;
-
-                    case 116:
-                          /*command type "0x16" for Device "Connection Status"
-                          true = connected, false = disconnected*/
-
-                        Log.d(TAG, "--- Device connection status ---");
-                        // JSONObject dataObj = mainObject.getJSONObject("data");
-                        Log.d(TAG, "DeviceId ::: [" + mainObject.getString("uniqueId") + "] :: Device status :: " + mainObject.getString("command") + "," + new Date());
-
-                        if (mainObject.has("command")) {
-                            isConnected = mainObject.getBoolean("command");
-                            onConnectionStateChange(isConnected);
-                        }
-                        break;
-
-                    default:
-                        hideDialog(FirmwareActivity.this);
-                        setStatusText(R.string.device_disconnected);
-                        Toast.makeText(FirmwareActivity.this, message, Toast.LENGTH_LONG).show();
+                    etSubscribe.setText(message);
 
                 }
+            });
 
-            } catch (Exception e) {
-                e.printStackTrace();
+
+            String messageType = "";
+            String ackId = "";
+            String childId = "";
+            int cmdType = -1;
+            JSONObject mainObject = null;
+
+            boolean jsonValid = isJSONValid(message);
+
+            if (jsonValid) {
+                mainObject = new JSONObject(message);
+                //Publish message call back received.
+                if (!mainObject.has("ct")) {
+                    return;
+                }
+
+                cmdType = mainObject.getInt("ct");
+
+                if (mainObject.has("ack")) {
+                    ackId = mainObject.getString("ack");
+                }
+
+                if (mainObject.has("id")) {
+                    childId = mainObject.getString("id");
+                }
             }
+
+            switch (cmdType) {
+                case 0:
+                    Log.d(TAG, "--- Device Command Received ---");
+                    if (ackId != null && !ackId.isEmpty()) {
+                        messageType = "5";
+
+                        /*
+                         * Type    : Public Method "sendAck()"
+                         * Usage   : Send device command received acknowledgment to cloud
+                         *
+                         * - status Type
+                         *     st = 6; // Device command Ack status
+                         *     st = 4; // Failed Ack
+                         * - Message Type
+                         *     msgType = 5; // for "0x01" device command
+                         */
+
+                        D2CSendAckBean d2CSendAckBean = new D2CSendAckBean(getCurrentTime(), new D2CSendAckBean.Data(ackId, 0, 6, "", childId));
+                        Gson gson = new Gson();
+                        String jsonString = gson.toJson(d2CSendAckBean);
+
+                        if (isConnected)
+                            sdkClient.sendAck(jsonString, messageType);
+                        else
+                            Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
+                    }
+                    break;
+                case 0x02:
+                    Log.d(TAG, "--- Firmware OTA Command Received ---");
+                    if (ackId != null && !ackId.isEmpty()) {
+                        messageType = "11";
+                        JSONObject obj = getAckObject(mainObject);
+                        obj.put("st", 7);
+
+                        /*
+                         * Type    : Public Method "sendAck()"
+                         * Usage   : Send firmware command received acknowledgement to cloud
+                         * - status Type
+                         *     st = 7; // firmware OTA command Ack status
+                         *     st = 4; // Failed Ack
+                         * - Message Type
+                         *     msgType = 11; // for "0x02" Firmware command
+                         */
+
+                               /* if (isConnected)
+                                    sdkClient.sendAck(obj, messageType);
+                                else
+                                    Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();*/
+                    }
+                    break;
+
+                case 116:
+                              /*command type "0x16" for Device "Connection Status"
+                              true = connected, false = disconnected*/
+
+                    Log.d(TAG, "--- Device connection status ---");
+                    // JSONObject dataObj = mainObject.getJSONObject("data");
+                    Log.d(TAG, "DeviceId ::: [" + mainObject.getString("uniqueId") + "] :: Device status :: " + mainObject.getString("command") + "," + new Date());
+
+                    if (mainObject.has("command")) {
+                        isConnected = mainObject.getBoolean("command");
+                        onConnectionStateChange(isConnected);
+                    }
+                    break;
+
+                default:
+                    hideDialog(FirmwareActivity.this);
+                    setStatusText(R.string.device_disconnected);
+                    Toast.makeText(FirmwareActivity.this, message, Toast.LENGTH_LONG).show();
+
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+        // }
     }
 
     /*

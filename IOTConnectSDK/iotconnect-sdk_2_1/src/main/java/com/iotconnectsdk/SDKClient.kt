@@ -165,13 +165,23 @@ class SDKClient(
 
         @JvmStatic
         fun getInstance(
-            context: Context?, cpId: String?, uniqueId: String?, deviceCallback: DeviceCallback?,
-            twinUpdateCallback: TwinUpdateCallback?, sdkOptions: String?, environment: String?
+            context: Context?,
+            cpId: String?,
+            uniqueId: String?,
+            deviceCallback: DeviceCallback?,
+            twinUpdateCallback: TwinUpdateCallback?,
+            sdkOptions: String?,
+            environment: String?
         ): SDKClient {
             synchronized(this) {
                 if (sdkClient == null) {
                     sdkClient = SDKClient(
-                        context, cpId, uniqueId, deviceCallback, twinUpdateCallback, sdkOptions,
+                        context,
+                        cpId,
+                        uniqueId,
+                        deviceCallback,
+                        twinUpdateCallback,
+                        sdkOptions,
                         environment
                     )
                 }
@@ -281,15 +291,11 @@ class SDKClient(
             discoveryUrl = DEFAULT_DISCOVERY_URL //set default discovery url when sdkOption is null.
         }
         if (!validationUtils!!.isEmptyValidation(
-                cpId,
-                "ERR_IN04",
-                context.getString(R.string.ERR_IN04)
+                cpId, "ERR_IN04", context.getString(R.string.ERR_IN04)
             )
         ) return
         if (!validationUtils!!.isEmptyValidation(
-                uniqueId,
-                "ERR_IN05",
-                context.getString(R.string.ERR_IN05)
+                uniqueId, "ERR_IN05", context.getString(R.string.ERR_IN05)
             )
         ) return
         callDiscoveryService()
@@ -331,8 +337,7 @@ class SDKClient(
     override fun onSuccessResponse(methodName: String?, response: String?) {
         try {
             if (methodName.equals(
-                    IotSDKUrls.DISCOVERY_SERVICE,
-                    ignoreCase = true
+                    IotSDKUrls.DISCOVERY_SERVICE, ignoreCase = true
                 ) && response != null
             ) {
                 val discoveryApiResponse =
@@ -340,10 +345,7 @@ class SDKClient(
                 if (discoveryApiResponse != null && discoveryApiResponse.d.bu != null) {
                     //BaseUrl received to sync the device information.
                     iotSDKLogUtils!!.log(
-                        false,
-                        isDebug,
-                        "INFO_IN07",
-                        context!!.getString(R.string.INFO_IN07)
+                        false, isDebug, "INFO_IN07", context!!.getString(R.string.INFO_IN07)
                     )
                     if (!validationUtils!!.validateBaseUrl(discoveryApiResponse)) return
                     val baseUrl: String = discoveryApiResponse.d.bu + UNIQUE_ID + uniqueId
@@ -353,12 +355,17 @@ class SDKClient(
                 } else {
                     val responseCodeMessage =
                         validationUtils?.responseCodeMessage(discoveryApiResponse.d.ec)
-                    deviceCallback?.onReceiveMsg(responseCodeMessage)
+
+                    try {
+                        deviceCallback?.onReceiveMsg(responseCodeMessage)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+
                     sdkClient = null
                 }
             } else if (methodName.equals(
-                    IotSDKUrls.SYNC_SERVICE,
-                    ignoreCase = true
+                    IotSDKUrls.SYNC_SERVICE, ignoreCase = true
                 ) && response != null
             ) {
                 val syncServiceResponseData =
@@ -385,27 +392,26 @@ class SDKClient(
                         } else {
                             timerStop(reCheckingTimer)
                             iotSDKLogUtils!!.log(
-                                true,
-                                isDebug,
-                                "ERR_IN10",
-                                context!!.getString(R.string.ERR_IN10)
+                                true, isDebug, "ERR_IN10", context!!.getString(R.string.ERR_IN10)
                             )
                         }
                         return
                     } else if (rc != 0) {
 //                            onConnectionStateChange(false);
                         iotSDKLogUtils!!.log(
-                            true,
-                            isDebug,
-                            "ERR_IN10",
-                            context!!.getString(R.string.ERR_IN10)
+                            true, isDebug, "ERR_IN10", context!!.getString(R.string.ERR_IN10)
                         )
                         return
                     } else {
                         timerStop(reCheckingTimer)
                     }
 
-                    deviceCallback?.onReceiveMsg(responseCodeMessage)
+                    try {
+                        deviceCallback?.onReceiveMsg(responseCodeMessage)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+
                     sdkClient = null
                 }
             }
@@ -487,7 +493,12 @@ class SDKClient(
     * */
     override fun onSendMsgUI(message: String?) {
         if (message != null) {
-            deviceCallback?.onReceiveMsg(message)
+            try {
+                deviceCallback?.onReceiveMsg(message)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
         }
     }
 
@@ -520,7 +531,8 @@ class SDKClient(
             publishMessage(
                 response.d.p.topics.di,
                 JSONObject().put(MESSAGE_TYPE, DeviceIdentityMessages.GET_EDGE_RULE.value)
-                    .toString(), false
+                    .toString(),
+                false
             )
         }
 
@@ -528,7 +540,8 @@ class SDKClient(
             publishMessage(
                 response.d.p.topics.di,
                 JSONObject().put(MESSAGE_TYPE, DeviceIdentityMessages.GET_CHILD_DEVICES.value)
-                    .toString(), false
+                    .toString(),
+                false
             )
         }
 
@@ -627,7 +640,13 @@ class SDKClient(
                             iotSDKLogUtils!!.log(
                                 false, isDebug, "INFO_CM01", context!!.getString(R.string.INFO_CM01)
                             )
-                            deviceCallback?.onReceiveMsg(message)
+
+                            try {
+                                deviceCallback?.onReceiveMsg(message)
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+
                         }
 
                         /*OTA Command received by the device from the cloud*/
@@ -670,8 +689,7 @@ class SDKClient(
                             val response = getSyncResponse()
                             publishMessage(
                                 response?.d?.p?.topics!!.di, JSONObject().put(
-                                    MESSAGE_TYPE,
-                                    DeviceIdentityMessages.GET_EDGE_RULE.value
+                                    MESSAGE_TYPE, DeviceIdentityMessages.GET_EDGE_RULE.value
                                 ).toString(), false
                             )
                         }
@@ -681,8 +699,7 @@ class SDKClient(
                             val response = getSyncResponse()
                             publishMessage(
                                 response?.d?.p?.topics!!.di, JSONObject().put(
-                                    MESSAGE_TYPE,
-                                    DeviceIdentityMessages.GET_CHILD_DEVICES.value
+                                    MESSAGE_TYPE, DeviceIdentityMessages.GET_CHILD_DEVICES.value
                                 ).toString(), false
                             )
                         }
@@ -694,15 +711,13 @@ class SDKClient(
                                 val response = getSyncResponse()
                                 response?.d?.meta?.df = mainObject.getInt(DF)
                                 IotSDKPreferences.getInstance(context)?.putStringData(
-                                    IotSDKPreferences.SYNC_RESPONSE,
-                                    Gson().toJson(response)
+                                    IotSDKPreferences.SYNC_RESPONSE, Gson().toJson(response)
                                 )
                             }
                         }
 
                         /*The device must stop all communication and release the MQTT connection*/
-                        C2DMessageEnums.DEVICE_DELETED.value, C2DMessageEnums.DEVICE_DISABLED.value, C2DMessageEnums.DEVICE_RELEASED.value,
-                        C2DMessageEnums.STOP_OPERATION.value, C2DMessageEnums.DEVICE_CONNECTION_STATUS.value -> {
+                        C2DMessageEnums.DEVICE_DELETED.value, C2DMessageEnums.DEVICE_DISABLED.value, C2DMessageEnums.DEVICE_RELEASED.value, C2DMessageEnums.STOP_OPERATION.value, C2DMessageEnums.DEVICE_CONNECTION_STATUS.value -> {
                             iotSDKLogUtils?.log(
                                 false, isDebug, "INFO_CM16", context!!.getString(R.string.INFO_CM16)
                             )
@@ -831,8 +846,7 @@ class SDKClient(
                     val mainObj = JSONObject()
                     mainObj.put(DEVICE, deviceObj)
                     mainObj.put(
-                        ATTRIBUTES,
-                        getAttributesList(attributeResponse.d!!.att, childDeviceBean.tg)
+                        ATTRIBUTES, getAttributesList(attributeResponse.d!!.att, childDeviceBean.tg)
                     )
 
                     //ADD MAIN BOJ TO ARRAY.
@@ -841,17 +855,11 @@ class SDKClient(
                     //Attributes data not found
                     if (mainArray.length() == 0) {
                         iotSDKLogUtils!!.log(
-                            true,
-                            isDebug,
-                            "ERR_GA02",
-                            context!!.getString(R.string.ERR_GA02)
+                            true, isDebug, "ERR_GA02", context!!.getString(R.string.ERR_GA02)
                         )
                     } else {
                         iotSDKLogUtils!!.log(
-                            false,
-                            isDebug,
-                            "INFO_GA01",
-                            context!!.getString(R.string.INFO_GA01)
+                            false, isDebug, "INFO_GA01", context!!.getString(R.string.INFO_GA01)
                         )
                     }
 
@@ -881,17 +889,11 @@ class SDKClient(
                 //Attributes data not found
                 if (mainArray.length() == 0) {
                     iotSDKLogUtils!!.log(
-                        true,
-                        isDebug,
-                        "ERR_GA02",
-                        context!!.getString(R.string.ERR_GA02)
+                        true, isDebug, "ERR_GA02", context!!.getString(R.string.ERR_GA02)
                     )
                 } else {
                     iotSDKLogUtils!!.log(
-                        false,
-                        isDebug,
-                        "INFO_GA01",
-                        context!!.getString(R.string.INFO_GA01)
+                        false, isDebug, "INFO_GA01", context!!.getString(R.string.INFO_GA01)
                     )
                 }
 
@@ -909,10 +911,7 @@ class SDKClient(
         }
         if (mqttService != null) {
             iotSDKLogUtils!!.log(
-                false,
-                isDebug,
-                "INFO_TP02",
-                context!!.getString(R.string.INFO_TP02)
+                false, isDebug, "INFO_TP02", context!!.getString(R.string.INFO_TP02)
             )
             mqttService?.getAllTwins()
         }
@@ -925,8 +924,11 @@ class SDKClient(
         }
         if (!validationUtils!!.validateKeyValue(key!!, value!!)) return
         try {
-            if (mqttService != null)
-                publishMessage("", JSONObject().put(key, value).toString(), true)
+            if (mqttService != null) publishMessage(
+                "",
+                JSONObject().put(key, value).toString(),
+                true
+            )
         } catch (e: JSONException) {
             iotSDKLogUtils!!.log(true, isDebug, "ERR_TP01", e.message!!)
             e.printStackTrace()
@@ -1036,8 +1038,13 @@ class SDKClient(
 
         try {
             val strJson = SDKClientUtils.createCommandFormat(
-                C2DMessageEnums.DEVICE_CONNECTION_STATUS.value, cpId, "", uniqueId,
-                isConnected.toString(), false, ""
+                C2DMessageEnums.DEVICE_CONNECTION_STATUS.value,
+                cpId,
+                "",
+                uniqueId,
+                isConnected.toString(),
+                false,
+                ""
             )
             deviceCallback?.onReceiveMsg(strJson)
         } catch (e: Exception) {
@@ -1065,10 +1072,7 @@ class SDKClient(
                         .getList(IotSDKPreferences.TEXT_FILE_NAME).isEmpty()
                 ) {
                     iotSDKLogUtils!!.log(
-                        false,
-                        isDebug,
-                        "INFO_OS05",
-                        context.getString(R.string.INFO_OS05)
+                        false, isDebug, "INFO_OS05", context.getString(R.string.INFO_OS05)
                     )
                     return
                 }
@@ -1186,18 +1190,12 @@ class SDKClient(
                 )
             ) {
                 iotSDKLogUtils!!.log(
-                    false,
-                    isDebug,
-                    "INFO_OS04",
-                    context.getString(R.string.INFO_OS04)
+                    false, isDebug, "INFO_OS04", context.getString(R.string.INFO_OS04)
                 )
             }
         } catch (e: java.lang.Exception) {
             iotSDKLogUtils!!.log(
-                true,
-                isDebug,
-                "ERR_OS03",
-                context!!.getString(R.string.ERR_OS03) + e.message
+                true, isDebug, "ERR_OS03", context!!.getString(R.string.ERR_OS03) + e.message
             )
             e.printStackTrace()
         }
@@ -1242,8 +1240,7 @@ class SDKClient(
             }
             return
         }
-        if (!validationUtils!!.isValidInputFormat(jsonData!!, uniqueId!!))
-            return
+        if (!validationUtils!!.isValidInputFormat(jsonData!!, uniqueId!!)) return
         if (!idEdgeDevice) { // simple device.
             publishDeviceInputData(jsonData)
         } else { //Edge device
@@ -1292,8 +1289,7 @@ class SDKClient(
      * @param inputJsonStr input json from user.
      * */
     private fun publishDeviceInputData(
-        syncResponse: IdentityServiceResponse?, inputJsonStr: String,
-        dObj: CommonResponseBean?
+        syncResponse: IdentityServiceResponse?, inputJsonStr: String, dObj: CommonResponseBean?
     ) {
         try {
 
@@ -1366,10 +1362,11 @@ class SDKClient(
                         }
 
                         //add gyro object to parent d object.
-                        if (gyroObj_reporting.length() != 0)
-                            innerD_Obj_reporting.put(key, gyroObj_reporting)
-                        if (gyroObj_faulty.length() != 0)
-                            innerD_Obj_faulty.put(key, gyroObj_faulty)
+                        if (gyroObj_reporting.length() != 0) innerD_Obj_reporting.put(
+                            key,
+                            gyroObj_reporting
+                        )
+                        if (gyroObj_faulty.length() != 0) innerD_Obj_faulty.put(key, gyroObj_faulty)
                     } else {
                         val othersValidation = compareForInputValidationNew(key, value, tag, dObj)
                         if (othersValidation == 0) {
@@ -1393,16 +1390,16 @@ class SDKClient(
                 reportingObject_faulty.put(D_OBJ, innerD_Obj_faulty)
 
 
-                if (innerD_Obj_reporting.length() != 0)
-                    arrayObj_attributes_reporting.put(reportingObject_reporting)
+                if (innerD_Obj_reporting.length() != 0) arrayObj_attributes_reporting.put(
+                    reportingObject_reporting
+                )
 
-                if (innerD_Obj_faulty.length() != 0)
-                    arrayObj_attributes_faulty.put(reportingObject_faulty)
+                if (innerD_Obj_faulty.length() != 0) arrayObj_attributes_faulty.put(
+                    reportingObject_faulty
+                )
 
-                if (arrayObj_attributes_reporting.length() > 0)
-                    doReportingPublish = true
-                if (arrayObj_attributes_faulty.length() > 0)
-                    doFaultyPublish = true
+                if (arrayObj_attributes_reporting.length() > 0) doReportingPublish = true
+                if (arrayObj_attributes_faulty.length() > 0) doFaultyPublish = true
 
 
             }
@@ -1477,19 +1474,13 @@ class SDKClient(
 
                                 //check for input validation dv=data validation dv="data validation". {"ln":"x","dt":0,"dv":"10to20","tg":"","sq":1,"agt":63,"tw":"40s"}
                                 val validation: Int = compareForInputValidationNew(
-                                    innerKey,
-                                    innerKValue,
-                                    tag,
-                                    attributeResponse
+                                    innerKey, innerKValue, tag, attributeResponse
                                 )
 
                                 //ignore string value for edge device.
                                 if (SDKClientUtils.isDigit(innerKValue) && validation != 1) {
                                     updateEdgeDeviceGyroObj(
-                                        key,
-                                        innerKey,
-                                        innerKValue,
-                                        edgeDeviceAttributeGyroMap
+                                        key, innerKey, innerKValue, edgeDeviceAttributeGyroMap
                                     )
                                     if (edgeResponse != null) {
                                         if (jsonData != null) {
@@ -1511,28 +1502,18 @@ class SDKClient(
 
                             //check for input validation dv="data validation". {"ln":"abc","dt":0,"dv":"10","tg":"","sq":8,"agt":63,"tw":"60s"}
                             val validation: Int = compareForInputValidationNew(
-                                key,
-                                value,
-                                tag,
-                                attributeResponse
+                                key, value, tag, attributeResponse
                             )
 
                             //ignore string value for edge device.
                             if (SDKClientUtils.isDigit(value) && validation != 1) {
                                 updateEdgeDeviceObj(
-                                    key,
-                                    value,
-                                    edgeDeviceAttributeMap
+                                    key, value, edgeDeviceAttributeMap
                                 )
                                 if (edgeResponse != null) {
                                     if (jsonData != null) {
                                         EvaluateRuleForEdgeDevice(
-                                            edgeResponse.d!!.edge,
-                                            key,
-                                            null,
-                                            value,
-                                            jsonData,
-                                            null
+                                            edgeResponse.d!!.edge, key, null, value, jsonData, null
                                         )
                                     }
                                 }
@@ -1553,8 +1534,7 @@ class SDKClient(
      * @param response      Sync service response.
      * */
     private fun processEdgeDeviceTWTimer(
-        syncResponse: IdentityServiceResponse,
-        response: CommonResponseBean
+        syncResponse: IdentityServiceResponse, response: CommonResponseBean
     ) {
         val attributeList = response.d?.att
         edgeDeviceAttributeMap = ConcurrentHashMap()
@@ -1582,11 +1562,7 @@ class SDKClient(
                             tg = ""
                         }
                         edgeDeviceTWTimerStart(
-                            syncResponse,
-                            beanX.tw,
-                            bean.p,
-                            tg,
-                            gyroAttributeList
+                            syncResponse, beanX.tw, bean.p, tg, gyroAttributeList
                         )
 
                         //  }
@@ -1637,8 +1613,7 @@ class SDKClient(
         if (ln != null) {
             if (gyroAttributeList != null) {
                 (edgeDeviceAttributeGyroMap as ConcurrentHashMap<String, List<TumblingWindowBean>>).put(
-                    ln,
-                    gyroAttributeList
+                    ln, gyroAttributeList
                 )
             }
         }
@@ -1707,9 +1682,7 @@ class SDKClient(
         }
         if (tw != null) {
             timerTumblingWindow.scheduleAtFixedRate(
-                timerTask,
-                (tw * 1000).toLong(),
-                (tw * 1000).toLong()
+                timerTask, (tw * 1000).toLong(), (tw * 1000).toLong()
             )
         }
     }
@@ -1764,10 +1737,15 @@ class SDKClient(
    * */
     private fun onEdgeDeviceRuleMatched(bean: GetEdgeRuleBean) {
         val strJson = SDKClientUtils.createCommandFormat(
-            C2DMessageEnums.DEVICE_COMMAND.value,
-            cpId, bean.g, uniqueId, bean.cmd, true, ""
+            C2DMessageEnums.DEVICE_COMMAND.value, cpId, bean.g, uniqueId, bean.cmd, true, ""
         )
-        deviceCallback!!.onReceiveMsg(strJson)
+
+        try {
+            deviceCallback!!.onReceiveMsg(strJson)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
     }
 
 
@@ -1844,13 +1822,7 @@ class SDKClient(
                                 .toTypedArray() //gyro#x > 5
                             val parentAttName = parent[0] //gyro
                             setPublishJsonForRuleMatchedEdgeDevice(
-                                parent[1],
-                                innerKey,
-                                value,
-                                attObj,
-                                parentKey,
-                                bean,
-                                inputJsonString
+                                parent[1], innerKey, value, attObj, parentKey, bean, inputJsonString
                             )
                         } else if (innerKey != null && con.contains(".") && con.contains("AND")) { //"gyro.x = 10 AND gyro.y > 10",
                             val param = con.split("AND".toRegex()).dropLastWhile { it.isEmpty() }
@@ -1886,24 +1858,22 @@ class SDKClient(
                                 onEdgeDeviceRuleMatched(bean)
                                 val cvAttObj = JSONObject()
                                 cvAttObj.put(parentKey, inputValue)
-                                val mainObj: JSONObject =
-                                    getEdgeDevicePublishMainObj(
-                                        DateTimeUtils.currentDate,
-                                        /*getDtg(),
-                                        cpId,
-                                        environment,
-                                        appVersion,
-                                        EDGE_DEVICE_RULE_MATCH_MESSAGE_TYPE*/
-                                    )
-                                val publishObj: JSONObject =
-                                    getPublishStringEdgeDevice(
-                                        uniqueId,
-                                        DateTimeUtils.currentDate,
-                                        bean,
-                                        inputJsonString,
-                                        cvAttObj,
-                                        mainObj
-                                    )!!
+                                val mainObj: JSONObject = getEdgeDevicePublishMainObj(
+                                    DateTimeUtils.currentDate,
+                                    /*getDtg(),
+                                    cpId,
+                                    environment,
+                                    appVersion,
+                                    EDGE_DEVICE_RULE_MATCH_MESSAGE_TYPE*/
+                                )
+                                val publishObj: JSONObject = getPublishStringEdgeDevice(
+                                    uniqueId,
+                                    DateTimeUtils.currentDate,
+                                    bean,
+                                    inputJsonString,
+                                    cvAttObj,
+                                    mainObj
+                                )!!
                                 //publish edge device rule matched data. Publish simple attribute data only. (temp > 10)
                                 if (publishObj != null) {
                                     val syncResponse = getSyncResponse()
@@ -1978,8 +1948,7 @@ class SDKClient(
     private fun publishRuleEvaluatedData() {
         val syncResponse = getSyncResponse()
         if (publishObjForRuleMatchEdgeDevice != null) publishMessage(
-            syncResponse?.d?.p?.topics?.erm!!,
-            publishObjForRuleMatchEdgeDevice.toString(), false
+            syncResponse?.d?.p?.topics?.erm!!, publishObjForRuleMatchEdgeDevice.toString(), false
         )
     }
 
