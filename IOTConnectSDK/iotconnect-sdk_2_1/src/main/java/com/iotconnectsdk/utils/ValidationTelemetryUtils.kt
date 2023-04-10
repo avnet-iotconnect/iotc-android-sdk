@@ -46,6 +46,7 @@ internal object ValidationTelemetryUtils {
     const val DATA_TYPE_LATLONG = 10 // [Decimal Array, Decimal (10,8), Decimal (11,8)]
 
     const val DATA_TYPE_OBJECT = 11
+    var isBit = false
 
 
     @Synchronized
@@ -99,6 +100,7 @@ internal object ValidationTelemetryUtils {
             }
 
         } else if (dt == DATA_TYPE_BIT) {
+            isBit = true
             return validateBit(value, dv)
         } else if (dt == DATA_TYPE_BOOLEAN) {
             return validateBoolean(value, dv)
