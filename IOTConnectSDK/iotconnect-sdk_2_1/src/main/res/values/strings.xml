@@ -35,7 +35,7 @@
 
     <string name="INFO_CM01">Command : 0 : STANDARD_COMMAND</string>
 
-    <string name="INFO_CM02">Command : 0x02 : FIRMWARE_UPDATE</string>
+    <string name="INFO_CM02">Command : 1 : FIRMWARE_UPDATE</string>
     <string name="INFO_CM03">Command : 0x10 : ATTRIBUTE_UPDATE</string>
     <string name="INFO_CM04">Command : 0x11 : SETTING_UPDATE</string>
     <string name="INFO_CM05">Command : 0x12 : PASSWORD_UPDATE</string>

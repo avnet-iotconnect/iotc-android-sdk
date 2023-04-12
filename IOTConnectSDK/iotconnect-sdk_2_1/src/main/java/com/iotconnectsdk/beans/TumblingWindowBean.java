@@ -9,6 +9,8 @@ public class TumblingWindowBean {
     private int count; // number of time client sends data
     private double lv; //last value
 
+    private boolean isMinSet = false;
+
     public String getAttributeName() {
         return attributeName;
     }
@@ -63,5 +65,13 @@ public class TumblingWindowBean {
 
     public void setCount(int count) {
         this.count = count;
+    }
+
+    public boolean isMinSet() {
+        return isMinSet;
+    }
+
+    public void setMinSet(boolean minSet) {
+        isMinSet = minSet;
     }
 }

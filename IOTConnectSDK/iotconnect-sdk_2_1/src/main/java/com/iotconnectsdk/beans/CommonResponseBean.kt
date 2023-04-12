@@ -16,6 +16,8 @@ data class CommonResponseBean(
         val edge: List<GetEdgeRuleBean>,
         @SerializedName("d")
         val childDevice: ArrayList<GetChildDeviceBean>,
+        @SerializedName("ota")
+        val ota:GetOTAUpdateBean,
         @SerializedName("ct")
         val ct: Int, // 201
         @SerializedName("ec")

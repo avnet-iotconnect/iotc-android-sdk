@@ -1,5 +1,6 @@
 package com.iotconnectsdk.utils
 
+import android.content.Context
 import com.iotconnectsdk.beans.GetEdgeRuleBean
 import com.iotconnectsdk.beans.TumblingWindowBean
 import org.json.JSONArray
@@ -28,7 +29,7 @@ object EdgeDeviceUtils {
 
     fun updateEdgeDeviceGyroObj(
         key: String, innerKey: String, value: String,
-        edgeDeviceAttributeGyroMap: MutableMap<String, List<TumblingWindowBean>>?
+        edgeDeviceAttributeGyroMap: MutableMap<String, List<TumblingWindowBean>>?, context: Context?
     ) {
         if (edgeDeviceAttributeGyroMap != null) {
             for ((key1, tlbList) in edgeDeviceAttributeGyroMap) {
@@ -37,29 +38,32 @@ object EdgeDeviceUtils {
                     if (tlbList != null) {
                         for (bean in tlbList) {
                             if (innerKey == bean?.attributeName) {
-                                setObjectValue(bean, inputValue)
+                                setObjectValue(bean, inputValue, context)
                             }
                         }
                     }
                 }
             }
-            ValidationTelemetryUtils.isBit=false
+            ValidationTelemetryUtils.isBit = false
         }
     }
 
     fun updateEdgeDeviceObj(
-        key: String, value: String, edgeDeviceAttributeMap: MutableMap<String, TumblingWindowBean>?
+        key: String,
+        value: String,
+        edgeDeviceAttributeMap: MutableMap<String, TumblingWindowBean>?,
+        context: Context?
     ) {
         if (edgeDeviceAttributeMap != null) {
             for ((key1, tlb) in edgeDeviceAttributeMap) {
                 if (key1 == key) {
                     val inputValue = value.toDouble()
                     if (tlb != null) {
-                        setObjectValue(tlb, inputValue)
+                        setObjectValue(tlb, inputValue, context)
                     }
                 }
             }
-            ValidationTelemetryUtils.isBit=false
+            ValidationTelemetryUtils.isBit = false
         }
     }
 
@@ -191,11 +195,11 @@ object EdgeDeviceUtils {
         return attributeArray
     }
 
-    fun setObjectValue(bean: TumblingWindowBean, inputValue: Double) {
+    fun setObjectValue(bean: TumblingWindowBean, inputValue: Double, context: Context?) {
 
-        if (ValidationTelemetryUtils.isBit) {
+       /* if (ValidationTelemetryUtils.isBit) {
 
-            /* val oldMin = bean.getMin()
+            *//* val oldMin = bean.getMin()
 
              if (bean.getMin() == inputValue) {
                  bean.setMin(bean.getMin())
@@ -208,7 +212,7 @@ object EdgeDeviceUtils {
              val oldMax = bean.getMax()
              if (oldMax == 0.0 || inputValue > oldMax) {
                  bean.setMax(inputValue)
-             }*/
+             }*//*
 
             if (inputValue > 0.0) {
                 bean.setMax(inputValue)
@@ -216,16 +220,29 @@ object EdgeDeviceUtils {
                 bean.setMin(inputValue)
             }
 
-        } else {
+        } else {*/
+
             val oldMin = bean.getMin()
-            if (oldMin == 0.0 || inputValue < oldMin) {
-                bean.setMin(inputValue)
+
+            if (inputValue == 0.0) {
+                bean.setMin(0.0)
+                bean.setMinSet(true)
+                /*  if (context != null) {
+                      IotSDKPreferences.getInstance(context)?.putBooleanData("isMinSet", true)
+                  }*/
+            } /*else if (inputValue == 1.0 && !bean.isMinSet()*//*&& !IotSDKPreferences.getInstance(context!!)?.getBooleanData("isMinSet")!!*//*) {
+                bean.setMin(1.0)
+            }*/ else if (oldMin == 0.0 || inputValue < oldMin) {
+                if (!bean.isMinSet()) {
+                    bean.setMin(inputValue)
+                }
+
             }
             val oldMax = bean.getMax()
             if (oldMax == 0.0 || inputValue > oldMax) {
                 bean.setMax(inputValue)
             }
-        }
+      //  }
 
         val sum: Double = inputValue + bean.getSum()
         val df_obj = DecimalFormat("#.####")
@@ -246,6 +263,7 @@ object EdgeDeviceUtils {
         twb.setAvg(0.0)
         twb.setCount(0)
         twb.setLv(0.0)
+        twb.setMinSet(false)
     }
 
     fun getAttributeName(con: String): String? {

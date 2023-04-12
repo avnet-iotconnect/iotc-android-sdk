@@ -156,6 +156,8 @@ class SDKClient(
 
     private var reCheckingCountTime = 0
 
+    private var isRefreshAttribute = false
+
 
     /*return singleton object for this class.
      * */
@@ -385,6 +387,13 @@ class SDKClient(
                     val responseCodeMessage =
                         validationUtils?.responseCodeMessage(syncServiceResponseData.d.ec)
 
+                    try {
+                        deviceCallback?.onReceiveMsg(responseCodeMessage)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+
+                    sdkClient = null
 
                     if (rc == 1 || rc == 3 || rc == 4 || rc == 6) {
                         if (reCheckingCountTime <= 3) {
@@ -405,14 +414,6 @@ class SDKClient(
                     } else {
                         timerStop(reCheckingTimer)
                     }
-
-                    try {
-                        deviceCallback?.onReceiveMsg(responseCodeMessage)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-
-                    sdkClient = null
                 }
             }
         } catch (e: java.lang.Exception) {
@@ -546,11 +547,11 @@ class SDKClient(
         }
 
         if ((response?.d?.has?.ota == 1)) {
-            /*publishMessage(
+            publishMessage(
                 response.d.p.topics.di,
                 JSONObject().put(MESSAGE_TYPE, DeviceIdentityMessages.GET_PENDING_OTA.value)
                     .toString(), false
-            )*/
+            )
         }
 
     }
@@ -590,7 +591,12 @@ class SDKClient(
                                 IotSDKPreferences.ATTRIBUTE_RESPONSE, Gson().toJson(commonModel)
                             )
 
-                            onDeviceConnectionStatus(isConnected())
+
+                            if (isRefreshAttribute) {
+                                isRefreshAttribute = false
+                                onDeviceConnectionStatus(isConnected())
+                            }
+
                         }
 
                         /*
@@ -618,7 +624,10 @@ class SDKClient(
                         }
 
                         DeviceIdentityMessages.GET_PENDING_OTA.value -> {
-
+                            iotSDKLogUtils!!.log(
+                                false, isDebug, "INFO_CM02", context!!.getString(R.string.INFO_CM02)
+                            )
+                            deviceCallback!!.onReceiveMsg(message)
                         }
                     }
                 } else {
@@ -652,6 +661,10 @@ class SDKClient(
                         /*OTA Command received by the device from the cloud*/
                         C2DMessageEnums.OTA_COMMAND.value -> {
 
+                            iotSDKLogUtils!!.log(
+                                false, isDebug, "INFO_CM02", context!!.getString(R.string.INFO_CM02)
+                            )
+                            deviceCallback!!.onReceiveMsg(message)
                         }
 
                         /*Module Command received by the device from the cloud*/
@@ -661,6 +674,7 @@ class SDKClient(
 
                         /*The device must send a message of type 201 to get updated attributes*/
                         C2DMessageEnums.REFRESH_ATTRIBUTE.value -> {
+                            isRefreshAttribute = true
                             val response = getSyncResponse()
 
                             if (idEdgeDevice) edgeDeviceTimerStop()
@@ -1480,7 +1494,11 @@ class SDKClient(
                                 //ignore string value for edge device.
                                 if (SDKClientUtils.isDigit(innerKValue) && validation != 1) {
                                     updateEdgeDeviceGyroObj(
-                                        key, innerKey, innerKValue, edgeDeviceAttributeGyroMap
+                                        key,
+                                        innerKey,
+                                        innerKValue,
+                                        edgeDeviceAttributeGyroMap,
+                                        context
                                     )
                                     if (edgeResponse != null) {
                                         if (jsonData != null) {
@@ -1508,7 +1526,7 @@ class SDKClient(
                             //ignore string value for edge device.
                             if (SDKClientUtils.isDigit(value) && validation != 1) {
                                 updateEdgeDeviceObj(
-                                    key, value, edgeDeviceAttributeMap
+                                    key, value, edgeDeviceAttributeMap, context
                                 )
                                 if (edgeResponse != null) {
                                     if (jsonData != null) {
@@ -1676,6 +1694,9 @@ class SDKClient(
                     return
                 }
                 if (publishObj != null) {
+                    /*if (context != null) {
+                        IotSDKPreferences.getInstance(context)?.clearSharedPreferences("isMinSet")
+                    }*/
                     publishMessage(syncResponse.d.p.topics.erpt, publishObj.toString(), false)
                 }
             }

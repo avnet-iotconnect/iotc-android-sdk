@@ -469,12 +469,12 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                             Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
                     }
                     break;
-                case 0x02:
+                case 1:
                     Log.d(TAG, "--- Firmware OTA Command Received ---");
                     if (ackId != null && !ackId.isEmpty()) {
                         messageType = "11";
-                        JSONObject obj = getAckObject(mainObject);
-                        obj.put("st", 7);
+                        //   JSONObject obj = getAckObject(mainObject);
+                        //  obj.put("st", 7);
 
                         /*
                          * Type    : Public Method "sendAck()"
@@ -486,16 +486,20 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                          *     msgType = 11; // for "0x02" Firmware command
                          */
 
-                               /* if (isConnected)
-                                    sdkClient.sendAck(obj, messageType);
-                                else
-                                    Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();*/
+                        D2CSendAckBean d2CSendAckBean = new D2CSendAckBean(getCurrentTime(), new D2CSendAckBean.Data(ackId, 1, 7, "", childId));
+                        Gson gson = new Gson();
+                        String jsonString = gson.toJson(d2CSendAckBean);
+
+                        if (isConnected)
+                            sdkClient.sendAck(jsonString, messageType);
+                        else
+                            Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
                     }
                     break;
 
                 case 116:
-                              /*command type "0x16" for Device "Connection Status"
-                              true = connected, false = disconnected*/
+                    /*command type "0x16" for Device "Connection Status"
+                      true = connected, false = disconnected*/
 
                     Log.d(TAG, "--- Device connection status ---");
                     // JSONObject dataObj = mainObject.getJSONObject("data");

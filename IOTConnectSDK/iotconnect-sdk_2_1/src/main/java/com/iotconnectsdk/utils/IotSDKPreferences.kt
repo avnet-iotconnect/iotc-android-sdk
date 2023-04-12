@@ -54,6 +54,28 @@ internal class IotSDKPreferences private constructor(context: Context) {
         }
     }
 
+    fun putBooleanData(key: String?, value: Boolean) {
+        val mEditor = mSharedPreferences.edit()
+        mEditor.putBoolean(key, value)
+        mEditor.commit()
+    }
+
+
+    fun getBooleanData(key: String?): Boolean {
+        return try {
+            mSharedPreferences.getBoolean(key, false)
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+            true
+        }
+    }
+
+    fun clearSharedPreferences(key:String) {
+        val mEditor = mSharedPreferences.edit()
+        mEditor.remove(key)
+        mEditor.commit()
+    }
+
     fun getSyncResponse(key: String?): IdentityServiceResponse? {
         val syncServiceResponse = try {
             val jsonString = getStringData(key)
