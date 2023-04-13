@@ -197,9 +197,9 @@ object EdgeDeviceUtils {
 
     fun setObjectValue(bean: TumblingWindowBean, inputValue: Double, context: Context?) {
 
-       /* if (ValidationTelemetryUtils.isBit) {
+        /* if (ValidationTelemetryUtils.isBit) {
 
-            *//* val oldMin = bean.getMin()
+             *//* val oldMin = bean.getMin()
 
              if (bean.getMin() == inputValue) {
                  bean.setMin(bean.getMin())
@@ -222,27 +222,37 @@ object EdgeDeviceUtils {
 
         } else {*/
 
-            val oldMin = bean.getMin()
 
-            if (inputValue == 0.0) {
-                bean.setMin(0.0)
+        val oldMin = bean.getMin()
+
+        if (inputValue < 0.0) {
+            if (oldMin == 0.0 || inputValue < oldMin) {
+                //    if (!bean.isMinSet()) {
                 bean.setMinSet(true)
-                /*  if (context != null) {
-                      IotSDKPreferences.getInstance(context)?.putBooleanData("isMinSet", true)
-                  }*/
-            } /*else if (inputValue == 1.0 && !bean.isMinSet()*//*&& !IotSDKPreferences.getInstance(context!!)?.getBooleanData("isMinSet")!!*//*) {
-                bean.setMin(1.0)
-            }*/ else if (oldMin == 0.0 || inputValue < oldMin) {
+                bean.setMin(inputValue)
+                //  }
+
+            }
+
+        } else {
+            if (inputValue == 0.0) {
+                if (!bean.isMinSet()) {
+                    bean.setMin(0.0)
+                    bean.setMinSet(true)
+                }
+
+            } else if (oldMin == 0.0 || inputValue < oldMin) {
                 if (!bean.isMinSet()) {
                     bean.setMin(inputValue)
                 }
 
             }
-            val oldMax = bean.getMax()
-            if (oldMax == 0.0 || inputValue > oldMax) {
-                bean.setMax(inputValue)
-            }
-      //  }
+        }
+        val oldMax = bean.getMax()
+        if (oldMax == 0.0 || inputValue > oldMax) {
+            bean.setMax(inputValue)
+        }
+        //  }
 
         val sum: Double = inputValue + bean.getSum()
         val df_obj = DecimalFormat("#.####")

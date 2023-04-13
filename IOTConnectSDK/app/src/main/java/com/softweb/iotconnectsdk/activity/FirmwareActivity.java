@@ -480,13 +480,13 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                          * Type    : Public Method "sendAck()"
                          * Usage   : Send firmware command received acknowledgement to cloud
                          * - status Type
-                         *     st = 7; // firmware OTA command Ack status
+                         *     st = 0; // firmware OTA command Ack status
                          *     st = 4; // Failed Ack
                          * - Message Type
                          *     msgType = 11; // for "0x02" Firmware command
                          */
 
-                        D2CSendAckBean d2CSendAckBean = new D2CSendAckBean(getCurrentTime(), new D2CSendAckBean.Data(ackId, 1, 7, "", childId));
+                        D2CSendAckBean d2CSendAckBean = new D2CSendAckBean(getCurrentTime(), new D2CSendAckBean.Data(ackId, 1, 0, "", childId));
                         Gson gson = new Gson();
                         String jsonString = gson.toJson(d2CSendAckBean);
 
