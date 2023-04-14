@@ -592,10 +592,10 @@ class SDKClient(
                             )
 
 
-                            if (isRefreshAttribute) {
-                                isRefreshAttribute = false
+                         //   if (isRefreshAttribute) {
+                           //     isRefreshAttribute = false
                                 onDeviceConnectionStatus(isConnected())
-                            }
+                          //  }
 
                         }
 

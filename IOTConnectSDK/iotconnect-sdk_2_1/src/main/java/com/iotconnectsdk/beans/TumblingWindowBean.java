@@ -8,8 +8,8 @@ public class TumblingWindowBean {
     private double avg; // sum/count
     private int count; // number of time client sends data
     private double lv; //last value
-
     private boolean isMinSet = false;
+    private boolean isMaxSet = false;
 
     public String getAttributeName() {
         return attributeName;
@@ -73,5 +73,13 @@ public class TumblingWindowBean {
 
     public void setMinSet(boolean minSet) {
         isMinSet = minSet;
+    }
+
+    public boolean isMaxSet() {
+        return isMaxSet;
+    }
+
+    public void setMaxSet(boolean maxSet) {
+        isMaxSet = maxSet;
     }
 }

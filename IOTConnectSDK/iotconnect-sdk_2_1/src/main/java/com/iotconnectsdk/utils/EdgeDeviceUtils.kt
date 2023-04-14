@@ -248,10 +248,30 @@ object EdgeDeviceUtils {
 
             }
         }
+
+
         val oldMax = bean.getMax()
-        if (oldMax == 0.0 || inputValue > oldMax) {
-            bean.setMax(inputValue)
+
+        if (inputValue < 0.0) {
+            if (oldMax == 0.0 || inputValue > oldMax) {
+                if (!bean.isMaxSet()) {
+                    bean.setMax(inputValue)
+                }
+            }
+        } else {
+            if (inputValue == 0.0) {
+                if (!bean.isMaxSet()) {
+                    bean.setMax(0.0)
+                    bean.setMaxSet(true)
+                }
+            } else if (oldMax == 0.0 || inputValue > oldMax) {
+                // if (!bean.isMaxSet()) {
+                bean.setMaxSet(true)
+                bean.setMax(inputValue)
+                // }
+            }
         }
+
         //  }
 
         val sum: Double = inputValue + bean.getSum()
@@ -274,6 +294,7 @@ object EdgeDeviceUtils {
         twb.setCount(0)
         twb.setLv(0.0)
         twb.setMinSet(false)
+        twb.setMaxSet(false)
     }
 
     fun getAttributeName(con: String): String? {
