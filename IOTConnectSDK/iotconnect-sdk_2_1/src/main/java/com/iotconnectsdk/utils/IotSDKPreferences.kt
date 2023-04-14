@@ -70,9 +70,9 @@ internal class IotSDKPreferences private constructor(context: Context) {
         }
     }
 
-    fun clearSharedPreferences(key:String) {
+    fun clearSharedPreferences() {
         val mEditor = mSharedPreferences.edit()
-        mEditor.remove(key)
+        mEditor.clear()
         mEditor.commit()
     }
 

@@ -399,7 +399,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
      */
     @Override
     public void onReceiveMsg(String message) {
-        hideDialog(FirmwareActivity.this);
+      //  hideDialog(FirmwareActivity.this);
         //  if (message != null && !message.isEmpty()) {
         btnClear.setEnabled(true);
         try {
@@ -528,7 +528,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
      * Type    : Function "onConnectionStateChange()"
      */
     private void onConnectionStateChange(boolean isConnected) {
-        hideDialog(FirmwareActivity.this);
+
         linearLayout.removeAllViews();
         if (isConnected) {
 
@@ -545,10 +545,12 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
 
             String data = sdkClient.getAttributes();
             Log.d("attdata", "::" + data);
-            if (data != null) {
+            if (data != null && !data.equalsIgnoreCase("[]")) {
                 btnSendData.setEnabled(true);
                 btnGetAllTwins.setEnabled(true);
                 createDynamicViews(data);
+            }else{
+                return;
             }
 
         } else {
@@ -558,6 +560,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
             btnSendData.setEnabled(false);
             btnGetAllTwins.setEnabled(false);
         }
+        hideDialog(FirmwareActivity.this);
     }
 
 

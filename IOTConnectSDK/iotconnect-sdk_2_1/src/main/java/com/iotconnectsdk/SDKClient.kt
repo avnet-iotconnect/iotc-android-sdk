@@ -592,8 +592,8 @@ class SDKClient(
                             )
 
 
-                         //   if (isRefreshAttribute) {
-                           //     isRefreshAttribute = false
+                           // if (isRefreshAttribute) {
+                            //    isRefreshAttribute = false
                                 onDeviceConnectionStatus(isConnected())
                           //  }
 
@@ -992,6 +992,9 @@ class SDKClient(
         timerStop(timerCheckDeviceState)
         timerStop(timerOfflineSync)
 
+        if (context != null) {
+            IotSDKPreferences.getInstance(context)?.clearSharedPreferences()
+        }
         if (mqttService != null) {
             mqttService?.disconnectClient()
             mqttService?.clearInstance() //destroy singleton object.
