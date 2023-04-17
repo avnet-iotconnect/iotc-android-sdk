@@ -1,4 +1,4 @@
-# IOT Connect SDK: iotconnect-Android-sdk
+# IOT Connect SDK: iotconnect-Android-sdk(Device Message 1.0)
 
 This is Android library to connect with IoTConnect cloud by MQTT
 This library only abstract JSON responses from both end D2C and C2D 
