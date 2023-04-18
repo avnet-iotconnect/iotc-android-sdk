@@ -28,9 +28,8 @@ import java.util.*
 
 /*
  *****************************************************************************
- * @file : FirmwareActivity.java
+ * @file : FirmwareActivity.kotlin
  * @author : Softweb Solutions An Avnet Company
- * @modify : 28-June-2022
  * @brief : Firmware part for Android SDK 3.1.2
  * *****************************************************************************
  */
