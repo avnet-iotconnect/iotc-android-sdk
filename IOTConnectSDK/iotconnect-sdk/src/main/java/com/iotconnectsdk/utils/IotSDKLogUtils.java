@@ -26,9 +26,9 @@ import java.util.List;
 public class IotSDKLogUtils {
 
     private static IotSDKLogUtils iotSDKLogUtils;
-    private String cpId;
-    private String uniqueId;
-    private Context activity;
+    private final String cpId;
+    private final String uniqueId;
+    private final Context activity;
 
     public static IotSDKLogUtils getInstance(Context act, String cpId, String uniqueId) {
         if (iotSDKLogUtils == null) return new IotSDKLogUtils(act, cpId, uniqueId);
@@ -91,7 +91,7 @@ public class IotSDKLogUtils {
 
     private File getChildrenFolder(String path) {
         File dir = activity.getFilesDir();
-        List<String> dirs = new ArrayList<String>(Arrays.<String>asList(path.split("/")));
+        List<String> dirs = new ArrayList<String>(Arrays.asList(path.split("/")));
         for (int i = 0; i < dirs.size(); ++i) {
             dir = new File(dir, dirs.get(i)); //Getting a file within the dir.
             if (!dir.exists()) {

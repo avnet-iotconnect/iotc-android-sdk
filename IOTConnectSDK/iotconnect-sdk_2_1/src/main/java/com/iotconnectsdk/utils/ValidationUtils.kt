@@ -319,7 +319,7 @@ internal class ValidationUtils private constructor(
             iotSDKLogUtils: IotSDKLogUtils,
             context: Context,
             debug: Boolean
-        ): ValidationUtils? {
+        ): ValidationUtils {
             return validationUtils
                 ?: ValidationUtils(iotSDKLogUtils, context, debug)
         }

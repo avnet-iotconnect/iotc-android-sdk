@@ -133,10 +133,10 @@ class MqttConnection implements MqttCallbackExtended {
 	// Saved sent messages and their corresponding Topics, activityTokens and
 	// invocationContexts, so we can handle "deliveryComplete" callbacks
 	// from the mqttClient
-	private Map<IMqttDeliveryToken, String /* Topic */> savedTopics = new HashMap<>();
-	private Map<IMqttDeliveryToken, MqttMessage> savedSentMessages = new HashMap<>();
-	private Map<IMqttDeliveryToken, String> savedActivityTokens = new HashMap<>();
-	private Map<IMqttDeliveryToken, String> savedInvocationContexts = new HashMap<>();
+	private final Map<IMqttDeliveryToken, String /* Topic */> savedTopics = new HashMap<>();
+	private final Map<IMqttDeliveryToken, MqttMessage> savedSentMessages = new HashMap<>();
+	private final Map<IMqttDeliveryToken, String> savedActivityTokens = new HashMap<>();
+	private final Map<IMqttDeliveryToken, String> savedInvocationContexts = new HashMap<>();
 
 	private WakeLock wakelock = null;
 	private String wakeLockTag = null;
@@ -167,13 +167,12 @@ class MqttConnection implements MqttCallbackExtended {
 		this.persistence = persistence;
 		this.clientHandle = clientHandle;
 
-		StringBuilder stringBuilder = new StringBuilder(this.getClass().getCanonicalName());
-		stringBuilder.append(" ");
-		stringBuilder.append(clientId);
-		stringBuilder.append(" ");
-		stringBuilder.append("on host ");
-		stringBuilder.append(serverURI);
-		wakeLockTag = stringBuilder.toString();
+        String stringBuilder = this.getClass().getCanonicalName() + " " +
+                clientId +
+                " " +
+                "on host " +
+                serverURI;
+		wakeLockTag = stringBuilder;
 	}
 
 	// The major API implementation follows

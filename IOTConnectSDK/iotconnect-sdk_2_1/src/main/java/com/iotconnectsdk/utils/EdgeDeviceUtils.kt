@@ -11,22 +11,13 @@ import java.text.DecimalFormat
 
 object EdgeDeviceUtils {
 
-    private const val CP_ID = "cpId"
-    private const val MESSAGE_TYPE = "mt"
-    private const val LANGUAGE = "l"
-    private const val VERSION = "v"
-    private const val ENVIRONMENT = "e"
-    private const val SDK_OBJ = "sdk"
-    private const val DTG = "dtg"
-    private const val CURRENT_DATE = "dt"
     private const val DEVICE_ID = "id"
     private const val DT = "dt"
     private const val DEVICE_TAG = "tg"
     private const val D_OBJ = "d"
 
-    private const val EDGE_DEVICE_MESSAGE_TYPE = 2
-    private const val TEXT_FILE_PREFIX = "current"
 
+    /*Update edge device object with object as datatype*/
     fun updateEdgeDeviceGyroObj(
         key: String, innerKey: String, value: String,
         edgeDeviceAttributeGyroMap: MutableMap<String, List<TumblingWindowBean>>?, context: Context?
@@ -37,8 +28,8 @@ object EdgeDeviceUtils {
                     val inputValue = value.toDouble()
                     if (tlbList != null) {
                         for (bean in tlbList) {
-                            if (innerKey == bean?.attributeName) {
-                                setObjectValue(bean, inputValue, context)
+                            if (innerKey == bean.attributeName) {
+                                setObjectValue(bean, inputValue)
                             }
                         }
                     }
@@ -48,6 +39,8 @@ object EdgeDeviceUtils {
         }
     }
 
+
+    /*Update edge device object for all other datatype*/
     fun updateEdgeDeviceObj(
         key: String,
         value: String,
@@ -59,7 +52,7 @@ object EdgeDeviceUtils {
                 if (key1 == key) {
                     val inputValue = value.toDouble()
                     if (tlb != null) {
-                        setObjectValue(tlb, inputValue, context)
+                        setObjectValue(tlb, inputValue)
                     }
                 }
             }
@@ -99,7 +92,7 @@ object EdgeDeviceUtils {
                         var attributeArray: JSONArray? = null
                         if (twbList != null) {
                             for (twb in twbList) {
-                                attributeArray = getEdgeDevicePublishAttributes(twb!!)
+                                attributeArray = getEdgeDevicePublishAttributes(twb)
                                 if (attributeArray.length() > 0) {
                                     dInnerArrayObject.put(twb.attributeName, attributeArray)
                                 }
@@ -108,7 +101,6 @@ object EdgeDeviceUtils {
                         }
                         if (dInnerArrayObject.length() > 0) {
                             gyroObj.put(attributeName, dInnerArrayObject)
-                            // dInnerArray.put(gyroObj)
                         }
                         dArrayObject.put(D_OBJ, gyroObj)
                         dArray.put(dArrayObject)
@@ -126,7 +118,7 @@ object EdgeDeviceUtils {
             for ((key, twb) in edgeDeviceAttributeMap) {
                 if (key == attributeName) {
                     try {
-                        val attributeArray = getEdgeDevicePublishAttributes(twb!!)
+                        val attributeArray = getEdgeDevicePublishAttributes(twb)
                         if (attributeArray.length() > 0) {
                             dInnerArrayObject.put(attributeName, attributeArray)
                             // dInnerArray.put(dInnerArrayObject)
@@ -148,16 +140,11 @@ object EdgeDeviceUtils {
     }
 
     fun getEdgeDevicePublishMainObj(
-        currentTime: String?/*, dtg: String?, cpId: String?, environment: String?,
-        appVersion: String?, messageType: Int*/
+        currentTime: String?
     ): JSONObject {
         val mainObj = JSONObject()
         try {
-            //  mainObj.put(CP_ID, cpId)
-            //  mainObj.put(DTG, dtg)
             mainObj.put(DT, currentTime)
-            // mainObj.put(MESSAGE_TYPE, messageType)
-            //  mainObj.put(SDK_OBJ, SDKClientUtils.getSdk(environment, appVersion))
         } catch (e: JSONException) {
             e.printStackTrace()
         }
@@ -181,13 +168,13 @@ object EdgeDeviceUtils {
     private fun getEdgeDevicePublishAttributes(twb: TumblingWindowBean): JSONArray {
         val attributeArray = JSONArray()
         try {
-            if (twb.getMin() !== 0.0 || twb.getMax() !== 0.0 || twb.getSum() !== 0.0 || twb.avg !== 0.0 || twb.getCount() !== 0 || twb.getLv() !== 0.0) {
-                attributeArray.put(twb.getMin())
-                attributeArray.put(twb.getMax())
-                attributeArray.put(twb.getSum())
-                attributeArray.put(twb.getAvg())
-                attributeArray.put(twb.getCount())
-                attributeArray.put(twb.getLv())
+            if (twb.min !== 0.0 || twb.max !== 0.0 || twb.sum !== 0.0 || twb.avg !== 0.0 || twb.count !== 0 || twb.lv !== 0.0) {
+                attributeArray.put(twb.min)
+                attributeArray.put(twb.max)
+                attributeArray.put(twb.sum)
+                attributeArray.put(twb.avg)
+                attributeArray.put(twb.count)
+                attributeArray.put(twb.lv)
             }
         } catch (e: JSONException) {
             e.printStackTrace()
@@ -195,42 +182,14 @@ object EdgeDeviceUtils {
         return attributeArray
     }
 
-    fun setObjectValue(bean: TumblingWindowBean, inputValue: Double, context: Context?) {
-
-        /* if (ValidationTelemetryUtils.isBit) {
-
-             *//* val oldMin = bean.getMin()
-
-             if (bean.getMin() == inputValue) {
-                 bean.setMin(bean.getMin())
-             } else if (inputValue < bean.getMin()) {
-                 bean.setMin(inputValue)
-             }else{
-                // bean.setMin(inputValue)
-             }
-
-             val oldMax = bean.getMax()
-             if (oldMax == 0.0 || inputValue > oldMax) {
-                 bean.setMax(inputValue)
-             }*//*
-
-            if (inputValue > 0.0) {
-                bean.setMax(inputValue)
-            } else {
-                bean.setMin(inputValue)
-            }
-
-        } else {*/
-
+    fun setObjectValue(bean: TumblingWindowBean, inputValue: Double) {
 
         val oldMin = bean.getMin()
 
         if (inputValue < 0.0) {
             if (oldMin == 0.0 || inputValue < oldMin) {
-                //    if (!bean.isMinSet()) {
                 bean.setMinSet(true)
                 bean.setMin(inputValue)
-                //  }
 
             }
 
@@ -249,7 +208,6 @@ object EdgeDeviceUtils {
             }
         }
 
-
         val oldMax = bean.getMax()
 
         if (inputValue < 0.0) {
@@ -265,14 +223,11 @@ object EdgeDeviceUtils {
                     bean.setMaxSet(true)
                 }
             } else if (oldMax == 0.0 || inputValue > oldMax) {
-                // if (!bean.isMaxSet()) {
                 bean.setMaxSet(true)
                 bean.setMax(inputValue)
-                // }
+
             }
         }
-
-        //  }
 
         val sum: Double = inputValue + bean.getSum()
         val df_obj = DecimalFormat("#.####")
@@ -312,13 +267,11 @@ object EdgeDeviceUtils {
                             att.split("\\.".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
                         val parent = KeyValue[0].split("#".toRegex()).dropLastWhile { it.isEmpty() }
                             .toTypedArray() //gyro#vibration
-                        //                        String childAttName = parent[1]; //vibration
-//                        String keyAttName = KeyValue[1]; //x > 5
+
                         return parent[1]
                     } else if (con.contains("#")) {                    //gyro#x > 5
                         val parent = att.split("#".toRegex()).dropLastWhile { it.isEmpty() }
                             .toTypedArray() //gyro#x > 5
-                        //                        String childAttName = parent[1]; //x > 5
                         return parent[1]
                     }
                 }
@@ -329,7 +282,6 @@ object EdgeDeviceUtils {
                     .toTypedArray() //gyro#vibration
                 val parentAttName = parent[0] //gyro
                 val childAttName = parent[1] //vibration
-                // val keyAttName = KeyValue[1] //x > 5
                 return getAttName(childAttName)
             } else if (con.contains(".")) {
                 val keyValue =
@@ -498,6 +450,4 @@ object EdgeDeviceUtils {
         }
         return dObj
     }
-
-
 }

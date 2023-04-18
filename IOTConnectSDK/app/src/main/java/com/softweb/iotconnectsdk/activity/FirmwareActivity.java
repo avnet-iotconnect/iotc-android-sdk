@@ -88,7 +88,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
 
     private HashMap<String, List<TextInputLayout>> inputMap;
     private List<TextInputLayout> editTextInputList;
-    private String[] permissions = new String[]{
+    private final String[] permissions = new String[]{
             Manifest.permission.READ_PHONE_STATE,
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
@@ -108,7 +108,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
 
     private SDKClient sdkClient;
 
-    private static String DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+    private static final String DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -221,14 +221,13 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == 100) {
             if (grantResults.length > 0
                     && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // do something
             }
-            return;
         }
     }
 
@@ -339,11 +338,6 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                     }
                 }
 
-                // add object type values.
-                /*if (gyroObj.length() != 0) {
-                    dObj.putOpt(objectKeyName, gyroObj);
-                }*/
-
                 valueObj.put("data", dObj);
 
                 inputArray.put(valueObj);
@@ -399,12 +393,10 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
      */
     @Override
     public void onReceiveMsg(String message) {
-      //  hideDialog(FirmwareActivity.this);
-        //  if (message != null && !message.isEmpty()) {
+
         btnClear.setEnabled(true);
         try {
             Log.d(TAG, "onReceiveMsg => " + message);
-            //etSubscribe.append("\n--- Device Command Received ---\n");
 
             runOnUiThread(new Runnable() {
                 @Override
@@ -498,7 +490,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                     break;
 
                 case 116:
-                    /*command type "0x16" for Device "Connection Status"
+                    /*command type "116" for Device "Connection Status"
                       true = connected, false = disconnected*/
 
                     Log.d(TAG, "--- Device connection status ---");

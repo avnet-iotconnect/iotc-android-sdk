@@ -119,8 +119,6 @@ class SDKClient(
 
     private val DATA = "data"
 
-    private val TIME = "time"
-
     private val ID = "id"
 
     private val DT = "dt"
@@ -132,8 +130,6 @@ class SDKClient(
     private val DIRECTORY_PATH = "logs/offline/"
 
     private var savedTime: Long = 0
-
-    private val EDGE_DEVICE_RULE_MATCH_MESSAGE_TYPE = 3
 
     //for Edge Device
     private var edgeDeviceTimersList: ArrayList<Timer>? = null
@@ -233,7 +229,6 @@ class SDKClient(
                     if (offlineStorage.has("disabled")) {
                         isSaveToOffline = offlineStorage.getBoolean("disabled")
                         if (!isSaveToOffline) { // false = offline data storing, true = not storing offline data
-                            isSaveToOffline = isSaveToOffline
 
                             //Add below configuration in respective sdk configuration. We want this setting to be done form firmware. default fileCount 1 and availeSpaceInMb is unlimited.
                             fileCount =
@@ -373,7 +368,7 @@ class SDKClient(
                 val syncServiceResponseData =
                     Gson().fromJson(response, IdentityServiceResponse::class.java)
 
-                if (syncServiceResponseData != null && syncServiceResponseData?.d != null && syncServiceResponseData.d.p != null) {
+                if (syncServiceResponseData != null && syncServiceResponseData.d != null && syncServiceResponseData.d.p != null) {
                     //save the sync response to shared pref
                     IotSDKPreferences.getInstance(context!!)
                         ?.putStringData(IotSDKPreferences.SYNC_RESPONSE, response)
@@ -591,11 +586,8 @@ class SDKClient(
                                 IotSDKPreferences.ATTRIBUTE_RESPONSE, Gson().toJson(commonModel)
                             )
 
+                            onDeviceConnectionStatus(isConnected())
 
-                           // if (isRefreshAttribute) {
-                            //    isRefreshAttribute = false
-                                onDeviceConnectionStatus(isConnected())
-                          //  }
 
                         }
 
@@ -829,7 +821,7 @@ class SDKClient(
     /*Method creates json string to be given to framework.
     *[{"device":{"id":"ch1","tg":"ch"},"attributes":[{"dt":1,"dv":"5 to 10","ln":"Humidity","sq":2,"tg":"ch"},{"dt":1,"dv":"","ln":"Lumosity","sq":4,"tg":"ch"}]},{"device":{"id":"","tg":"p"},"attributes":[{"dt":1,"dv":"5 to 10","ln":"Temp","sq":1,"tg":"p"},{"d":[{"dt":1,"dv":"","ln":"x","sq":1,"tg":"p"},{"dt":1,"dv":"","ln":"y","sq":2,"tg":"p"}],"dt":11,"p":"Gyroscope","tg":"p"}]}]
     * */
-    fun getAttributes(): String? {
+    fun getAttributes(): String {
 
         val syncResponse = getSyncResponse()
         val attributeResponse = getAttributeResponse()
@@ -1099,7 +1091,7 @@ class SDKClient(
                 if (directory.exists()) {
                     val contents = directory.listFiles()
                     if (contents.size > 0) {
-//                        publishOfflineData();
+
                         checkIsDeviceOnline()
                     }
                 }
@@ -1127,7 +1119,7 @@ class SDKClient(
         try {
             syncOfflineData = true
             val finalOfflineData = CopyOnWriteArrayList<String>()
-            finalOfflineData.addAll(readTextFile()!!)
+            finalOfflineData.addAll(readTextFile())
             if (finalOfflineData.isEmpty()) return
 
             //start timer to sync offline data.
@@ -1136,7 +1128,7 @@ class SDKClient(
                 override fun run() {
                     //read next text file, when previous list is done sync.
                     if (finalOfflineData.isEmpty()) {
-                        finalOfflineData.addAll(readTextFile()!!)
+                        finalOfflineData.addAll(readTextFile())
                     }
                     syncOfflineData = if (syncOfflineData) {
                         if (!finalOfflineData.isEmpty()) {
@@ -1144,10 +1136,7 @@ class SDKClient(
                                 val data = finalOfflineData[i]
                                 try {
                                     val dataObj = JSONObject(data)
-                                    //                                    dataObj.put(OFFLINE_DATA, 1);
 
-                                    //publish offline data.
-                                    // mqttService!!.publishMessage(dataObj.toString())
                                 } catch (e: JSONException) {
                                     iotSDKLogUtils!!.log(true, isDebug, "ERR_OS01", e.message!!)
                                     e.printStackTrace()
@@ -1168,7 +1157,7 @@ class SDKClient(
         }
     }
 
-    fun readTextFile(): CopyOnWriteArrayList<String>? {
+    fun readTextFile(): CopyOnWriteArrayList<String> {
         val offlineData = CopyOnWriteArrayList<String>()
         try {
             val preferences = IotSDKPreferences.getInstance(
@@ -1190,9 +1179,9 @@ class SDKClient(
                 )
             )
             var read: String
-            //            StringBuilder builder = new StringBuilder("");
+
             while (bufferedReader.readLine().also { read = it } != null) {
-//                builder.append(read);
+
                 offlineData.add(read)
             }
             bufferedReader.close()
@@ -1464,7 +1453,7 @@ class SDKClient(
                 val gatewayChildResponse = getGatewayChildResponse()
                 val getChildDeviceBean = GetChildDeviceBean()
 
-                getChildDeviceBean.tg = syncResponse?.d?.meta?.gtw?.tg
+                getChildDeviceBean.tg = syncResponse.d.meta?.gtw?.tg
                 getChildDeviceBean.id = uniqueId
                 gatewayChildResponse?.d?.childDevice?.add(getChildDeviceBean)
 
@@ -1570,8 +1559,6 @@ class SDKClient(
                     for (beanX in listD) {
                         val attributeLn = beanX.ln
 
-                        //check attribute input type is numeric or not, ignore the attribute if it is not numeric.
-                        //if (beanX.dt != 1) {
                         val twb = TumblingWindowBean()
                         twb.attributeName = attributeLn
                         gyroAttributeList.add(twb)
@@ -1586,7 +1573,6 @@ class SDKClient(
                             syncResponse, beanX.tw, bean.p, tg, gyroAttributeList
                         )
 
-                        //  }
                     }
 
 
@@ -1601,9 +1587,7 @@ class SDKClient(
                         } else {
                             tag = ""
                         }
-                        //check attribute input type is numeric or not, ignore the attribute if it is not numeric.
 
-                        /*if (beanX.dt != 1)*/
                         edgeDeviceTWTimerStart(syncResponse, beanX.tw, ln, tag, null)
                     }
                 }
@@ -1639,11 +1623,11 @@ class SDKClient(
             }
         }
 
-        if (syncResponse?.d?.meta?.gtw != null) {
+        if (syncResponse.d.meta?.gtw != null) {
             val gatewayChildResponse = getGatewayChildResponse()
             val getChildDeviceBean = GetChildDeviceBean()
 
-            getChildDeviceBean.tg = syncResponse?.d?.meta?.gtw?.tg
+            getChildDeviceBean.tg = syncResponse.d.meta.gtw.tg
             getChildDeviceBean.id = uniqueId
             gatewayChildResponse?.d?.childDevice?.add(getChildDeviceBean)
 
@@ -1661,7 +1645,7 @@ class SDKClient(
         edgeDeviceTimersList?.add(timerTumblingWindow)
         val timerTask: TimerTask = object : TimerTask() {
             override fun run() {
-                //   val dtg: String = getSyncResponse().getD().getDtg()
+
                 val publishObj = publishEdgeDeviceInputData(
                     ln,
                     tag,
@@ -1697,9 +1681,6 @@ class SDKClient(
                     return
                 }
                 if (publishObj != null) {
-                    /*if (context != null) {
-                        IotSDKPreferences.getInstance(context)?.clearSharedPreferences("isMinSet")
-                    }*/
                     publishMessage(syncResponse.d.p.topics.erpt, publishObj.toString(), false)
                 }
             }
@@ -1799,7 +1780,6 @@ class SDKClient(
                     //match parent attribute name (eg. temp == temp OR gyro == gyro)
                     if (attKey != null && parentKey == attKey) {
 
-//                        if (innerKey != null) {
 
                         //for gyro type object. "gyro": {"x":"7","y":"8","z":"9"}
                         if (innerKey != null && con.contains("#") && con.contains("AND")) { //ac1#vibration.x > 5 AND ac1#vibration.y > 10
@@ -1814,8 +1794,7 @@ class SDKClient(
                                     val parent = KeyValue[0].split("#".toRegex())
                                         .dropLastWhile { it.isEmpty() }
                                         .toTypedArray() //gyro#vibration
-                                    val parentAttName = parent[0] //gyro
-                                    val childAttName = parent[1] //vibration
+
                                     setPublishJsonForRuleMatchedEdgeDevice(
                                         KeyValue[1],
                                         innerKey,
@@ -1829,7 +1808,7 @@ class SDKClient(
                                     val parent =
                                         att.split("#".toRegex()).dropLastWhile { it.isEmpty() }
                                             .toTypedArray() //gyro#x > 5
-                                    val parentAttName = parent[0] //gyro
+
                                     setPublishJsonForRuleMatchedEdgeDevice(
                                         parent[1],
                                         innerKey,
@@ -1844,7 +1823,7 @@ class SDKClient(
                         } else if (innerKey != null && con.contains("#")) { //gyro#x > 5  //  ac1#vibration.x > 5
                             val parent = con.split("#".toRegex()).dropLastWhile { it.isEmpty() }
                                 .toTypedArray() //gyro#x > 5
-                            val parentAttName = parent[0] //gyro
+
                             setPublishJsonForRuleMatchedEdgeDevice(
                                 parent[1], innerKey, value, attObj, parentKey, bean, inputJsonString
                             )
@@ -1883,12 +1862,7 @@ class SDKClient(
                                 val cvAttObj = JSONObject()
                                 cvAttObj.put(parentKey, inputValue)
                                 val mainObj: JSONObject = getEdgeDevicePublishMainObj(
-                                    DateTimeUtils.currentDate,
-                                    /*getDtg(),
-                                    cpId,
-                                    environment,
-                                    appVersion,
-                                    EDGE_DEVICE_RULE_MATCH_MESSAGE_TYPE*/
+                                    DateTimeUtils.currentDate
                                 )
                                 val publishObj: JSONObject = getPublishStringEdgeDevice(
                                     uniqueId,
@@ -1917,11 +1891,6 @@ class SDKClient(
         }
     }
 
-    /*Get dtg attribute from sync saved response.
-     * */
-    /* private fun getDtg(): String? {
-         return getSyncResponse().getD().getDtg()
-     }*/
 
     /*Set the json data for publish for edge device only for gyro attributes.
      * */
@@ -1936,8 +1905,6 @@ class SDKClient(
     ) {
         //collect publish data for gyro type object.
         try {
-
-//            String childAttNameValue = KeyValue[1]; //x > 5
             val key: String = getAttName(childAttNameValue)!!
             if (innerKey == key) { // compare x with x.
                 if (evaluateEdgeDeviceRuleValue(childAttNameValue, value)) {
@@ -1949,18 +1916,14 @@ class SDKClient(
                 val cvAttObj = JSONObject()
                 cvAttObj.put(parentKey, attObj)
                 val mainObj: JSONObject = getEdgeDevicePublishMainObj(
-                    DateTimeUtils.currentDate,
-                    /*  getDtg(),
-                      cpId,
-                      environment,
-                      appVersion,
-                      EDGE_DEVICE_RULE_MATCH_MESSAGE_TYPE*/
+                    DateTimeUtils.currentDate
                 )
                 publishObjForRuleMatchEdgeDevice = getPublishStringEdgeDevice(
                     uniqueId, DateTimeUtils.currentDate, bean, inputJsonString, cvAttObj, mainObj
                 )
             }
-        } catch (e: java.lang.Exception) {
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 

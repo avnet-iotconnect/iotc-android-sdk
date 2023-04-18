@@ -25,7 +25,6 @@
     <string name="ERR_SD03">" It does not matched with predefined standard date time format for payload's 'time'"</string>
     <string name="ERR_SD10">Publish data failed : MQTT connection not found</string>
 
-    <string name="INFO_IN01">Device information received successfully</string>
     <string name="INFO_IN02">Device connected </string>
     <string name="INFO_IN03">Device disconnected</string>
     <string name="INFO_IN04">Initializing…</string>
@@ -36,14 +35,7 @@
     <string name="INFO_CM01">Command : 0 : STANDARD_COMMAND</string>
 
     <string name="INFO_CM02">Command : 1 : FIRMWARE_UPDATE</string>
-    <string name="INFO_CM03">Command : 0x10 : ATTRIBUTE_UPDATE</string>
-    <string name="INFO_CM04">Command : 0x11 : SETTING_UPDATE</string>
-    <string name="INFO_CM05">Command : 0x12 : PASSWORD_UPDATE</string>
-    <string name="INFO_CM06">Command : 0x13 : DEVICE_UPDATE</string>
-    <string name="INFO_CM07">Command : 0x15 : RULE_UPDATE</string>
     <string name="INFO_CM08">Command : 0x99 : STOP_SDK_CONNECTION</string>
-    <string name="INFO_CM09">Command : 0x16 : SDK_CONNECTION_STATUS</string>
-    <string name="INFO_CM10">Command acknowledgement success></string>
     <string name="INFO_CM16">Command : 116 : DEVICE_CONNECTION_STATUS</string>
 
     <string name="INFO_DC01">Device already disconnected</string>

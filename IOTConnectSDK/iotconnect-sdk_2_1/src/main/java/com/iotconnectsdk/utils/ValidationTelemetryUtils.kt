@@ -3,18 +3,12 @@ package com.iotconnectsdk.utils
 import android.text.TextUtils
 import android.util.Log
 import com.iotconnectsdk.beans.CommonResponseBean
-import java.lang.Boolean
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.ResolverStyle
 import java.util.*
 import java.util.regex.Pattern
-import kotlin.Double
-import kotlin.Exception
-import kotlin.Int
-import kotlin.String
-import kotlin.Throws
 
 internal object ValidationTelemetryUtils {
 
@@ -26,11 +20,6 @@ internal object ValidationTelemetryUtils {
     const val REPORTING = 0 //"rpt";
 
     const val ERR = 0 //"ERR";
-
-    const val EDGE_SKIP = 2 // skip string data type for edge device
-
-    //Data Types
-    const val DATA_TYPE_NON_OBJECT = 0 // Without parent attribute
 
     const val DATA_TYPE_INTEGER = 1
     const val DATA_TYPE_LONG = 2
@@ -45,7 +34,6 @@ internal object ValidationTelemetryUtils {
 
     const val DATA_TYPE_LATLONG = 10 // [Decimal Array, Decimal (10,8), Decimal (11,8)]
 
-    const val DATA_TYPE_OBJECT = 11
     var isBit = false
 
 
@@ -53,7 +41,6 @@ internal object ValidationTelemetryUtils {
     fun compareForInputValidationNew(
         key: String, value: String, tag: String, dObj: CommonResponseBean?
     ): Int {
-        //  var result = 0
         val attributesList = dObj?.d?.att
         if (attributesList != null) {
             outerloop@
@@ -74,7 +61,6 @@ internal object ValidationTelemetryUtils {
                     if (key.equals(ln, ignoreCase = true) && tag.equals(tg, ignoreCase = true)) {
                         return validateDataType(dt, value, dv)
 
-                        //break@outerloop
                     }
                 }
             }
@@ -84,9 +70,6 @@ internal object ValidationTelemetryUtils {
 
 
     private fun validateDataType(dt: Int, value: String, dv: String): Int {
-        //    var result = 0
-
-        Log.d("dtValue", "::" + dt)
 
         if (dt == DATA_TYPE_STRING) {
             return validateNumber(dt, value, dv)
@@ -152,9 +135,6 @@ internal object ValidationTelemetryUtils {
         //if value is in comma separated value
 
         try {
-            /* if (SDKClientUtils.isLetter(value)) {
-                 return validateVarchar(value, range)
-             } else*/
 
             if (SDKClientUtils.isDigit(value)) {
                 if (rngwithnum.contains(value.toDouble())) {
@@ -236,10 +216,7 @@ internal object ValidationTelemetryUtils {
 
     private fun validateBoolean(value: String, dataValidation: String?): Int {
         return try {
-            /* val `val` = Boolean.parseBoolean(value)
-             if (`val` !== Boolean.TRUE && `val` !== Boolean.FALSE) {
-                 return FAULTY
-             }*/
+
             if (dataValidation != null && dataValidation.isNotEmpty()) {
                 if (dataValidation == value) {
                     REPORTING

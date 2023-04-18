@@ -1,7 +1,6 @@
 package com.iotconnectsdk.utils
 
 import android.content.Context
-import android.content.SharedPreferences
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.iotconnectsdk.beans.CommonResponseBean
@@ -23,8 +22,6 @@ internal class IotSDKPreferences private constructor(context: Context) {
         val SETTING_TWIN_RESPONSE = "setting_response"
         val EDGE_RULE_RESPONSE = "edge_rule_response"
         val CHILD_DEVICE_RESPONSE = "child_device_response"
-        val PENDING_OTA_RESPONSE = "ota_response"
-        val DATA_FREQUENCY_CHANGE = "data_freq_change"
 
         val TEXT_FILE_NAME = "text_file"
 

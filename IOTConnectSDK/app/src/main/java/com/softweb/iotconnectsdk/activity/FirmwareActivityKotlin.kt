@@ -1,7 +1,6 @@
 package com.softweb.iotconnectsdk.activity
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.ProgressDialog
 import android.content.pm.PackageManager
@@ -40,9 +39,8 @@ import java.util.*
  * Hope you have imported SDK v3.1.2 in build.gradle as guided in README.md file or from documentation portal.
  */
 
-class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, DeviceCallback,
-    TwinUpdateCallback {
-
+class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
+    DeviceCallback, TwinUpdateCallback {
     private val TAG = FirmwareActivityKotlin::class.java.simpleName
 
     private var inputMap: MutableMap<String, List<TextInputLayout>>? = null
@@ -69,7 +67,6 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
     private var sdkClient: SDKClient? = null
 
     private val DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_firmware)
@@ -82,76 +79,72 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
         checkPermissions()
     }
 
+    override fun onClick(v: View) {
+        if (v.id == R.id.btnConnect) {
+            if (sdkClient != null && isConnected) {
+                sdkClient!!.dispose()
+            } else {
+                if (environment.isEmpty()) {
+                    Toast.makeText(
+                        this@FirmwareActivityKotlin,
+                        getString(R.string.string_select_environment),
+                        Toast.LENGTH_LONG
+                    ).show()
+                    return
+                }
+                if (checkValidation()) {
+                    setStatusText(R.string.initializing_sdk)
+                    btnSendData!!.isEnabled = false
+                    btnGetAllTwins!!.isEnabled = false
+                    cpId = etCpid!!.text.toString()
+                    uniqueId = etUniqueId!!.text.toString()
 
-    override fun onClick(view: View?) {
-        when (view?.id) {
-            R.id.btnConnect -> {
-                if (sdkClient != null && isConnected) {
-                    sdkClient?.dispose()
-                } else {
-                    if (environment.isEmpty()) {
-                        Toast.makeText(
-                            this@FirmwareActivityKotlin,
-                            getString(R.string.string_select_environment),
-                            Toast.LENGTH_LONG
-                        ).show()
-                        return
-                    }
-
-                    if (checkValidation()) {
-                        setStatusText(R.string.initializing_sdk)
-                        btnSendData.isEnabled = false
-                        btnGetAllTwins.isEnabled = false
-                        cpId = etCpid.text.toString()
-                        uniqueId = etUniqueId.text.toString()
-
-                        /*
-                                 * Type    : Object Initialization "new SDKClient()"
-                                 * Usage   : To Initialize SDK and Device connection
-                                 * Input   : context, cpId, uniqueId, deviceCallback, twinUpdateCallback, sdkOptions, env.
-                                 * Output  : Callback methods for device command and twin properties
-                                 */sdkClient = SDKClient.getInstance(
-                            this@FirmwareActivityKotlin,
-                            cpId,
-                            uniqueId,
-                            this@FirmwareActivityKotlin,
-                            this@FirmwareActivityKotlin,
-                            getSdkOptions(),
-                            environment
-                        )
-                        showDialog(this@FirmwareActivityKotlin)
-                    }
+                    /*
+                     * Type    : Object Initialization "new SDKClient()"
+                     * Usage   : To Initialize SDK and Device connection
+                     * Input   : context, cpId, uniqueId, deviceCallback, twinUpdateCallback, sdkOptions, env.
+                     * Output  : Callback methods for device command and twin properties
+                     */sdkClient = SDKClient.getInstance(
+                        this@FirmwareActivityKotlin,
+                        cpId,
+                        uniqueId,
+                        this@FirmwareActivityKotlin,
+                        this@FirmwareActivityKotlin,
+                        getSdkOptions(),
+                        environment
+                    )
+                    showDialog(this@FirmwareActivityKotlin)
                 }
             }
-            R.id.btnSendData -> {
-                // showDialog(this@FirmwareActivityKotlin)
+        } else if (v.id == R.id.btnSendData) {
+            // showDialog(FirmwareActivity.this);
+            try {
                 sendInputData()
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
-            R.id.btnGetAllTwins -> {
-                if (sdkClient != null) {
-                    if (isConnected) {
-                        /*
-                             * Type    : Public Method "getAllTwins()"
-                             * Usage   : Send request to get all the twin properties Desired and Reported
-                             * Input   :
-                             * Output  :
-                             */
-                        sdkClient?.getAllTwins()
-                    } else {
-                        Toast.makeText(
-                            this@FirmwareActivityKotlin,
-                            getString(R.string.string_connection_not_found),
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
+        } else if (v.id == R.id.btnGetAllTwins) {
+            if (sdkClient != null) {
+                if (isConnected) {
+                    /*
+                     * Type    : Public Method "getAllTwins()"
+                     * Usage   : Send request to get all the twin properties Desired and Reported
+                     * Input   :
+                     * Output  :
+                     */
+                    sdkClient!!.getAllTwins()
+                } else {
+                    Toast.makeText(
+                        this@FirmwareActivityKotlin,
+                        getString(R.string.string_connection_not_found),
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             }
-            R.id.btnClear -> {
-                etSubscribe!!.setText("")
-            }
+        } else if (v.id == R.id.btnClear) {
+            etSubscribe!!.setText("")
         }
     }
-
 
     /*
      * Type    : Function "checkPermissions()"
@@ -168,7 +161,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
                 listPermissionsNeeded.add(p)
             }
         }
-        if (listPermissionsNeeded.isNotEmpty()) {
+        if (!listPermissionsNeeded.isEmpty()) {
             ActivityCompat.requestPermissions(this, listPermissionsNeeded.toTypedArray(), 100)
             return false
         }
@@ -177,20 +170,33 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
-        permissions: Array<out String>,
+        permissions: Array<String>,
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == 100) {
-            if (grantResults.isNotEmpty()
+            if (grantResults.size > 0
                 && grantResults[0] == PackageManager.PERMISSION_GRANTED
             ) {
                 // do something
             }
-            return
         }
-    }
+    }//        String sdkOptions = {
 
+    //                "certificate": {
+//                    "SSLKeyPath"	: "<< Certificate file path >>",
+//                    "SSLCertPath"   : "<< Certificate file path >>",
+//                    "SSLCaPath"     : "<< Certificate file path >>"
+//                },
+//                "offlineStorage": {
+//                    "disabled": false, //default value = false, false = store data, true = not store data
+//                    "availSpaceInMb": 1, //in MB Default value = unlimited
+//                    "fileCount": 5 // Default value = 1
+//                },
+//            }
+    //default value false
+    //This will be in MB. mean total available space is 1 MB.
+    //5 files can be created.
     /*
      * It helps to define the path of self signed and CA signed certificate as well as define the offline storage params.
      * <p>
@@ -251,27 +257,32 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
             try {
                 val valueObj = JSONObject()
                 valueObj.put("uniqueId", keyValue)
-                valueObj.put("time", getCurrentTime())
+                valueObj.put("time", currentTime)
                 val dObj = JSONObject()
-                val gyroObj = JSONObject()
+                var gyroObj = JSONObject()
                 var objectKeyName = ""
                 for (inValue in inputValue) {
                     val label = inValue.hint.toString()
                     val value = inValue.editText!!.text.toString()
                     if (label.contains(":")) {
                         //for object type values.
-                        objectKeyName = label.split(":").toTypedArray()[0]
-                        val lab = label.split(":").toTypedArray()[1]
-                        gyroObj.put(lab, value)
+                        objectKeyName = label.split(":".toRegex()).dropLastWhile { it.isEmpty() }
+                            .toTypedArray()[0]
+                        val lab = label.split(":".toRegex()).dropLastWhile { it.isEmpty() }
+                            .toTypedArray()[1]
+                        val keyExist = keyExists(dObj, objectKeyName)
+                        if (keyExist) {
+                            gyroObj.put(lab, value)
+                            dObj.putOpt(objectKeyName, gyroObj)
+                        } else {
+                            gyroObj = JSONObject()
+                            gyroObj.put(lab, value)
+                            dObj.putOpt(objectKeyName, gyroObj)
+                        }
                     } else {
                         //for simple key values.
                         dObj.put(label, value)
                     }
-                }
-
-                // add object type values.
-                if (gyroObj.length() != 0) {
-                    dObj.putOpt(objectKeyName, gyroObj)
                 }
                 valueObj.put("data", dObj)
                 inputArray.put(valueObj)
@@ -280,33 +291,31 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
             }
         }
         // Device to Cloud data publish.
-        if (isConnected) {
-            /*
+        if (isConnected) /*
              * Type    : Public data Method "sendData()"
              * Usage   : To publish the data on cloud D2C
              * Input   : Predefined data object
              * Output  :
-             */
-            sdkClient!!.sendData(inputArray.toString())
-        } else {
-            Toast.makeText(
-                this@FirmwareActivityKotlin,
-                getString(R.string.string_connection_not_found),
-                Toast.LENGTH_LONG
-            ).show()
-        }
+             */ sdkClient!!.sendData(inputArray.toString()) else Toast.makeText(
+            this@FirmwareActivityKotlin,
+            getString(R.string.string_connection_not_found),
+            Toast.LENGTH_LONG
+        ).show()
     }
 
-    /*
-     * Type    : private function "getCurrentTime()"
-     * Usage   : To get current time with format of "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'".
-     * Input   :
-     * Output  : current time.
-     */
-    private fun getCurrentTime(): String? {
-        val df = SimpleDateFormat(DATE_TIME_FORMAT)
-        df.timeZone = TimeZone.getTimeZone("gmt")
-        return df.format(Date())
+    @Throws(JSONException::class)
+    fun keyExists(`object`: JSONObject, searchedKey: String?): Boolean {
+        var exists = `object`.has(searchedKey)
+        if (!exists) {
+            val keys: Iterator<*> = `object`.keys()
+            while (keys.hasNext()) {
+                val key = keys.next() as String
+                if (`object`[key] is JSONObject) {
+                    exists = keyExists(`object`[key] as JSONObject, searchedKey)
+                }
+            }
+        }
+        return exists
     }
 
     /*
@@ -316,139 +325,131 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
      * Output  : Receive device command, firmware command and other device initialize error response
      */
     override fun onReceiveMsg(message: String?) {
-        hideDialog(this@FirmwareActivityKotlin)
-        Log.d(TAG, "onReceiveMsg => $message")
-        if (!message?.isEmpty()!!) {
-            btnClear!!.isEnabled = true
-            etSubscribe!!.append("\n--- Device Command Received ---\n")
-            etSubscribe!!.append(message + "")
+        btnClear!!.isEnabled = true
+        try {
+            Log.d(TAG, "onReceiveMsg => $message")
+            runOnUiThread { etSubscribe!!.setText(message) }
             var messageType = ""
-            try {
-
-                var messageType = ""
-                var ackId = ""
-                var childId = ""
-                var cmdType = -1
-                var mainObject: JSONObject? = null
-
-                val jsonValid: Boolean = isJSONValid(message)
-
-                if (jsonValid) {
-                    mainObject = JSONObject(message)
-                    //Publish message call back received.
-                    if (!mainObject.has("ct")) {
-                        return
-                    }
-                    cmdType = mainObject.getInt("ct")
-
-                    if (mainObject.has("ack")) {
-                        ackId = mainObject.getString("ack")
-                    }
-
-                    if (mainObject.has("id")) {
-                        childId = mainObject.getString("id")
-                    }
+            var ackId = ""
+            var childId = ""
+            var cmdType = -1
+            var mainObject: JSONObject? = null
+            val jsonValid = isJSONValid(message)
+            if (jsonValid) {
+                mainObject = JSONObject(message)
+                //Publish message call back received.
+                if (!mainObject.has("ct")) {
+                    return
                 }
-                when (cmdType) {
-                    0 -> {
-                        Log.d(TAG, "--- Device Command Received ---")
-                        if (ackId != null && ackId.isNotEmpty()) {
-                            messageType = "5"
-
-
-                            /*
-                             * Type    : Public Method "sendAck()"
-                             * Usage   : Send device command received acknowledgment to cloud
-                             *
-                             * - status Type
-                             *     st = 6; // Device command Ack status
-                             *     st = 4; // Failed Ack
-                             * - Message Type
-                             *     msgType = 5; // for "0x01" device command
-                             */
-
-
-                            val d2CSendAckBean = D2CSendAckBean(
-                                getCurrentTime()!!, D2CSendAckBean.Data(ackId, 0, 6, "", childId)
-                            )
-                            val gson = Gson()
-                            val jsonString = gson.toJson(d2CSendAckBean)
-
-                            if (isConnected)
-                                sdkClient?.sendAck(jsonString, messageType)
-                            else
-                                Toast.makeText(
-                                    this@FirmwareActivityKotlin,
-                                    getString(R.string.string_connection_not_found),
-                                    Toast.LENGTH_LONG
-                                ).show()
-
-                        }
-                    }
-                    0x02 -> {
-                        Log.d(TAG, "--- Firmware OTA Command Received ---")
-                        if (ackId != null && ackId.isNotEmpty()) {
-                            messageType = "11"
-                            val obj = getAckObject(mainObject!!)
-                            obj!!.put("st", 7)
-
-                            /*
-                             * Type    : Public Method "sendAck()"
-                             * Usage   : Send firmware command received acknowledgement to cloud
-                             * - status Type
-                             *     st = 7; // firmware OTA command Ack status
-                             *     st = 4; // Failed Ack
-                             * - Message Type
-                             *     msgType = 11; // for "0x02" Firmware command
-                             *//*if (isConnected) sdkClient!!.sendAck(
-                                obj,
-                                messageType
-                            ) else Toast.makeText(
-                                this@FirmwareActivityKotlin,
-                                getString(R.string.string_connection_not_found),
-                                Toast.LENGTH_LONG
-                            ).show()*/
-                        }
-                    }
-                    116 -> {
-                        /*command type "0x16" for Device "Connection Status"
-                          true = connected, false = disconnected*/Log.d(
-                            TAG,
-                            "--- Device connection status ---"
-                        )
-                        Log.d(
-                            TAG,
-                            "DeviceId ::: [" + mainObject?.getString(
-                                "uniqueId"
-                            ) + "] :: Device status :: " + mainObject?.getString(
-                                "command"
-                            ) + "," + Date()
-                        )
-                        if (mainObject != null) {
-                            if (mainObject.has("command")) {
-                                isConnected = mainObject.getBoolean("command")
-                                onConnectionStateChange(isConnected)
-                            }
-                        }
-                    }
-                    else -> {
-                        hideDialog(this@FirmwareActivityKotlin)
-                        setStatusText(R.string.device_disconnected)
-                        Toast.makeText(this@FirmwareActivityKotlin, message, Toast.LENGTH_LONG)
-                            .show()
-                    }
+                cmdType = mainObject.getInt("ct")
+                if (mainObject.has("ack")) {
+                    ackId = mainObject.getString("ack")
                 }
-            } catch (e: JSONException) {
-                e.printStackTrace()
+                if (mainObject.has("id")) {
+                    childId = mainObject.getString("id")
+                }
             }
+            when (cmdType) {
+                0 -> {
+                    Log.d(TAG, "--- Device Command Received ---")
+                    if (ackId != null && !ackId.isEmpty()) {
+                        messageType = "5"
+
+                        /*
+                         * Type    : Public Method "sendAck()"
+                         * Usage   : Send device command received acknowledgment to cloud
+                         *
+                         * - status Type
+                         *     st = 6; // Device command Ack status
+                         *     st = 4; // Failed Ack
+                         * - Message Type
+                         *     msgType = 5; // for "0x01" device command
+                         */
+                        val d2CSendAckBean = D2CSendAckBean(
+                            currentTime,
+                            D2CSendAckBean.Data(ackId, 0, 6, "", childId)
+                        )
+                        val gson = Gson()
+                        val jsonString = gson.toJson(d2CSendAckBean)
+                        if (isConnected) sdkClient!!.sendAck(
+                            jsonString,
+                            messageType
+                        ) else Toast.makeText(
+                            this@FirmwareActivityKotlin,
+                            getString(R.string.string_connection_not_found),
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+
+                1 -> {
+                    Log.d(TAG, "--- Firmware OTA Command Received ---")
+                    if (ackId != null && !ackId.isEmpty()) {
+                        messageType = "11"
+                        //   JSONObject obj = getAckObject(mainObject);
+                        //  obj.put("st", 7);
+
+                        /*
+                         * Type    : Public Method "sendAck()"
+                         * Usage   : Send firmware command received acknowledgement to cloud
+                         * - status Type
+                         *     st = 0; // firmware OTA command Ack status
+                         *     st = 4; // Failed Ack
+                         * - Message Type
+                         *     msgType = 11; // for "0x02" Firmware command
+                         */
+                        val d2CSendAckBean = D2CSendAckBean(
+                            currentTime,
+                            D2CSendAckBean.Data(ackId, 1, 0, "", childId)
+                        )
+                        val gson = Gson()
+                        val jsonString = gson.toJson(d2CSendAckBean)
+                        if (isConnected) sdkClient!!.sendAck(
+                            jsonString,
+                            messageType
+                        ) else Toast.makeText(
+                            this@FirmwareActivityKotlin,
+                            getString(R.string.string_connection_not_found),
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+
+                116 -> {
+                    /*command type "116" for Device "Connection Status"
+                      true = connected, false = disconnected*/Log.d(
+                        TAG,
+                        "--- Device connection status ---"
+                    )
+                    // JSONObject dataObj = mainObject.getJSONObject("data");
+                    Log.d(
+                        TAG,
+                        "DeviceId ::: [" + mainObject!!.getString("uniqueId") + "] :: Device status :: " + mainObject.getString(
+                            "command"
+                        ) + "," + Date()
+                    )
+                    if (mainObject.has("command")) {
+                        isConnected = mainObject.getBoolean("command")
+                        onConnectionStateChange(isConnected)
+                    }
+                }
+
+                else -> {
+                    hideDialog(this@FirmwareActivityKotlin)
+                    setStatusText(R.string.device_disconnected)
+                    Toast.makeText(this@FirmwareActivityKotlin, message, Toast.LENGTH_LONG).show()
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
+        // }
     }
 
     /*
      * Type    : Function "onConnectionStateChange()"
      */
     private fun onConnectionStateChange(isConnected: Boolean) {
-        hideDialog(this@FirmwareActivityKotlin)
         llTemp!!.removeAllViews()
         if (isConnected) {
             setStatusText(R.string.device_connected)
@@ -461,23 +462,24 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
              * Input   :
              * Output  :
              */
-
             val data = sdkClient!!.getAttributes()
             Log.d("attdata", "::$data")
-            if (data != null) {
+            if (data != null && !data.equals("[]", ignoreCase = true)) {
                 btnSendData!!.isEnabled = true
                 btnGetAllTwins!!.isEnabled = true
                 createDynamicViews(data)
+            } else {
+                return
             }
         } else {
             setStatusText(R.string.device_disconnected)
-            tvConnStatus.isSelected = false
-            btnConnect.text = "Connect"
-            btnSendData.isEnabled = false
-            btnGetAllTwins.isEnabled = false
+            tvConnStatus!!.isSelected = false
+            btnConnect!!.text = "Connect"
+            btnSendData!!.isEnabled = false
+            btnGetAllTwins!!.isEnabled = false
         }
+        hideDialog(this@FirmwareActivityKotlin)
     }
-
 
     private fun getAckObject(mainObject: JSONObject): JSONObject? {
         var objD: JSONObject? = null
@@ -502,7 +504,6 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
                 e.printStackTrace()
             }
 
-
             //create json object.
             objD = JSONObject()
             objD.put("ackId", ackId)
@@ -514,14 +515,12 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
         return objD
     }
 
-
     /*
      * Type    : private function "createDynamicViews()"
      * Usage   : To create views according to device attributes.
      * Input   : Device attribute object.
      * Output  :
      */
-    @SuppressLint("SetTextI18n", "InflateParams")
     private fun createDynamicViews(data: String) {
         inputMap = HashMap()
         editTextInputList = ArrayList()
@@ -534,14 +533,14 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
             for (model in attributesModelList) {
                 val device = model.device
                 val textViewTitle = TextView(this)
-                textViewTitle.text = "$TAG : : " + device.tg + " : " + device.id
+                textViewTitle.text = "TAG : : " + device.tg + " : " + device.id
                 llTemp!!.addView(textViewTitle)
                 editTextInputList = ArrayList()
                 val attributeList = model.attributes
                 for (attribute in attributeList) {
 
                     // if for not empty "p":"gyro"
-                    if (attribute.p != null && attribute.p.isNotEmpty()) {
+                    if (attribute.p != null && !attribute.p.isEmpty()) {
                         val d = attribute.d
                         for (dObj in d) {
                             val textInputLayout = LayoutInflater.from(this@FirmwareActivityKotlin)
@@ -558,14 +557,12 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
                         textInputLayout.hint = attribute.ln
                     }
                 }
-                inputMap!!.put(device.id, editTextInputList!!)
-
+                inputMap!![device.id] = editTextInputList!!
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
-
 
     /*
      * ## Function to check prerequisite configuration to run this sample code
@@ -578,21 +575,18 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
                 this@FirmwareActivityKotlin,
                 getString(R.string.alert_enter_cpid),
                 Toast.LENGTH_SHORT
-            )
-                .show()
+            ).show()
             return false
         } else if (etUniqueId!!.text.toString().isEmpty()) {
             Toast.makeText(
                 this@FirmwareActivityKotlin,
                 getString(R.string.alert_enter_unique_id),
                 Toast.LENGTH_SHORT
-            )
-                .show()
+            ).show()
             return false
         }
         return true
     }
-
 
     override fun onDestroy() {
         super.onDestroy()
@@ -605,8 +599,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
              * Input   :
              * Output  :
              */
-
-             sdkClient?.dispose()
+            sdkClient!!.dispose()
         }
     }
 
@@ -659,7 +652,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
                     try {
                         val value = jsonObject[key]
                         if (sdkClient != null && isConnected) {
-                             sdkClient?.updateTwin(key, "" + value)
+                            sdkClient!!.updateTwin(key, "" + value)
                         }
                         break
                     } catch (e: JSONException) {
@@ -667,13 +660,12 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
                     }
                 }
             }
-        } catch (e: JSONException) {
+        } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
     private var progressDialog: ProgressDialog? = null
-
     private fun showDialog(activity: Activity?) {
         try {
             progressDialog = ProgressDialog(activity)
@@ -707,4 +699,23 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener, Device
         }
         return true
     }
+
+    companion object {
+        private val TAG = FirmwareActivity::class.java.simpleName
+        private const val DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+
+        /*
+       * Type    : private function "getCurrentTime()"
+       * Usage   : To get current time with format of "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'".
+       * Input   :
+       * Output  : current time.
+       */
+        private val currentTime: String
+            private get() {
+                val df = SimpleDateFormat(DATE_TIME_FORMAT)
+                df.timeZone = TimeZone.getTimeZone("gmt")
+                return df.format(Date())
+            }
+    }
 }
+

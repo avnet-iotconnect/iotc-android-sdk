@@ -16,15 +16,12 @@ class IotSDKLogUtils private constructor(
         if (isDebug) {
             val currentDate: String = DateTimeUtils.currentDate
             val LOG = "[" + code + "] " + currentDate + " [" + cpId + "_" + uniqueId + "]: " + msg
-            //   Log.d("", LOG);
             writeLogFile(isError, LOG)
         }
     }
 
     fun writeLogFile(isError: Boolean, log: String) {
         try {
-//            File errorFile = new File("sdcard/IotSDK/logs/debug", "error.txt");
-//            File infoFile = new File("sdcard/IotSDK/logs/debug", "info.txt");
             val directoryPath = "logs/debug"
             val directory = getChildrenFolder(directoryPath)
             val errorFile = File(directory, "error.txt")
@@ -84,7 +81,7 @@ class IotSDKLogUtils private constructor(
 
     companion object {
         private val iotSDKLogUtils: IotSDKLogUtils? = null
-        fun getInstance(act: Context, cpId: String, uniqueId: String): IotSDKLogUtils? {
+        fun getInstance(act: Context, cpId: String, uniqueId: String): IotSDKLogUtils {
             return iotSDKLogUtils
                 ?: IotSDKLogUtils(
                     act,

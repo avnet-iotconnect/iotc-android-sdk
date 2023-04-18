@@ -254,7 +254,7 @@ public class MqttService extends Service implements MqttTraceHandler {
   private MqttServiceBinder mqttServiceBinder;
 
 	// mapping from client handle strings to actual client connections.
-	private Map<String/* clientHandle */, MqttConnection/* client */> connections = new ConcurrentHashMap<>();
+	private final Map<String/* clientHandle */, MqttConnection/* client */> connections = new ConcurrentHashMap<>();
 
   public MqttService() {
     super();

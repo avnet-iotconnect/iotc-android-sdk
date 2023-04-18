@@ -64,15 +64,19 @@ public class SDKClient implements WsResponseInterface, HubToSdkCallback, TwinUpd
     private IotSDKLogUtils iotSDKLogUtils;
     private IotSDKMQTTService mqttService;
 
-    private DeviceCallback deviceCallback;
-    private TwinUpdateCallback twinUpdateCallback;
+    private final DeviceCallback deviceCallback;
+    private final TwinUpdateCallback twinUpdateCallback;
 
     private final Context context;
-    private String cpId, uniqueId, commandType, sdkOptions, environment = "PROD";
+    private final String cpId;
+    private final String uniqueId;
+    private String commandType;
+    private final String sdkOptions;
+    private String environment = "PROD";
     private boolean isConnected, isDispose, isSaveToOffline;
     private boolean isDebug = false;
     private boolean idEdgeDevice;
-    private String appVersion = "2.0";
+    private final String appVersion = "2.0";
     private String discoveryUrl = "";
 
     private static final String DEFAULT_DISCOVERY_URL = "https://discovery.iotconnect.io/";
@@ -160,7 +164,7 @@ public class SDKClient implements WsResponseInterface, HubToSdkCallback, TwinUpd
 
     private void connect() {
         this.directoryPath = "";
-        this.reCheckingCountTime = 0;
+        reCheckingCountTime = 0;
         this.commandType = null;
         this.isDispose = false;
         this.idEdgeDevice = false;
@@ -695,7 +699,7 @@ public class SDKClient implements WsResponseInterface, HubToSdkCallback, TwinUpd
                 }
             }
         };
-        timerTumblingWindow.scheduleAtFixedRate(timerTask, tw * 1000, tw * 1000);
+        timerTumblingWindow.scheduleAtFixedRate(timerTask, tw * 1000L, tw * 1000L);
     }
 
 
@@ -1068,7 +1072,7 @@ public class SDKClient implements WsResponseInterface, HubToSdkCallback, TwinUpd
 
                     String attKey = SDKClientUtils.getAttributeName(con);
                     //match parent attribute name (eg. temp == temp OR gyro == gyro)
-                    if (attKey != null && parentKey.equals(attKey)) {
+                    if (parentKey.equals(attKey)) {
 
 //                        if (innerKey != null) {
 
@@ -1078,22 +1082,22 @@ public class SDKClient implements WsResponseInterface, HubToSdkCallback, TwinUpd
                             for (int i = 0; i < param.length; i++) {
                                 String att = param[i];
                                 if (att.contains(".")) { //gyro#vibration.x > 5
-                                    String KeyValue[] = att.split("\\.");
-                                    String parent[] = KeyValue[0].split("#"); //gyro#vibration
+                                    String[] KeyValue = att.split("\\.");
+                                    String[] parent = KeyValue[0].split("#"); //gyro#vibration
                                     String parentAttName = parent[0]; //gyro
                                     String childAttName = parent[1]; //vibration
 
                                     setPublishJsonForRuleMatchedEdgeDevice(KeyValue[1], innerKey, value, attObj, parentKey, bean, inputJsonString);
 
                                 } else if (con.contains("#")) {
-                                    String parent[] = att.split("#"); //gyro#x > 5
+                                    String[] parent = att.split("#"); //gyro#x > 5
                                     String parentAttName = parent[0]; //gyro
                                     setPublishJsonForRuleMatchedEdgeDevice(parent[1], innerKey, value, attObj, parentKey, bean, inputJsonString);
                                 }
                             }
                         } else if (innerKey != null && con.contains("#")) { //gyro#x > 5  //  ac1#vibration.x > 5
 
-                            String parent[] = con.split("#"); //gyro#x > 5
+                            String[] parent = con.split("#"); //gyro#x > 5
                             String parentAttName = parent[0]; //gyro
                             setPublishJsonForRuleMatchedEdgeDevice(parent[1], innerKey, value, attObj, parentKey, bean, inputJsonString);
 
@@ -1101,12 +1105,12 @@ public class SDKClient implements WsResponseInterface, HubToSdkCallback, TwinUpd
                             String[] param = con.split("AND");
 
                             for (int i = 0; i < param.length; i++) {
-                                String KeyValue[] = param[i].split("\\.");  //gyro.x = 10
+                                String[] KeyValue = param[i].split("\\.");  //gyro.x = 10
                                 setPublishJsonForRuleMatchedEdgeDevice(KeyValue[1], innerKey, value, attObj, parentKey, bean, inputJsonString);
                             }
 
                         } else if (innerKey != null && con.contains(".")) { //gyro.x = 10
-                            String KeyValue[] = con.split("\\."); //gyro.x = 10
+                            String[] KeyValue = con.split("\\."); //gyro.x = 10
                             setPublishJsonForRuleMatchedEdgeDevice(KeyValue[1], innerKey, value, attObj, parentKey, bean, inputJsonString);
                         } else if (innerKey == null) { // simple object like temp = 10. (not gyro type).
                             if (SDKClientUtils.evaluateEdgeDeviceRuleValue(con, value)) {
@@ -1412,7 +1416,7 @@ public class SDKClient implements WsResponseInterface, HubToSdkCallback, TwinUpd
         fileList.add(textFileName);
 
         List<String> list = new ArrayList<>(fileList);
-        sdkPreferences.getInstance(context).saveList(TEXT_FILE_NAME, list);
+        IotSDKPreferences.getInstance(context).saveList(TEXT_FILE_NAME, list);
 
         //Delete first text file, when more than user defined count.
         if (list.size() > fileCount) {
