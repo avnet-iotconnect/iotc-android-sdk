@@ -480,7 +480,7 @@ class SDKClient(
   * */
     private fun getGatewayChildResponse(): CommonResponseBean? {
         return IotSDKPreferences.getInstance(context!!)
-            ?.getDeviceInformation(IotSDKPreferences.CHILD_DEVICE_RESPONSE)
+            ?.getDeviceInformation(IotSDKPreferences.CHILD_DEVICE_RESPONSE) ?: CommonResponseBean()
     }
 
 
@@ -613,6 +613,7 @@ class SDKClient(
                             IotSDKPreferences.getInstance(context!!)!!.putStringData(
                                 IotSDKPreferences.CHILD_DEVICE_RESPONSE, Gson().toJson(commonModel)
                             )
+                            onDeviceConnectionStatus(isConnected())
                         }
 
                         DeviceIdentityMessages.GET_PENDING_OTA.value -> {
@@ -852,7 +853,8 @@ class SDKClient(
                     val mainObj = JSONObject()
                     mainObj.put(DEVICE, deviceObj)
                     mainObj.put(
-                        ATTRIBUTES, getAttributesList(attributeResponse.d!!.att, childDeviceBean.tg)
+                        ATTRIBUTES,
+                        getAttributesList(attributeResponse.d?.att!!, childDeviceBean.tg)
                     )
 
                     //ADD MAIN BOJ TO ARRAY.
@@ -886,7 +888,7 @@ class SDKClient(
                 val mainObj = JSONObject()
                 mainObj.put(DEVICE, deviceObj)
                 mainObj.put(
-                    ATTRIBUTES, getAttributesList(attributeResponse.d!!.att, null)
+                    ATTRIBUTES, getAttributesList(attributeResponse.d!!.att!!, null)
                 )
 
                 //ADD MAIN BOJ TO ARRAY.
@@ -1495,7 +1497,7 @@ class SDKClient(
                                     if (edgeResponse != null) {
                                         if (jsonData != null) {
                                             EvaluateRuleForEdgeDevice(
-                                                edgeResponse.d!!.edge,
+                                                edgeResponse.d!!.edge!!,
                                                 key,
                                                 innerKey,
                                                 innerKValue,
@@ -1523,7 +1525,12 @@ class SDKClient(
                                 if (edgeResponse != null) {
                                     if (jsonData != null) {
                                         EvaluateRuleForEdgeDevice(
-                                            edgeResponse.d!!.edge, key, null, value, jsonData, null
+                                            edgeResponse.d!!.edge!!,
+                                            key,
+                                            null,
+                                            value,
+                                            jsonData,
+                                            null
                                         )
                                     }
                                 }
