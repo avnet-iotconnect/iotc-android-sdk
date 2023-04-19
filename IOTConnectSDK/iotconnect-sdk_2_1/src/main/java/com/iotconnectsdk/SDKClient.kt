@@ -567,7 +567,7 @@ class SDKClient(
                 val gson = Gson()
                 val commonModel = gson.fromJson(message, CommonResponseBean::class.java)
 
-                if (commonModel?.d != null) {
+                if (commonModel?.d?.ct != null) {
                     when (commonModel.d.ct) {
                         /*{"d":{"att":[{"p":"","dt":0,"tg":"","d":[{"ln":"Temp","dt":1,"dv":"5 to 10","sq":1,"tg":"p","tw":"60s"},{"ln":"Humidity","dt":1,"dv":"5 to 10","sq":2,"tg":"ch","tw":"60s"},{"ln":"Lumosity","dt":1,"dv":"","sq":4,"tg":"ch","tw":"60s"}]},{"p":"Gyroscope","dt":11,"tg":"p","d":[{"ln":"x","dt":1,"dv":"","sq":1,"tg":"p","tw":"60s"},{"ln":"y","dt":1,"dv":"","sq":2,"tg":"p","tw":"60s"}]}],"ct":201,"ec":0,"dt":"2023-02-22T10:41:18.6947577Z"}}*/
                         DeviceIdentityMessages.GET_DEVICE_TEMPLATE_ATTRIBUTES.value -> {
