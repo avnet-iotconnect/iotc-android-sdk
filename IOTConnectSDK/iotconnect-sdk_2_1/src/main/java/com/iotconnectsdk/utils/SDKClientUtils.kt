@@ -11,7 +11,7 @@ import org.json.JSONObject
 import java.io.File
 import java.util.concurrent.CopyOnWriteArrayList
 
-object SDKClientUtils {
+internal object SDKClientUtils {
     private const val TEXT_FILE_PREFIX = "current"
 
     fun getAttributesList(
