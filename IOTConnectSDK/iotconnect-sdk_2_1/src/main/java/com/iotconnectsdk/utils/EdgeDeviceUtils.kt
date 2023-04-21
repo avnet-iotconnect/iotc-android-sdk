@@ -9,7 +9,7 @@ import org.json.JSONObject
 import org.json.JSONTokener
 import java.text.DecimalFormat
 
-object EdgeDeviceUtils {
+internal object EdgeDeviceUtils {
 
     private const val DEVICE_ID = "id"
     private const val DT = "dt"

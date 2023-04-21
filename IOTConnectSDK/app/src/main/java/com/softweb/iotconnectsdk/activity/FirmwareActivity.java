@@ -220,6 +220,9 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         return true;
     }
 
+    /*
+     * Check here that permission is granted or not and do accordingly
+     * */
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -359,7 +362,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
     }
 
 
-    public boolean keyExists(JSONObject object, String searchedKey) throws JSONException {
+    private boolean keyExists(JSONObject object, String searchedKey) throws JSONException {
         boolean exists = object.has(searchedKey);
         if (!exists) {
             Iterator<?> keys = object.keys();
@@ -541,7 +544,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                 btnSendData.setEnabled(true);
                 btnGetAllTwins.setEnabled(true);
                 createDynamicViews(data);
-            }else{
+            } else {
                 return;
             }
 

@@ -17,10 +17,12 @@ import org.json.JSONObject
  * Service class for MQTT data upload to cloud
  */
 internal class IotSDKMQTTService private constructor(
-    private val context: Context, private val protocolBean: IdentityServiceResponse.D.P,
+    private val context: Context,
+    private val protocolBean: IdentityServiceResponse.D.P,
     private val hubToSdkCallback: HubToSdkCallback,
     private val publishMessageCallback: PublishMessageCallback,
-    private val twinCallbackMessage: TwinUpdateCallback, private val iotSDKLogUtils: IotSDKLogUtils,
+    private val twinCallbackMessage: TwinUpdateCallback,
+    private val iotSDKLogUtils: IotSDKLogUtils,
     private val isDebug: Boolean, private val uniqueId: String
 ) {
 
@@ -40,8 +42,8 @@ internal class IotSDKMQTTService private constructor(
 
     private val UNIQUE_ID = "uniqueId"
 
-    private var subscriptionTopic: String? = null // = "devices/520uta-sdk003/messages/devicebound/#";
-
+    private var subscriptionTopic: String? =
+        null // = "devices/520uta-sdk003/messages/devicebound/#";
 
 
     companion object {
@@ -83,10 +85,10 @@ internal class IotSDKMQTTService private constructor(
         )
         mqttAndroidClient?.setCallback(object : MqttCallbackExtended {
             override fun connectComplete(reconnect: Boolean, serverURI: String) {
-                    // Because Clean Session is true, we need to re-subscribe
-                    if (subscriptionTopic != null) {
-                        subscribeToTopic()
-                    }
+                // Because Clean Session is true, we need to re-subscribe
+                if (subscriptionTopic != null) {
+                    subscribeToTopic()
+                }
 
             }
 
@@ -105,7 +107,9 @@ internal class IotSDKMQTTService private constructor(
                         mainObj.put(DESIRED, JSONObject(String(message.payload)))
                         mainObj.put(UNIQUE_ID, uniqueId)
                         twinCallbackMessage.twinUpdateCallback(mainObj)
-                    } else if (topic.contains(TWIN_SUB_TOPIC_BLANK_MSG.substring(0, TWIN_SUB_TOPIC_BLANK_MSG.length - 1
+                    } else if (topic.contains(
+                            TWIN_SUB_TOPIC_BLANK_MSG.substring(
+                                0, TWIN_SUB_TOPIC_BLANK_MSG.length - 1
                             )
                         )
                     ) {
