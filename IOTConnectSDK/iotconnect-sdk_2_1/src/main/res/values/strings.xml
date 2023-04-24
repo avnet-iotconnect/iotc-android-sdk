@@ -35,6 +35,7 @@
     <string name="INFO_CM01">Command : 0 : STANDARD_COMMAND</string>
 
     <string name="INFO_CM02">Command : 1 : FIRMWARE_UPDATE</string>
+    <string name="INFO_CM02Module">Command : 2 : MODULE_UPDATE</string>
     <string name="INFO_CM08">Command : 0x99 : STOP_SDK_CONNECTION</string>
     <string name="INFO_CM16">Command : 116 : DEVICE_CONNECTION_STATUS</string>
 

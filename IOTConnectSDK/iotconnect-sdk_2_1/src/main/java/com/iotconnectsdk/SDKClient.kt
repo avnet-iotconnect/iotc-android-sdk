@@ -165,12 +165,12 @@ class SDKClient(
      *
      * https://docs.iotconnect.io/iotconnect/resources/device-message-2-1-2/device-to-cloud-d2c-messages/#Device_Acknowledgement
      */
-    fun sendAck(obj: String?, messageType: String?) {
+    fun sendAck(obj: String?) {
         if (isDispose) {
             iotSDKLogUtils!!.log(true, isDebug, "ERR_CM04", context!!.getString(R.string.ERR_CM04))
             return
         }
-        sdkClientManager?.sendAck(obj, messageType)
+        sdkClientManager?.sendAck(obj)
     }
 
 

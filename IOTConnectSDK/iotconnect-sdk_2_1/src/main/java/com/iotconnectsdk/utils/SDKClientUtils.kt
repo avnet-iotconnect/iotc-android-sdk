@@ -49,6 +49,37 @@ internal object SDKClientUtils {
     }
 
 
+    fun getTagsList(attributesLists: List<GetAttributeBean>): JSONArray {
+
+        //CREATE ATTRIBUTES ARRAY and OBJECT, "attributes":[{"ln":"Temp","dt":"number","dv":"5 to 20, 25","tg":"gateway","tw":"60s"},{"p":"gyro","dt":"object","tg":"gateway","tw":"90s","d":[{"ln":"x","dt":"number","dv":"","tg":"gateway","tw":"90s"},{"ln":"y","dt":"string","dv":"red, gray,   blue","tg":"gateway","tw":"90s"},{"ln":"z","dt":"number","dv":"-5 to 5, 10","tg":"gateway","tw":"90s"}]}]
+        val attributesArray = JSONArray()
+        for (attribute in attributesLists) {
+
+//           if for not empty "p":"gyro"
+            if (attribute.p != null && attribute.p.isNotEmpty()) {
+                    try {
+                        val attributeObj = JSONObject(Gson().toJson(attribute))
+                        attributesArray.put(attributeObj)
+                    } catch (e: Exception) {
+                    }
+
+            } else {
+                // "p" : "", is empty.
+                val attributeValues = attribute.d
+                for (attributeValue in attributeValues) {
+                        try {
+                            val attributeObj = JSONObject(Gson().toJson(attributeValue))
+                            attributesArray.put(attributeObj)
+                        } catch (e: Exception) {
+                        }
+
+                }
+            }
+        }
+        return attributesArray
+    }
+
+
     /* function to get device tag. by comparing unique id.
      *
      *@param uniqueId  device unique id.

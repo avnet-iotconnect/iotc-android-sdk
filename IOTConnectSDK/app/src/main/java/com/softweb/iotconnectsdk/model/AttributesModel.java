@@ -14,6 +14,10 @@ public class AttributesModel {
     @Expose
     private List<Attribute> attributes = null;
 
+    @SerializedName("attributes")
+    @Expose
+    private List<Attribute> tags = null;
+
     public Device getDevice() {
         return device;
     }
@@ -30,4 +34,11 @@ public class AttributesModel {
         this.attributes = attributes;
     }
 
+    public List<Attribute> getTags() {
+        return tags;
+    }
+
+    public void setTags(List<Attribute> tags) {
+        this.tags = tags;
+    }
 }

@@ -6,4 +6,5 @@ enum class DeviceIdentityMessages(val value: Int) {
     GET_EDGE_RULE(203),
     GET_CHILD_DEVICES(204),
     GET_PENDING_OTA(205),
+    CREATE_CHILD_DEVICE(221)
 }

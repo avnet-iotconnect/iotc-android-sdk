@@ -32,6 +32,7 @@ import com.iotconnectsdk.utils.EdgeDeviceUtils.updateEdgeDeviceObj
 import com.iotconnectsdk.utils.SDKClientUtils.createTextFile
 import com.iotconnectsdk.utils.SDKClientUtils.deleteTextFile
 import com.iotconnectsdk.utils.SDKClientUtils.getAttributesList
+import com.iotconnectsdk.utils.SDKClientUtils.getTagsList
 import com.iotconnectsdk.utils.ValidationTelemetryUtils.compareForInputValidationNew
 import com.iotconnectsdk.webservices.CallWebServices
 import com.iotconnectsdk.webservices.interfaces.WsResponseInterface
@@ -111,6 +112,8 @@ internal class SDKClientManager(
     private val DEVICE = "device"
 
     private val ATTRIBUTES = "attributes"
+
+    private val TAGS = "tags"
 
     private val CMD_TYPE = "ct"
 
@@ -589,6 +592,7 @@ internal class SDKClientManager(
                                 IotSDKPreferences.ATTRIBUTE_RESPONSE, Gson().toJson(commonModel)
                             )
 
+
                             onDeviceConnectionStatus(isConnected())
 
 
@@ -665,7 +669,13 @@ internal class SDKClientManager(
 
                         /*Module Command received by the device from the cloud*/
                         C2DMessageEnums.MODULE_COMMAND.value -> {
-
+                            iotSDKLogUtils!!.log(
+                                false,
+                                isDebug,
+                                "INFO_CM02",
+                                context!!.getString(R.string.INFO_CM02Module)
+                            )
+                            deviceCallback!!.onReceiveMsg(message)
                         }
 
                         /*The device must send a message of type 201 to get updated attributes*/
@@ -754,8 +764,8 @@ internal class SDKClientManager(
     }
 
     /*Call publish method of IotSDKMQTTService class to publish to web.
-   * 1.When device is not connected to network and offline storage is true from client, than save all published message to device memory.
-   * */
+    * 1.When device is not connected to network and offline storage is true from client, than save all published message to device memory.
+    * */
     private fun publishMessage(topics: String, publishMessage: String, isUpdate: Boolean) {
 
         Log.d("publishMessage", "::$publishMessage")
@@ -861,6 +871,8 @@ internal class SDKClientManager(
                         getAttributesList(attributeResponse.d?.att!!, childDeviceBean.tg)
                     )
 
+                  //  mainObj.put(TAGS, getTagsList(attributeResponse.d.att))
+
                     //ADD MAIN BOJ TO ARRAY.
                     mainArray.put(mainObj)
 
@@ -951,7 +963,7 @@ internal class SDKClientManager(
      * https://docs.iotconnect.io/iotconnect/resources/device-message-2-1-2/device-to-cloud-d2c-messages/#Device_Acknowledgement
      */
     @JvmSynthetic
-    fun sendAck(obj: String?, messageType: String?) {
+    fun sendAck(obj: String?) {
         var request: JSONObject? = null
 
         try {
@@ -961,7 +973,7 @@ internal class SDKClientManager(
             e.printStackTrace()
         }
 
-        if (!validationUtils!!.validateAckParameters(request, messageType!!)) return
+        if (!validationUtils!!.validateAckParameters(request)) return
 
         if (obj != null) {
             val response = getSyncResponse()
@@ -1734,9 +1746,9 @@ internal class SDKClientManager(
     }
 
     /* On edge device rule match, send below json format to firmware.
-   *{"cmdType":"0x01","data":{"cpid":"deviceData.cpId","guid":"deviceData.company","uniqueId":"device uniqueId","command":"json.cmd","ack":true,"ackId":null,"cmdType":"config.commandType.CORE_COMMAND, 0x01"}}
-   *
-   * */
+    *{"cmdType":"0x01","data":{"cpid":"deviceData.cpId","guid":"deviceData.company","uniqueId":"device uniqueId","command":"json.cmd","ack":true,"ackId":null,"cmdType":"config.commandType.CORE_COMMAND, 0x01"}}
+    *
+    * */
     private fun onEdgeDeviceRuleMatched(bean: GetEdgeRuleBean) {
         val strJson = SDKClientUtils.createCommandFormat(
             C2DMessageEnums.DEVICE_COMMAND.value, cpId, bean.g, uniqueId, bean.cmd, true, ""

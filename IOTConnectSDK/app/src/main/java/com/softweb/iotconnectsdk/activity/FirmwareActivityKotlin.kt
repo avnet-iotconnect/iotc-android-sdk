@@ -328,7 +328,6 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
         try {
             Log.d(TAG, "onReceiveMsg => $message")
             runOnUiThread { etSubscribe!!.setText(message) }
-            var messageType = ""
             var ackId = ""
             var childId = ""
             var cmdType = -1
@@ -352,7 +351,6 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
                 0 -> {
                     Log.d(TAG, "--- Device Command Received ---")
                     if (ackId != null && !ackId.isEmpty()) {
-                        messageType = "5"
 
                         /*
                          * Type    : Public Method "sendAck()"
@@ -371,8 +369,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
                         val gson = Gson()
                         val jsonString = gson.toJson(d2CSendAckBean)
                         if (isConnected) sdkClient!!.sendAck(
-                            jsonString,
-                            messageType
+                            jsonString
                         ) else Toast.makeText(
                             this@FirmwareActivityKotlin,
                             getString(R.string.string_connection_not_found),
@@ -384,9 +381,6 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
                 1 -> {
                     Log.d(TAG, "--- Firmware OTA Command Received ---")
                     if (ackId != null && !ackId.isEmpty()) {
-                        messageType = "11"
-                        //   JSONObject obj = getAckObject(mainObject);
-                        //  obj.put("st", 7);
 
                         /*
                          * Type    : Public Method "sendAck()"
@@ -404,8 +398,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
                         val gson = Gson()
                         val jsonString = gson.toJson(d2CSendAckBean)
                         if (isConnected) sdkClient!!.sendAck(
-                            jsonString,
-                            messageType
+                            jsonString
                         ) else Toast.makeText(
                             this@FirmwareActivityKotlin,
                             getString(R.string.string_connection_not_found),
@@ -413,6 +406,28 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
                         ).show()
                     }
                 }
+
+                2 -> {
+                    Log.d(TAG, "---Module Command Received ---")
+                    if (ackId != null && !ackId.isEmpty()) {
+
+
+                        val d2CSendAckBean = D2CSendAckBean(
+                            currentTime,
+                            D2CSendAckBean.Data(ackId, 2, 0, "", childId)
+                        )
+                        val gson = Gson()
+                        val jsonString = gson.toJson(d2CSendAckBean)
+                        if (isConnected) sdkClient!!.sendAck(
+                            jsonString
+                        ) else Toast.makeText(
+                            this@FirmwareActivityKotlin,
+                            getString(R.string.string_connection_not_found),
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+
 
                 116 -> {
                     /*command type "116" for Device "Connection Status"

@@ -177,11 +177,11 @@ internal class ValidationUtils private constructor(
         return true
     }
 
-    fun validateAckParameters(obj: JSONObject?, messageType: String): Boolean {
-        if (obj == null || messageType.isEmpty()) {
+    fun validateAckParameters(obj: JSONObject?): Boolean {
+       /* if (obj == null || messageType.isEmpty()) {
             iotSDKLogUtils.log(true, isDebug, "ERR_CM02", context.getString(R.string.ERR_CM02))
             return false
-        }
+        }*/
         return if (obj is JSONObject) {
             true
         } else {

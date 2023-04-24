@@ -3,8 +3,10 @@ package com.softweb.iotconnectsdk.activity;
 import android.Manifest;
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -72,6 +74,8 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
     private Button btnGetAllTwins;
     private Button btnClear;
 
+    private Button btnChildDevices;
+
     private TextView tvConnStatus;
     private TextView tvStatus;
 
@@ -87,6 +91,9 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
     private LinearLayout linearLayout;
 
     private HashMap<String, List<TextInputLayout>> inputMap;
+
+    private ArrayList<String> tagsList;
+
     private List<TextInputLayout> editTextInputList;
     private final String[] permissions = new String[]{
             Manifest.permission.READ_PHONE_STATE,
@@ -128,11 +135,13 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         btnSendData = findViewById(R.id.btnSendData);
         btnGetAllTwins = findViewById(R.id.btnGetAllTwins);
         btnClear = findViewById(R.id.btnClear);
+        btnChildDevices = findViewById(R.id.btnChildDevices);
 
         btnConnect.setOnClickListener(this);
         btnSendData.setOnClickListener(this);
         btnGetAllTwins.setOnClickListener(this);
         btnClear.setOnClickListener(this);
+        btnChildDevices.setOnClickListener(this);
 
         rbtnDev = findViewById(R.id.rbtnDev);
         rbtnAvnet = findViewById(R.id.rbtnAvnet);
@@ -193,6 +202,12 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                     Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
                 }
             }
+        } else if (v.getId() == R.id.btnChildDevices) {
+
+            Intent intent = new Intent(this, GatewayChildDevicesActivity.class);
+            intent.putExtra("tagsList", tagsList);
+            startActivity(intent);
+
         } else if (v.getId() == R.id.btnClear) {
             etSubscribe.setText("");
         }
@@ -411,7 +426,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
             });
 
 
-            String messageType = "";
+            // String messageType = "";
             String ackId = "";
             String childId = "";
             int cmdType = -1;
@@ -441,7 +456,6 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                 case 0:
                     Log.d(TAG, "--- Device Command Received ---");
                     if (ackId != null && !ackId.isEmpty()) {
-                        messageType = "5";
 
                         /*
                          * Type    : Public Method "sendAck()"
@@ -459,7 +473,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                         String jsonString = gson.toJson(d2CSendAckBean);
 
                         if (isConnected)
-                            sdkClient.sendAck(jsonString, messageType);
+                            sdkClient.sendAck(jsonString);
                         else
                             Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
                     }
@@ -467,9 +481,6 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                 case 1:
                     Log.d(TAG, "--- Firmware OTA Command Received ---");
                     if (ackId != null && !ackId.isEmpty()) {
-                        messageType = "11";
-                        //   JSONObject obj = getAckObject(mainObject);
-                        //  obj.put("st", 7);
 
                         /*
                          * Type    : Public Method "sendAck()"
@@ -486,10 +497,26 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                         String jsonString = gson.toJson(d2CSendAckBean);
 
                         if (isConnected)
-                            sdkClient.sendAck(jsonString, messageType);
+                            sdkClient.sendAck(jsonString);
                         else
                             Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
                     }
+                    break;
+
+                case 2:
+                    Log.d(TAG, "---Module Command Received ---");
+                    if (ackId != null && !ackId.isEmpty()) {
+
+                        D2CSendAckBean d2CSendAckBean = new D2CSendAckBean(getCurrentTime(), new D2CSendAckBean.Data(ackId, 2, 0, "", childId));
+                        Gson gson = new Gson();
+                        String jsonString = gson.toJson(d2CSendAckBean);
+
+                        if (isConnected)
+                            sdkClient.sendAck(jsonString);
+                        else
+                            Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
+                    }
+
                     break;
 
                 case 116:
@@ -554,6 +581,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
             btnConnect.setText("Connect");
             btnSendData.setEnabled(false);
             btnGetAllTwins.setEnabled(false);
+            btnChildDevices.setEnabled(false);
         }
         hideDialog(FirmwareActivity.this);
     }
@@ -607,6 +635,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
 
         inputMap = new HashMap<String, List<TextInputLayout>>();
         editTextInputList = new ArrayList<>();
+        tagsList = new ArrayList<>();
 
         try {
             Gson gson = new Gson();
@@ -615,6 +644,14 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
             for (AttributesModel model : attributesModelList) {
                 Device device = model.getDevice();
 
+                if (!TextUtils.isEmpty(device.getTg())) {
+                    if (!device.getId().equalsIgnoreCase(uniqueId)) {
+                        tagsList.add(device.getTg());
+                        btnChildDevices.setEnabled(true);
+                    }
+                } else {
+                    btnChildDevices.setEnabled(false);
+                }
                 TextView textViewTitle = new TextView(this);
                 textViewTitle.setText("TAG : : " + device.getTg() + " : " + device.getId());
                 linearLayout.addView(textViewTitle);
