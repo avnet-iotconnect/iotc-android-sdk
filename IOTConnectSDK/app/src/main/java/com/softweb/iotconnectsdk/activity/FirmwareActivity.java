@@ -113,7 +113,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
     private String uniqueId = "";
     private String environment = "";
 
-    private SDKClient sdkClient;
+    static SDKClient sdkClient;
 
     private static final String DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
 
@@ -635,7 +635,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
 
         inputMap = new HashMap<String, List<TextInputLayout>>();
         editTextInputList = new ArrayList<>();
-        tagsList = new ArrayList<>();
+
 
         try {
             Gson gson = new Gson();
@@ -644,11 +644,10 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
             for (AttributesModel model : attributesModelList) {
                 Device device = model.getDevice();
 
-                if (!TextUtils.isEmpty(device.getTg())) {
-                    if (!device.getId().equalsIgnoreCase(uniqueId)) {
-                        tagsList.add(device.getTg());
-                        btnChildDevices.setEnabled(true);
-                    }
+                if (model.getTags() != null && model.getTags().size() > 0) {
+                    tagsList = new ArrayList<>();
+                    tagsList.addAll(model.getTags());
+                    btnChildDevices.setEnabled(true);
                 } else {
                     btnChildDevices.setEnabled(false);
                 }

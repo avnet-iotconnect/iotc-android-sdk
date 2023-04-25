@@ -1,51 +1,11 @@
 package com.iotconnectsdk
 
-import android.app.Activity
 import android.content.Context
-import android.content.IntentFilter
-import android.net.ConnectivityManager
-import android.util.Log
-import android.webkit.URLUtil
-import com.google.gson.Gson
-import com.iotconnectsdk.beans.CommonResponseBean
-import com.iotconnectsdk.beans.GetChildDeviceBean
-import com.iotconnectsdk.beans.GetEdgeRuleBean
-import com.iotconnectsdk.beans.TumblingWindowBean
-import com.iotconnectsdk.enums.C2DMessageEnums
-import com.iotconnectsdk.enums.DeviceIdentityMessages
 import com.iotconnectsdk.interfaces.DeviceCallback
-import com.iotconnectsdk.interfaces.HubToSdkCallback
-import com.iotconnectsdk.interfaces.PublishMessageCallback
 import com.iotconnectsdk.interfaces.TwinUpdateCallback
-import com.iotconnectsdk.mqtt.IotSDKMQTTService
 import com.iotconnectsdk.utils.*
-import com.iotconnectsdk.utils.DateTimeUtils.getCurrentTime
-import com.iotconnectsdk.utils.EdgeDeviceUtils.evaluateEdgeDeviceRuleValue
-import com.iotconnectsdk.utils.EdgeDeviceUtils.getAttName
-import com.iotconnectsdk.utils.EdgeDeviceUtils.getAttributeName
-import com.iotconnectsdk.utils.EdgeDeviceUtils.getEdgeDevicePublishMainObj
-import com.iotconnectsdk.utils.EdgeDeviceUtils.getPublishStringEdgeDevice
-import com.iotconnectsdk.utils.EdgeDeviceUtils.publishEdgeDeviceInputData
-import com.iotconnectsdk.utils.EdgeDeviceUtils.updateEdgeDeviceGyroObj
-import com.iotconnectsdk.utils.EdgeDeviceUtils.updateEdgeDeviceObj
-import com.iotconnectsdk.utils.SDKClientUtils.createTextFile
-import com.iotconnectsdk.utils.SDKClientUtils.deleteTextFile
-import com.iotconnectsdk.utils.SDKClientUtils.getAttributesList
-import com.iotconnectsdk.utils.ValidationTelemetryUtils.compareForInputValidationNew
-import com.iotconnectsdk.webservices.CallWebServices
-import com.iotconnectsdk.webservices.interfaces.WsResponseInterface
-import com.iotconnectsdk.webservices.responsebean.DiscoveryApiResponse
-import com.iotconnectsdk.webservices.responsebean.IdentityServiceResponse
-import org.json.JSONArray
-import org.json.JSONException
 import org.json.JSONObject
-import org.json.JSONTokener
-import java.io.BufferedReader
-import java.io.File
-import java.io.FileReader
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * class for SDKClient
@@ -200,6 +160,10 @@ class SDKClient(
             return
         }
         sdkClientManager?.sendData(jsonData)
+    }
+
+    fun createChild(innerObject: JSONObject) {
+        sdkClientManager?.createChild(innerObject)
     }
 
 }

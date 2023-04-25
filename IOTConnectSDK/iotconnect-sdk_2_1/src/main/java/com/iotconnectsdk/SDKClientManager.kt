@@ -1,4 +1,3 @@
-
 package com.iotconnectsdk
 
 import android.app.Activity
@@ -32,7 +31,6 @@ import com.iotconnectsdk.utils.EdgeDeviceUtils.updateEdgeDeviceObj
 import com.iotconnectsdk.utils.SDKClientUtils.createTextFile
 import com.iotconnectsdk.utils.SDKClientUtils.deleteTextFile
 import com.iotconnectsdk.utils.SDKClientUtils.getAttributesList
-import com.iotconnectsdk.utils.SDKClientUtils.getTagsList
 import com.iotconnectsdk.utils.ValidationTelemetryUtils.compareForInputValidationNew
 import com.iotconnectsdk.webservices.CallWebServices
 import com.iotconnectsdk.webservices.interfaces.WsResponseInterface
@@ -484,7 +482,7 @@ internal class SDKClientManager(
 
     /*get the saved GatewayChild response from shared preference.
   * */
-    private fun getGatewayChildResponse(): CommonResponseBean? {
+    private fun getGatewayChildResponse(): CommonResponseBean {
         return IotSDKPreferences.getInstance(context!!)
             ?.getDeviceInformation(IotSDKPreferences.CHILD_DEVICE_RESPONSE) ?: CommonResponseBean()
     }
@@ -853,6 +851,18 @@ internal class SDKClientManager(
             getChildDeviceBean.id = uniqueId
             gatewayChildResponse?.d?.childDevice?.add(getChildDeviceBean)
 
+            val tagsList = ArrayList<String>()
+
+            attributeResponse?.d?.att?.forEach { attBean ->
+                attBean.d.forEach {
+                    if (syncResponse.d.meta.gtw.tg != it.tg) {
+                        if (!tagsList.contains(it.tg)) {
+                            tagsList.add(it.tg)
+                        }
+                    }
+                }
+            }
+
             gatewayChildResponse?.d?.childDevice?.forEach { childDeviceBean ->
                 if (attributeResponse != null) {
 
@@ -871,7 +881,7 @@ internal class SDKClientManager(
                         getAttributesList(attributeResponse.d?.att!!, childDeviceBean.tg)
                     )
 
-                  //  mainObj.put(TAGS, getTagsList(attributeResponse.d.att))
+                    mainObj.put(TAGS, JSONArray(tagsList))
 
                     //ADD MAIN BOJ TO ARRAY.
                     mainArray.put(mainObj)
@@ -1263,6 +1273,19 @@ internal class SDKClientManager(
         }
     }
 
+    @JvmSynthetic
+    fun createChild(innerObject: JSONObject) {
+        val response = getSyncResponse()
+        val mainObject = JSONObject()
+        innerObject.put("g", response?.d?.meta?.gtw?.g)
+        mainObject.put("mt", 221)
+        mainObject.put("d", innerObject)
+        publishMessage(
+            response?.d?.p?.topics?.di!!, mainObject.toString(), false
+        )
+
+    }
+
     /*process input data to publish.
      * 1.Publish input data based on interval of "df" value.
      * "df"="60" than data is published in interval of 60 seconds. If data is publish lass than 60 second time than data is ignored.
@@ -1457,7 +1480,7 @@ internal class SDKClientManager(
                 val gatewayChildResponse = getGatewayChildResponse()
                 val getChildDeviceBean = GetChildDeviceBean()
 
-                getChildDeviceBean.tg = syncResponse.d.meta?.gtw?.tg
+                getChildDeviceBean.tg = syncResponse.d.meta.gtw?.tg
                 getChildDeviceBean.id = uniqueId
                 gatewayChildResponse?.d?.childDevice?.add(getChildDeviceBean)
 
@@ -1632,7 +1655,7 @@ internal class SDKClientManager(
             }
         }
 
-        if (syncResponse.d.meta?.gtw != null) {
+        if (syncResponse.d.meta.gtw != null) {
             val gatewayChildResponse = getGatewayChildResponse()
             val getChildDeviceBean = GetChildDeviceBean()
 

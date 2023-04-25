@@ -3,6 +3,7 @@ package com.softweb.iotconnectsdk.activity
 import android.Manifest
 import android.app.Activity
 import android.app.ProgressDialog
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
@@ -65,6 +66,8 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
 
     private var sdkClient: SDKClient? = null
 
+    private var tagsList: ArrayList<String>? = null
+
     private val DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,6 +77,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
         btnSendData.setOnClickListener(this)
         btnGetAllTwins.setOnClickListener(this)
         btnClear.setOnClickListener(this)
+        btnChildDevices.setOnClickListener(this)
 
         checkPermissions()
     }
@@ -140,7 +144,13 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
                     ).show()
                 }
             }
-        } else if (v.id == R.id.btnClear) {
+        } else if (v.id == R.id.btnChildDevices) {
+            val intent = Intent(this, GatewayChildDevicesActivity::class.java)
+            intent.putExtra("tagsList", tagsList)
+            startActivity(intent)
+        }
+
+        else if (v.id == R.id.btnClear) {
             etSubscribe!!.setText("")
         }
     }
@@ -491,6 +501,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
             btnConnect!!.text = "Connect"
             btnSendData!!.isEnabled = false
             btnGetAllTwins!!.isEnabled = false
+            btnChildDevices.isEnabled = false
         }
         hideDialog(this@FirmwareActivityKotlin)
     }
@@ -546,6 +557,15 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
             )
             for (model in attributesModelList) {
                 val device = model.device
+
+                if (model.tags != null && model.tags.size > 0) {
+                    tagsList = ArrayList()
+                    tagsList?.addAll(model.tags)
+                    btnChildDevices.isEnabled = true
+                } else {
+                    btnChildDevices.isEnabled = false
+                }
+
                 val textViewTitle = TextView(this)
                 textViewTitle.text = "TAG : : " + device.tg + " : " + device.id
                 llTemp!!.addView(textViewTitle)
