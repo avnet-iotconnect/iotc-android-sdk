@@ -313,6 +313,113 @@ internal class ValidationUtils private constructor(
 
     }
 
+    fun rcMessageChildDevice(rc: Int): String = when (rc) {
+        0 -> {
+            iotSDKLogUtils.log(
+                false, isDebug, "INFO_IN08", context.getString(R.string.INFO_IN08)
+            )
+            "Child Device created successfully"
+        }
+        1 -> {
+            iotSDKLogUtils.log(
+                false,
+                isDebug,
+                "INFO_IN09",
+                context.getString(R.string.tv_missing_child_tag)
+            )
+
+            context.getString(R.string.tv_missing_child_tag)
+        }
+        2 -> {
+            iotSDKLogUtils.log(
+                false,
+                isDebug,
+                "INFO_IN10",
+                context.getString(R.string.tv_missing_uniqueid)
+            )
+
+            context.getString(R.string.tv_missing_uniqueid)
+        }
+        3 -> {
+            iotSDKLogUtils.log(
+                false,
+                isDebug,
+                "INFO_IN11",
+                context.getString(R.string.tv_missing_name)
+            )
+            context.getString(R.string.tv_missing_name)
+        }
+        4 -> {
+            iotSDKLogUtils.log(
+                false,
+                isDebug,
+                "INFO_IN12",
+                context.getString(R.string.tv_missing_gatewaydevice)
+            )
+            context.getString(R.string.tv_missing_gatewaydevice)
+        }
+        5 -> {
+            iotSDKLogUtils.log(
+                false,
+                isDebug,
+                "INFO_IN13",
+                context.getString(R.string.tv_something_wrong)
+            )
+            context.getString(R.string.tv_something_wrong)
+        }
+        6 -> {
+            iotSDKLogUtils.log(
+                false,
+                isDebug,
+                "INFO_IN14",
+                context.getString(R.string.tv_tag_not_valid)
+            )
+            context.getString(R.string.tv_tag_not_valid)
+        }
+
+        7 -> {
+            iotSDKLogUtils.log(
+                false,
+                isDebug,
+                "INFO_IN14",
+                context.getString(R.string.tv_tag_issue)
+            )
+            context.getString(R.string.tv_tag_issue)
+        }
+
+        8 -> {
+            iotSDKLogUtils.log(
+                false,
+                isDebug,
+                "INFO_IN14",
+                context.getString(R.string.tv_id_exist)
+            )
+            context.getString(R.string.tv_id_exist)
+        }
+
+        9 -> {
+            iotSDKLogUtils.log(
+                false,
+                isDebug,
+                "INFO_IN14",
+                context.getString(R.string.tv_id_limit)
+            )
+            context.getString(R.string.tv_id_limit)
+        }
+
+        else -> {
+            iotSDKLogUtils.log(
+                false,
+                isDebug,
+                "INFO_IN15",
+                context.getString(R.string.INFO_IN15)
+            )
+            context.getString(R.string.INFO_IN15)
+        }
+
+
+    }
+
     companion object {
         private val validationUtils: ValidationUtils? = null
         fun getInstance(

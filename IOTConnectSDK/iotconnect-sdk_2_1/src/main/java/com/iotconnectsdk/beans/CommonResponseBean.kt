@@ -27,19 +27,5 @@ data class CommonResponseBean(
         @SerializedName("dt")
         val dt: String? = null // 2023-02-03T08:36:00.4237005Z
     )
-/*
-    var deserializer: JsonDeserializer<CommonResponseBean> =
-        JsonDeserializer<Any?> { json, typeOfT, context ->
-            val location: MutableList<String> = ArrayList()
-            if (json.isJsonArray) {
-                val jsonArray = json.asJsonArray
-                for (jsonElement in jsonArray) {
-                    location.add(jsonElement.asString)
-                }
-            } else {
-                location.add(json.asString)
-            }
-            UserLocation(location)
-        }*/
 }
 

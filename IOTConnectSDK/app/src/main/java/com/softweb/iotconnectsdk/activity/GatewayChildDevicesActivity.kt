@@ -1,10 +1,13 @@
 package com.softweb.iotconnectsdk.activity
 
 import android.os.Bundle
+import android.text.TextUtils
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.iotconnectsdk.interfaces.DeviceCallback
 import com.softweb.iotconnectsdk.R
 import com.softweb.iotconnectsdk.activity.FirmwareActivity.sdkClient
 import kotlinx.android.synthetic.main.activity_gateway_child_devices.btnCreateDevice
@@ -13,7 +16,8 @@ import kotlinx.android.synthetic.main.activity_gateway_child_devices.etUniqueId
 import kotlinx.android.synthetic.main.activity_gateway_child_devices.spTags
 import org.json.JSONObject
 
-class GatewayChildDevicesActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener {
+class GatewayChildDevicesActivity : AppCompatActivity(), AdapterView.OnItemSelectedListener,
+    DeviceCallback {
 
     private var tagsList: ArrayList<String>? = null
 
@@ -24,7 +28,6 @@ class GatewayChildDevicesActivity : AppCompatActivity(), AdapterView.OnItemSelec
         tagsList = intent.extras?.getStringArrayList("tagsList")
 
 
-
         val adapter = ArrayAdapter(
             this,
             android.R.layout.simple_spinner_dropdown_item, tagsList!!
@@ -33,10 +36,10 @@ class GatewayChildDevicesActivity : AppCompatActivity(), AdapterView.OnItemSelec
         spTags.onItemSelectedListener = this
 
         btnCreateDevice.setOnClickListener {
-            val innerObject= JSONObject()
-            innerObject.put("dn",etDisplayName.text.toString())
-            innerObject.put("id",etUniqueId.text.toString())
-            innerObject.put("tg",spTags.selectedItem.toString())
+            val innerObject = JSONObject()
+            innerObject.put("dn", etDisplayName.text.toString())
+            innerObject.put("id", etUniqueId.text.toString())
+            innerObject.put("tg", spTags.selectedItem.toString())
 
             sdkClient.createChild(innerObject)
         }
@@ -48,5 +51,11 @@ class GatewayChildDevicesActivity : AppCompatActivity(), AdapterView.OnItemSelec
 
     override fun onNothingSelected(parent: AdapterView<*>?) {
 
+    }
+
+    override fun onReceiveMsg(message: String?) {
+        if (!message.isNullOrBlank()) {
+            Toast.makeText(this@GatewayChildDevicesActivity, message, Toast.LENGTH_LONG).show()
+        }
     }
 }

@@ -7,6 +7,7 @@ import android.net.ConnectivityManager
 import android.util.Log
 import android.webkit.URLUtil
 import com.google.gson.Gson
+import com.google.gson.JsonArray
 import com.iotconnectsdk.beans.CommonResponseBean
 import com.iotconnectsdk.beans.GetChildDeviceBean
 import com.iotconnectsdk.beans.GetEdgeRuleBean
@@ -565,155 +566,26 @@ internal class SDKClientManager(
 
         if (message != null) {
             try {
-                val mainObjectLog = JSONObject(message)
-                Log.d("mainObject", "::$mainObjectLog")
-
-                val gson = Gson()
-                val commonModel = gson.fromJson(message, CommonResponseBean::class.java)
-
-                if (commonModel?.d?.ct != null) {
-                    when (commonModel.d.ct) {
-                        /*{"d":{"att":[{"p":"","dt":0,"tg":"","d":[{"ln":"Temp","dt":1,"dv":"5 to 10","sq":1,"tg":"p","tw":"60s"},{"ln":"Humidity","dt":1,"dv":"5 to 10","sq":2,"tg":"ch","tw":"60s"},{"ln":"Lumosity","dt":1,"dv":"","sq":4,"tg":"ch","tw":"60s"}]},{"p":"Gyroscope","dt":11,"tg":"p","d":[{"ln":"x","dt":1,"dv":"","sq":1,"tg":"p","tw":"60s"},{"ln":"y","dt":1,"dv":"","sq":2,"tg":"p","tw":"60s"}]}],"ct":201,"ec":0,"dt":"2023-02-22T10:41:18.6947577Z"}}*/
-                        DeviceIdentityMessages.GET_DEVICE_TEMPLATE_ATTRIBUTES.value -> {
-                            val response = getSyncResponse()
-                            if (response?.d?.meta?.edge == 1) {
-                                idEdgeDevice = true
-
-                                try {
-                                    processEdgeDeviceTWTimer(response, commonModel)
-                                } catch (e: Exception) {
-                                    iotSDKLogUtils!!.log(true, isDebug, "ERR_EE01", e.message!!)
-                                }
-                            }
-
-                            IotSDKPreferences.getInstance(context!!)!!.putStringData(
-                                IotSDKPreferences.ATTRIBUTE_RESPONSE, Gson().toJson(commonModel)
-                            )
+                val mainObject = JSONObject(message)
+                Log.d("mainObject", "::$mainObject")
+                var cmdType: Int? = -1
+                var responseCode: Int? = -1
+                if (mainObject.has("d")) {
+                    val innerObject = mainObject.getJSONObject("d")
+                    cmdType = innerObject.getInt(CMD_TYPE)
+                    responseCode = innerObject.getInt("ec")
+                }
 
 
-                            onDeviceConnectionStatus(isConnected())
+                if (cmdType == DeviceIdentityMessages.CREATE_CHILD_DEVICE.value) {
+                    Log.d("cmdType", "::" + cmdType)
 
+                    val responseCodeMessage =
+                        validationUtils?.rcMessageChildDevice(responseCode!!)
 
-                        }
+                    try {
 
-                        /*
-                        * {"d":{"set":[{"ln":"Motor","dt":1,"dv":""}],"ct":202,"ec":0,"dt":"2023-02-22T10:41:18.6948342Z"}}
-                        * */
-                        DeviceIdentityMessages.GET_DEVICE_TEMPLATE_SETTINGS_TWIN.value -> {
-                            IotSDKPreferences.getInstance(context!!)!!.putStringData(
-                                IotSDKPreferences.SETTING_TWIN_RESPONSE, Gson().toJson(commonModel)
-                            )
-                        }
-
-                        DeviceIdentityMessages.GET_EDGE_RULE.value -> {
-                            IotSDKPreferences.getInstance(context!!)!!.putStringData(
-                                IotSDKPreferences.EDGE_RULE_RESPONSE, Gson().toJson(commonModel)
-                            )
-                        }
-
-                        /*
-                        * {"d":{"d":[{"tg":"ch","id":"ch1"}],"ct":204,"ec":0,"dt":"2023-02-22T10:41:18.2683604Z"}}
-                        * */
-                        DeviceIdentityMessages.GET_CHILD_DEVICES.value -> {
-                            IotSDKPreferences.getInstance(context!!)!!.putStringData(
-                                IotSDKPreferences.CHILD_DEVICE_RESPONSE, Gson().toJson(commonModel)
-                            )
-                            onDeviceConnectionStatus(isConnected())
-                        }
-
-                        DeviceIdentityMessages.GET_PENDING_OTA.value -> {
-                            iotSDKLogUtils!!.log(
-                                false, isDebug, "INFO_CM02", context!!.getString(R.string.INFO_CM02)
-                            )
-                            deviceCallback!!.onReceiveMsg(message)
-                        }
-                    }
-                } else {
-
-                    /*
-                    *For receiving Cloud to Device (C2D) messages
-                    * https://docs.iotconnect.io/iotconnect/resources/device-message-2-1-2/cloud-to-device-c2d-messages/
-                    * */
-                    val mainObject = JSONObject(message)
-
-                    when (mainObject.getInt(CMD_TYPE)) {
-
-                        /*Device command received by the device from the cloud
-                        *
-                        * {"v":"2.1","ct":0,"cmd":"ON ON","ack":"6198c520-1ebc-4556-b12c-dde9d790decc"}
-                        * */
-
-                        C2DMessageEnums.DEVICE_COMMAND.value -> {
-                            iotSDKLogUtils!!.log(
-                                false, isDebug, "INFO_CM01", context!!.getString(R.string.INFO_CM01)
-                            )
-
-                            try {
-                                deviceCallback?.onReceiveMsg(message)
-                            } catch (e: Exception) {
-                                e.printStackTrace()
-                            }
-
-                        }
-
-                        /*OTA Command received by the device from the cloud*/
-                        C2DMessageEnums.OTA_COMMAND.value -> {
-
-                            iotSDKLogUtils!!.log(
-                                false, isDebug, "INFO_CM02", context!!.getString(R.string.INFO_CM02)
-                            )
-                            deviceCallback!!.onReceiveMsg(message)
-                        }
-
-                        /*Module Command received by the device from the cloud*/
-                        C2DMessageEnums.MODULE_COMMAND.value -> {
-                            iotSDKLogUtils!!.log(
-                                false,
-                                isDebug,
-                                "INFO_CM02",
-                                context!!.getString(R.string.INFO_CM02Module)
-                            )
-                            deviceCallback!!.onReceiveMsg(message)
-                        }
-
-                        /*The device must send a message of type 201 to get updated attributes*/
-                        C2DMessageEnums.REFRESH_ATTRIBUTE.value -> {
-                            isRefreshAttribute = true
-                            val response = getSyncResponse()
-
-                            if (idEdgeDevice) edgeDeviceTimerStop()
-
-                            publishMessage(
-                                response?.d?.p?.topics!!.di, JSONObject().put(
-                                    MESSAGE_TYPE,
-                                    DeviceIdentityMessages.GET_DEVICE_TEMPLATE_ATTRIBUTES.value
-                                ).toString(), false
-                            )
-                        }
-
-                        /*The device must send a message of type 202 to get updated settings or twin*/
-                        C2DMessageEnums.REFRESH_SETTING_TWIN.value -> {
-                            val response = getSyncResponse()
-                            publishMessage(
-                                response?.d?.p?.topics!!.di, JSONObject().put(
-                                    MESSAGE_TYPE,
-                                    DeviceIdentityMessages.GET_DEVICE_TEMPLATE_SETTINGS_TWIN.value
-                                ).toString(), false
-                            )
-                        }
-
-                        /*The device must send a message of type 203 to get updated Edge rules*/
-                        C2DMessageEnums.REFRESH_EDGE_RULE.value -> {
-                            val response = getSyncResponse()
-                            publishMessage(
-                                response?.d?.p?.topics!!.di, JSONObject().put(
-                                    MESSAGE_TYPE, DeviceIdentityMessages.GET_EDGE_RULE.value
-                                ).toString(), false
-                            )
-                        }
-
-                        /*The device must send a message of type 204 to get updated child devices*/
-                        C2DMessageEnums.REFRESH_CHILD_DEVICE.value -> {
+                        if (responseCode == 0) {
                             val response = getSyncResponse()
                             publishMessage(
                                 response?.d?.p?.topics!!.di, JSONObject().put(
@@ -722,37 +594,215 @@ internal class SDKClientManager(
                             )
                         }
 
-                        /*The device needs to update the frequency received in this message*/
 
-                        C2DMessageEnums.DATA_FREQUENCY_CHANGE.value -> {
-                            if (context != null) {
+                        deviceCallback?.onReceiveMsg(responseCodeMessage)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+
+                } else {
+                    val gson = Gson()
+                    val commonModel = gson.fromJson(message, CommonResponseBean::class.java)
+
+                    if (commonModel?.d?.ct != null) {
+                        when (commonModel.d.ct) {
+                            /*{"d":{"att":[{"p":"","dt":0,"tg":"","d":[{"ln":"Temp","dt":1,"dv":"5 to 10","sq":1,"tg":"p","tw":"60s"},{"ln":"Humidity","dt":1,"dv":"5 to 10","sq":2,"tg":"ch","tw":"60s"},{"ln":"Lumosity","dt":1,"dv":"","sq":4,"tg":"ch","tw":"60s"}]},{"p":"Gyroscope","dt":11,"tg":"p","d":[{"ln":"x","dt":1,"dv":"","sq":1,"tg":"p","tw":"60s"},{"ln":"y","dt":1,"dv":"","sq":2,"tg":"p","tw":"60s"}]}],"ct":201,"ec":0,"dt":"2023-02-22T10:41:18.6947577Z"}}*/
+                            DeviceIdentityMessages.GET_DEVICE_TEMPLATE_ATTRIBUTES.value -> {
                                 val response = getSyncResponse()
-                                response?.d?.meta?.df = mainObject.getInt(DF)
-                                IotSDKPreferences.getInstance(context)?.putStringData(
-                                    IotSDKPreferences.SYNC_RESPONSE, Gson().toJson(response)
+                                if (response?.d?.meta?.edge == 1) {
+                                    idEdgeDevice = true
+
+                                    try {
+                                        processEdgeDeviceTWTimer(response, commonModel)
+                                    } catch (e: Exception) {
+                                        iotSDKLogUtils!!.log(true, isDebug, "ERR_EE01", e.message!!)
+                                    }
+                                }
+
+                                IotSDKPreferences.getInstance(context!!)!!.putStringData(
+                                    IotSDKPreferences.ATTRIBUTE_RESPONSE, Gson().toJson(commonModel)
+                                )
+
+
+                                onDeviceConnectionStatus(isConnected())
+
+
+                            }
+
+                            /*
+                            * {"d":{"set":[{"ln":"Motor","dt":1,"dv":""}],"ct":202,"ec":0,"dt":"2023-02-22T10:41:18.6948342Z"}}
+                            * */
+                            DeviceIdentityMessages.GET_DEVICE_TEMPLATE_SETTINGS_TWIN.value -> {
+                                IotSDKPreferences.getInstance(context!!)!!.putStringData(
+                                    IotSDKPreferences.SETTING_TWIN_RESPONSE,
+                                    Gson().toJson(commonModel)
                                 )
                             }
+
+                            DeviceIdentityMessages.GET_EDGE_RULE.value -> {
+                                IotSDKPreferences.getInstance(context!!)!!.putStringData(
+                                    IotSDKPreferences.EDGE_RULE_RESPONSE, Gson().toJson(commonModel)
+                                )
+                            }
+
+                            /*
+                            * {"d":{"d":[{"tg":"ch","id":"ch1"}],"ct":204,"ec":0,"dt":"2023-02-22T10:41:18.2683604Z"}}
+                            * */
+                            DeviceIdentityMessages.GET_CHILD_DEVICES.value -> {
+                                IotSDKPreferences.getInstance(context!!)!!.putStringData(
+                                    IotSDKPreferences.CHILD_DEVICE_RESPONSE,
+                                    Gson().toJson(commonModel)
+                                )
+                                onDeviceConnectionStatus(isConnected())
+                            }
+
+                            DeviceIdentityMessages.GET_PENDING_OTA.value -> {
+                                iotSDKLogUtils!!.log(
+                                    false,
+                                    isDebug,
+                                    "INFO_CM02",
+                                    context!!.getString(R.string.INFO_CM02)
+                                )
+                                deviceCallback!!.onReceiveMsg(message)
+                            }
                         }
+                    } else {
 
-                        /*The device must stop all communication and release the MQTT connection*/
-                        C2DMessageEnums.DEVICE_DELETED.value, C2DMessageEnums.DEVICE_DISABLED.value, C2DMessageEnums.DEVICE_RELEASED.value, C2DMessageEnums.STOP_OPERATION.value, C2DMessageEnums.DEVICE_CONNECTION_STATUS.value -> {
-                            iotSDKLogUtils?.log(
-                                false, isDebug, "INFO_CM16", context!!.getString(R.string.INFO_CM16)
-                            )
-                            dispose()
-                        }
+                        /*
+                        *For receiving Cloud to Device (C2D) messages
+                        * https://docs.iotconnect.io/iotconnect/resources/device-message-2-1-2/cloud-to-device-c2d-messages/
+                        * */
+                        val mainObject = JSONObject(message)
 
-                        /*The device must start sending a heartbeat*/
-                        C2DMessageEnums.START_HEARTBEAT.value -> {
+                        when (mainObject.getInt(CMD_TYPE)) {
 
-                        }
+                            /*Device command received by the device from the cloud
+                            *
+                            * {"v":"2.1","ct":0,"cmd":"ON ON","ack":"6198c520-1ebc-4556-b12c-dde9d790decc"}
+                            * */
 
-                        /*The device must stop sending a heartbeat*/
-                        C2DMessageEnums.STOP_HEARTBEAT.value -> {
+                            C2DMessageEnums.DEVICE_COMMAND.value -> {
+                                iotSDKLogUtils!!.log(
+                                    false,
+                                    isDebug,
+                                    "INFO_CM01",
+                                    context!!.getString(R.string.INFO_CM01)
+                                )
 
+                                try {
+                                    deviceCallback?.onReceiveMsg(message)
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+
+                            }
+
+                            /*OTA Command received by the device from the cloud*/
+                            C2DMessageEnums.OTA_COMMAND.value -> {
+
+                                iotSDKLogUtils!!.log(
+                                    false,
+                                    isDebug,
+                                    "INFO_CM02",
+                                    context!!.getString(R.string.INFO_CM02)
+                                )
+                                deviceCallback!!.onReceiveMsg(message)
+                            }
+
+                            /*Module Command received by the device from the cloud*/
+                            C2DMessageEnums.MODULE_COMMAND.value -> {
+                                iotSDKLogUtils!!.log(
+                                    false,
+                                    isDebug,
+                                    "INFO_CM02",
+                                    context!!.getString(R.string.INFO_CM02Module)
+                                )
+                                deviceCallback!!.onReceiveMsg(message)
+                            }
+
+                            /*The device must send a message of type 201 to get updated attributes*/
+                            C2DMessageEnums.REFRESH_ATTRIBUTE.value -> {
+                                isRefreshAttribute = true
+                                val response = getSyncResponse()
+
+                                if (idEdgeDevice) edgeDeviceTimerStop()
+
+                                publishMessage(
+                                    response?.d?.p?.topics!!.di, JSONObject().put(
+                                        MESSAGE_TYPE,
+                                        DeviceIdentityMessages.GET_DEVICE_TEMPLATE_ATTRIBUTES.value
+                                    ).toString(), false
+                                )
+                            }
+
+                            /*The device must send a message of type 202 to get updated settings or twin*/
+                            C2DMessageEnums.REFRESH_SETTING_TWIN.value -> {
+                                val response = getSyncResponse()
+                                publishMessage(
+                                    response?.d?.p?.topics!!.di, JSONObject().put(
+                                        MESSAGE_TYPE,
+                                        DeviceIdentityMessages.GET_DEVICE_TEMPLATE_SETTINGS_TWIN.value
+                                    ).toString(), false
+                                )
+                            }
+
+                            /*The device must send a message of type 203 to get updated Edge rules*/
+                            C2DMessageEnums.REFRESH_EDGE_RULE.value -> {
+                                val response = getSyncResponse()
+                                publishMessage(
+                                    response?.d?.p?.topics!!.di, JSONObject().put(
+                                        MESSAGE_TYPE, DeviceIdentityMessages.GET_EDGE_RULE.value
+                                    ).toString(), false
+                                )
+                            }
+
+                            /*The device must send a message of type 204 to get updated child devices*/
+                            C2DMessageEnums.REFRESH_CHILD_DEVICE.value -> {
+                                val response = getSyncResponse()
+                                publishMessage(
+                                    response?.d?.p?.topics!!.di, JSONObject().put(
+                                        MESSAGE_TYPE, DeviceIdentityMessages.GET_CHILD_DEVICES.value
+                                    ).toString(), false
+                                )
+                            }
+
+                            /*The device needs to update the frequency received in this message*/
+
+                            C2DMessageEnums.DATA_FREQUENCY_CHANGE.value -> {
+                                if (context != null) {
+                                    val response = getSyncResponse()
+                                    response?.d?.meta?.df = mainObject.getInt(DF)
+                                    IotSDKPreferences.getInstance(context)?.putStringData(
+                                        IotSDKPreferences.SYNC_RESPONSE, Gson().toJson(response)
+                                    )
+                                }
+                            }
+
+                            /*The device must stop all communication and release the MQTT connection*/
+                            C2DMessageEnums.DEVICE_DELETED.value, C2DMessageEnums.DEVICE_DISABLED.value, C2DMessageEnums.DEVICE_RELEASED.value, C2DMessageEnums.STOP_OPERATION.value, C2DMessageEnums.DEVICE_CONNECTION_STATUS.value -> {
+                                iotSDKLogUtils?.log(
+                                    false,
+                                    isDebug,
+                                    "INFO_CM16",
+                                    context!!.getString(R.string.INFO_CM16)
+                                )
+                                dispose()
+                            }
+
+                            /*The device must start sending a heartbeat*/
+                            C2DMessageEnums.START_HEARTBEAT.value -> {
+
+                            }
+
+                            /*The device must stop sending a heartbeat*/
+                            C2DMessageEnums.STOP_HEARTBEAT.value -> {
+
+                            }
                         }
                     }
                 }
+
+
             } catch (e: JSONException) {
                 e.printStackTrace()
             }
