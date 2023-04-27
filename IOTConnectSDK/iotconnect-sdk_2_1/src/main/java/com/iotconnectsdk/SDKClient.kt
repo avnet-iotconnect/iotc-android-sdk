@@ -93,6 +93,9 @@ class SDKClient(
     }
 
 
+    /*
+    * Get all twins from IOT connect portal
+    * */
     fun getAllTwins() {
         if (isDispose) {
             iotSDKLogUtils!!.log(true, isDebug, "ERR_TP04", context!!.getString(R.string.ERR_TP04))
@@ -162,8 +165,25 @@ class SDKClient(
         sdkClientManager?.sendData(jsonData)
     }
 
+    /**
+     * create child device to IOT connect portal
+     *
+     * @param innerObject  String value for "innerObject"
+     *
+     */
     fun createChild(innerObject: JSONObject) {
         sdkClientManager?.createChild(innerObject)
+    }
+
+    /**
+     * delete child device from IOT connect portal
+     *
+     * @param innerObject  String value for "innerObject"
+     *
+     */
+
+    fun deleteChild(innerObject: JSONObject) {
+        sdkClientManager?.deleteChild(innerObject)
     }
 
 }

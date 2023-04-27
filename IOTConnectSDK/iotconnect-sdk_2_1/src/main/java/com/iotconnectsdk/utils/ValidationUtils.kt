@@ -318,7 +318,7 @@ internal class ValidationUtils private constructor(
             iotSDKLogUtils.log(
                 false, isDebug, "INFO_IN08", context.getString(R.string.INFO_IN08)
             )
-            "Child Device created successfully"
+            context.getString(R.string.tv_device_created)
         }
         1 -> {
             iotSDKLogUtils.log(
@@ -407,6 +407,37 @@ internal class ValidationUtils private constructor(
             context.getString(R.string.tv_id_limit)
         }
 
+        else -> {
+            iotSDKLogUtils.log(
+                false,
+                isDebug,
+                "INFO_IN15",
+                context.getString(R.string.INFO_IN15)
+            )
+            context.getString(R.string.INFO_IN15)
+        }
+
+
+    }
+
+    fun rcMessageDelChildDevice(rc: Int): String = when (rc) {
+        0 -> {
+            iotSDKLogUtils.log(
+                false, isDebug, "INFO_IN08", context.getString(R.string.INFO_IN08)
+            )
+            context.getString(R.string.tv_device_deleted)
+        }
+        1 -> {
+            iotSDKLogUtils.log(
+                false,
+                isDebug,
+                "INFO_IN09",
+                context.getString(R.string.tv_child_device_not_found)
+            )
+
+            context.getString(R.string.tv_child_device_not_found)
+        }
+        
         else -> {
             iotSDKLogUtils.log(
                 false,

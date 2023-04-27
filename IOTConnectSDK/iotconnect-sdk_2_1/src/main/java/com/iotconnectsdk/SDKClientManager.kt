@@ -578,10 +578,32 @@ internal class SDKClientManager(
 
 
                 if (cmdType == DeviceIdentityMessages.CREATE_CHILD_DEVICE.value) {
-                    Log.d("cmdType", "::" + cmdType)
+                    /*{"d":{"ec":0,"ct":221,"d":{"tg":"werw","id":"dfsfd","s":0}}}*/
 
                     val responseCodeMessage =
                         validationUtils?.rcMessageChildDevice(responseCode!!)
+
+                    try {
+                        if (responseCode == 0) {
+                            val response = getSyncResponse()
+                            publishMessage(
+                                response?.d?.p?.topics!!.di, JSONObject().put(
+                                    MESSAGE_TYPE, DeviceIdentityMessages.GET_CHILD_DEVICES.value
+                                ).toString(), false
+                            )
+                        }
+
+
+                        deviceCallback?.onReceiveMsg(responseCodeMessage)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+
+                } else if (cmdType == DeviceIdentityMessages.DELETE_CHILD_DEVICE.value) {
+                    /*{"d":{"ec":0,"ct":222,"d":{"tg":"werw","id":"dfsfd","s":0}}}*/
+
+                    val responseCodeMessage =
+                        validationUtils?.rcMessageDelChildDevice(responseCode!!)
 
                     try {
 
@@ -593,8 +615,6 @@ internal class SDKClientManager(
                                 ).toString(), false
                             )
                         }
-
-
                         deviceCallback?.onReceiveMsg(responseCodeMessage)
                     } catch (e: Exception) {
                         e.printStackTrace()
@@ -1323,12 +1343,33 @@ internal class SDKClientManager(
         }
     }
 
+    /*Create child Device
+    *
+    *{"mt":221,"d":{"dn":"adasdad","id":"asdasd","tg":"qwe","g":"xvxcvx"}}
+    * */
     @JvmSynthetic
     fun createChild(innerObject: JSONObject) {
         val response = getSyncResponse()
         val mainObject = JSONObject()
         innerObject.put("g", response?.d?.meta?.gtw?.g)
         mainObject.put("mt", 221)
+        mainObject.put("d", innerObject)
+        publishMessage(
+            response?.d?.p?.topics?.di!!, mainObject.toString(), false
+        )
+
+    }
+
+    /*Delete child device
+    *
+    *{"mt":222,"d":{"id":"asdasd"}}
+    *
+    * */
+    @JvmSynthetic
+    fun deleteChild(innerObject: JSONObject) {
+        val response = getSyncResponse()
+        val mainObject = JSONObject()
+        mainObject.put("mt", 222)
         mainObject.put("d", innerObject)
         publishMessage(
             response?.d?.p?.topics?.di!!, mainObject.toString(), false
