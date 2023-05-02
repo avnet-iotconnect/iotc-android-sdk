@@ -4,8 +4,11 @@ import android.app.Activity
 import android.content.Context
 import android.content.IntentFilter
 import android.net.ConnectivityManager
+import android.text.TextUtils
 import android.util.Log
 import android.webkit.URLUtil
+import com.google.common.collect.ArrayListMultimap
+import com.google.common.collect.ListMultimap
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.iotconnectsdk.beans.CommonResponseBean
@@ -137,7 +140,7 @@ internal class SDKClientManager(
     //for Edge Device
     private var edgeDeviceTimersList: ArrayList<Timer>? = null
 
-    private var edgeDeviceAttributeMap: MutableMap<String, TumblingWindowBean>? = null
+    private var edgeDeviceAttributeMap: ListMultimap<String, TumblingWindowBean>? = null
 
     private var edgeDeviceAttributeGyroMap: MutableMap<String, List<TumblingWindowBean>>? = null
 
@@ -629,6 +632,13 @@ internal class SDKClientManager(
                             /*{"d":{"att":[{"p":"","dt":0,"tg":"","d":[{"ln":"Temp","dt":1,"dv":"5 to 10","sq":1,"tg":"p","tw":"60s"},{"ln":"Humidity","dt":1,"dv":"5 to 10","sq":2,"tg":"ch","tw":"60s"},{"ln":"Lumosity","dt":1,"dv":"","sq":4,"tg":"ch","tw":"60s"}]},{"p":"Gyroscope","dt":11,"tg":"p","d":[{"ln":"x","dt":1,"dv":"","sq":1,"tg":"p","tw":"60s"},{"ln":"y","dt":1,"dv":"","sq":2,"tg":"p","tw":"60s"}]}],"ct":201,"ec":0,"dt":"2023-02-22T10:41:18.6947577Z"}}*/
                             DeviceIdentityMessages.GET_DEVICE_TEMPLATE_ATTRIBUTES.value -> {
                                 val response = getSyncResponse()
+
+                                IotSDKPreferences.getInstance(context!!)!!.putStringData(
+                                    IotSDKPreferences.ATTRIBUTE_RESPONSE, Gson().toJson(commonModel)
+                                )
+
+                                onDeviceConnectionStatus(isConnected())
+
                                 if (response?.d?.meta?.edge == 1) {
                                     idEdgeDevice = true
 
@@ -638,13 +648,6 @@ internal class SDKClientManager(
                                         iotSDKLogUtils!!.log(true, isDebug, "ERR_EE01", e.message!!)
                                     }
                                 }
-
-                                IotSDKPreferences.getInstance(context!!)!!.putStringData(
-                                    IotSDKPreferences.ATTRIBUTE_RESPONSE, Gson().toJson(commonModel)
-                                )
-
-
-                                onDeviceConnectionStatus(isConnected())
 
 
                             }
@@ -1636,7 +1639,7 @@ internal class SDKClientManager(
                             //ignore string value for edge device.
                             if (SDKClientUtils.isDigit(value) && validation != 1) {
                                 updateEdgeDeviceObj(
-                                    key, value, edgeDeviceAttributeMap, context
+                                    key, value, uniqueId, edgeDeviceAttributeMap, context
                                 )
                                 if (edgeResponse != null) {
                                     if (jsonData != null) {
@@ -1670,7 +1673,7 @@ internal class SDKClientManager(
         syncResponse: IdentityServiceResponse, response: CommonResponseBean
     ) {
         val attributeList = response.d?.att
-        edgeDeviceAttributeMap = ConcurrentHashMap()
+        edgeDeviceAttributeMap = ArrayListMultimap.create()
         edgeDeviceAttributeGyroMap = ConcurrentHashMap()
         edgeDeviceTimersList = ArrayList()
         if (attributeList != null) {
@@ -1693,7 +1696,7 @@ internal class SDKClientManager(
                             tg = ""
                         }
                         edgeDeviceTWTimerStart(
-                            syncResponse, beanX.tw, bean.p, tg, gyroAttributeList
+                            syncResponse, beanX.tw, bean.p, tg, "", gyroAttributeList
                         )
 
                     }
@@ -1704,14 +1707,38 @@ internal class SDKClientManager(
                     for (beanX in listD) {
                         val ln = beanX.ln
                         val tag: String
+                        var id: String
 
                         if (beanX.tg != null) {
                             tag = beanX.tg
+                            val gatewayChildResponse = getGatewayChildResponse()
+                            val getChildDeviceBean = GetChildDeviceBean()
+
+                            getChildDeviceBean.tg = syncResponse.d.meta.gtw.tg
+                            getChildDeviceBean.id = uniqueId
+                            gatewayChildResponse?.d?.childDevice?.add(getChildDeviceBean)
+
+                            gatewayChildResponse?.d?.childDevice?.forEach {
+
+                                if (it.tg == tag) {
+                                    id = it.id!!
+                                    edgeDeviceTWTimerStart(
+                                        syncResponse,
+                                        beanX.tw,
+                                        ln,
+                                        it.tg!!,
+                                        id,
+                                        null
+                                    )
+                                }
+
+                            }
+
                         } else {
                             tag = ""
+                            id = ""
+                            edgeDeviceTWTimerStart(syncResponse, beanX.tw, ln, tag, id, null)
                         }
-
-                        edgeDeviceTWTimerStart(syncResponse, beanX.tw, ln, tag, null)
                     }
                 }
             }
@@ -1730,11 +1757,12 @@ internal class SDKClientManager(
         twTime: String?,
         ln: String?,
         tag: String,
+        uniqueId1: String,
         gyroAttributeList: MutableList<TumblingWindowBean>?
     ) {
-        var id = ""
+        var id = uniqueId1
         val tw = twTime?.replace("[^\\d.]".toRegex(), "")?.toDouble()
-        if (ln != null) {
+        /*if (ln != null) {
             edgeDeviceAttributeMap?.put(ln, TumblingWindowBean())
         }
 
@@ -1744,17 +1772,17 @@ internal class SDKClientManager(
                     ln, gyroAttributeList
                 )
             }
-        }
+        }*/
 
         if (syncResponse.d.meta.gtw != null) {
-            val gatewayChildResponse = getGatewayChildResponse()
-            val getChildDeviceBean = GetChildDeviceBean()
+            /* val gatewayChildResponse = getGatewayChildResponse()
+             val getChildDeviceBean = GetChildDeviceBean()
 
-            getChildDeviceBean.tg = syncResponse.d.meta.gtw.tg
-            getChildDeviceBean.id = uniqueId
-            gatewayChildResponse?.d?.childDevice?.add(getChildDeviceBean)
+             getChildDeviceBean.tg = syncResponse.d.meta.gtw.tg
+             getChildDeviceBean.id = uniqueId
+             gatewayChildResponse?.d?.childDevice?.add(getChildDeviceBean)
 
-            id = gatewayChildResponse?.d?.childDevice?.find { it.tg == tag }?.id!!
+             id = gatewayChildResponse?.d?.childDevice?.find { it.tg == tag }?.id.toString()*/
         } else {
             if (uniqueId != null) {
                 id = uniqueId
@@ -1762,7 +1790,32 @@ internal class SDKClientManager(
         }
 
 
-        Log.d("gatewayid", "::$id")
+        if (ln != null) {
+            if (!TextUtils.isEmpty(id)) {
+                val tumblingWindowBean = TumblingWindowBean()
+                tumblingWindowBean.setUniqueId(id)
+                edgeDeviceAttributeMap?.put(ln, tumblingWindowBean)
+            }
+
+        }
+
+        if (ln != null) {
+            if (gyroAttributeList != null) {
+                if (id != null) {
+                    gyroAttributeList.forEach {
+                        it.setUniqueId(id)
+                    }
+                }
+
+                (edgeDeviceAttributeGyroMap as ConcurrentHashMap<String, List<TumblingWindowBean>>).put(
+                    ln,
+                    gyroAttributeList
+                )
+            }
+        }
+
+
+        Log.d("gatewayid", "::$id ${edgeDeviceAttributeMap?.size()}")
 
         val timerTumblingWindow = Timer()
         edgeDeviceTimersList?.add(timerTumblingWindow)

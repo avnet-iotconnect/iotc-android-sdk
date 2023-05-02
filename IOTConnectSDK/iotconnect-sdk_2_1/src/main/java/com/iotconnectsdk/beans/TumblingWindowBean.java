@@ -11,6 +11,9 @@ public class TumblingWindowBean {
     private boolean isMinSet = false;
     private boolean isMaxSet = false;
 
+    private String uniqueId;
+
+
     public String getAttributeName() {
         return attributeName;
     }
@@ -81,5 +84,13 @@ public class TumblingWindowBean {
 
     public void setMaxSet(boolean maxSet) {
         isMaxSet = maxSet;
+    }
+
+    public String getUniqueId() {
+        return uniqueId;
+    }
+
+    public void setUniqueId(String uniqueId) {
+        this.uniqueId = uniqueId;
     }
 }

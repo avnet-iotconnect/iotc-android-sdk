@@ -1,6 +1,7 @@
 package com.iotconnectsdk.utils
 
 import android.content.Context
+import com.google.common.collect.ListMultimap
 import com.iotconnectsdk.beans.GetEdgeRuleBean
 import com.iotconnectsdk.beans.TumblingWindowBean
 import org.json.JSONArray
@@ -9,7 +10,7 @@ import org.json.JSONObject
 import org.json.JSONTokener
 import java.text.DecimalFormat
 
-internal object EdgeDeviceUtils {
+object EdgeDeviceUtils {
 
     private const val DEVICE_ID = "id"
     private const val DT = "dt"
@@ -44,15 +45,18 @@ internal object EdgeDeviceUtils {
     fun updateEdgeDeviceObj(
         key: String,
         value: String,
-        edgeDeviceAttributeMap: MutableMap<String, TumblingWindowBean>?,
+        uniqueId: String,
+        edgeDeviceAttributeMap: ListMultimap<String, TumblingWindowBean>?,
         context: Context?
     ) {
         if (edgeDeviceAttributeMap != null) {
-            for ((key1, tlb) in edgeDeviceAttributeMap) {
+            for ((key1, tlb) in edgeDeviceAttributeMap.entries()) {
                 if (key1 == key) {
-                    val inputValue = value.toDouble()
-                    if (tlb != null) {
-                        setObjectValue(tlb, inputValue)
+                    if (uniqueId == tlb.uniqueId) {
+                        val inputValue = value.toDouble()
+                        if (tlb != null) {
+                            setObjectValue(tlb, inputValue)
+                        }
                     }
                 }
             }
@@ -68,8 +72,8 @@ internal object EdgeDeviceUtils {
         attributeName: String?,
         tag: String,
         edgeDeviceAttributeGyroMap: MutableMap<String, List<TumblingWindowBean>>?,
-        edgeDeviceAttributeMap: MutableMap<String, TumblingWindowBean>?,
-        uniqueId: String?,
+        edgeDeviceAttributeMap: ListMultimap<String, TumblingWindowBean>?,
+        uniqueId: String,
         cpId: String?,
         environment: String?,
         appVersion: String?,
@@ -80,7 +84,7 @@ internal object EdgeDeviceUtils {
             currentTime/*, dtg, cpId, environment, appVersion, EDGE_DEVICE_MESSAGE_TYPE*/
         )
         val dArray = JSONArray()
-        val dArrayObject = getEdgeDevicePublishDObj(currentTime, tag, uniqueId!!)
+        val dArrayObject = getEdgeDevicePublishDObj(currentTime, tag, uniqueId)
         val dInnerArray = JSONArray()
         val gyroObj = JSONObject()
         val dInnerArrayObject = JSONObject()
@@ -115,24 +119,26 @@ internal object EdgeDeviceUtils {
 
         //for simple object
         if (edgeDeviceAttributeMap != null) {
-            for ((key, twb) in edgeDeviceAttributeMap) {
+            for ((key, twb) in edgeDeviceAttributeMap.entries()) {
                 if (key == attributeName) {
-                    try {
-                        val attributeArray = getEdgeDevicePublishAttributes(twb)
-                        if (attributeArray.length() > 0) {
-                            dInnerArrayObject.put(attributeName, attributeArray)
-                            // dInnerArray.put(dInnerArrayObject)
+                    if (uniqueId == twb.uniqueId) {
+                        try {
+                            val attributeArray = getEdgeDevicePublishAttributes(twb)
+                            if (attributeArray.length() > 0) {
+                                dInnerArrayObject.put(attributeName, attributeArray)
+                                // dInnerArray.put(dInnerArrayObject)
+                            }
+                            dArrayObject.put(D_OBJ, dInnerArrayObject)
+                            dArray.put(dArrayObject)
+                            mainObj.put(D_OBJ, dArray)
+                        } catch (e: JSONException) {
+                            e.printStackTrace()
                         }
-                        dArrayObject.put(D_OBJ, dInnerArrayObject)
-                        dArray.put(dArrayObject)
-                        mainObj.put(D_OBJ, dArray)
-                    } catch (e: JSONException) {
-                        e.printStackTrace()
+                        if (twb != null) {
+                            clearObject(twb)
+                        }
+                        return mainObj
                     }
-                    if (twb != null) {
-                        clearObject(twb)
-                    }
-                    return mainObj
                 }
             }
         }
