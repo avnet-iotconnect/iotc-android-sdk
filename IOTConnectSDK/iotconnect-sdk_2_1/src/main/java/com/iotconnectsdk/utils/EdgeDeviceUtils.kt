@@ -1,6 +1,7 @@
 package com.iotconnectsdk.utils
 
 import android.content.Context
+import android.util.Log
 import com.google.common.collect.ListMultimap
 import com.iotconnectsdk.beans.GetEdgeRuleBean
 import com.iotconnectsdk.beans.TumblingWindowBean
@@ -10,7 +11,7 @@ import org.json.JSONObject
 import org.json.JSONTokener
 import java.text.DecimalFormat
 
-object EdgeDeviceUtils {
+internal object EdgeDeviceUtils {
 
     private const val DEVICE_ID = "id"
     private const val DT = "dt"
@@ -20,17 +21,23 @@ object EdgeDeviceUtils {
 
     /*Update edge device object with object as datatype*/
     fun updateEdgeDeviceGyroObj(
-        key: String, innerKey: String, value: String,
-        edgeDeviceAttributeGyroMap: MutableMap<String, List<TumblingWindowBean>>?, context: Context?
+        key: String,
+        innerKey: String,
+        value: String,
+        uniqueId: String,
+        edgeDeviceAttributeGyroMap: ListMultimap<String, List<TumblingWindowBean>>?,
+        context: Context?
     ) {
         if (edgeDeviceAttributeGyroMap != null) {
-            for ((key1, tlbList) in edgeDeviceAttributeGyroMap) {
+            for ((key1, tlbList) in edgeDeviceAttributeGyroMap.entries()) {
                 if (key1 == key) {
                     val inputValue = value.toDouble()
                     if (tlbList != null) {
                         for (bean in tlbList) {
-                            if (innerKey == bean.attributeName) {
-                                setObjectValue(bean, inputValue)
+                            if (uniqueId == bean.uniqueId) {
+                                if (innerKey == bean.attributeName) {
+                                    setObjectValue(bean, inputValue)
+                                }
                             }
                         }
                     }
@@ -68,12 +75,13 @@ object EdgeDeviceUtils {
     *
     * @Param attributeName     Attribute name (humidity etc...)
     * */
+    @Synchronized
     fun publishEdgeDeviceInputData(
         attributeName: String?,
         tag: String,
-        edgeDeviceAttributeGyroMap: MutableMap<String, List<TumblingWindowBean>>?,
+        edgeDeviceAttributeGyroMap: ListMultimap<String, List<TumblingWindowBean>>?,
         edgeDeviceAttributeMap: ListMultimap<String, TumblingWindowBean>?,
-        uniqueId: String,
+        uniqueId: String?,
         cpId: String?,
         environment: String?,
         appVersion: String?,
@@ -84,23 +92,28 @@ object EdgeDeviceUtils {
             currentTime/*, dtg, cpId, environment, appVersion, EDGE_DEVICE_MESSAGE_TYPE*/
         )
         val dArray = JSONArray()
-        val dArrayObject = getEdgeDevicePublishDObj(currentTime, tag, uniqueId)
+        val dArrayObject = getEdgeDevicePublishDObj(currentTime, tag, uniqueId!!)
         val dInnerArray = JSONArray()
         val gyroObj = JSONObject()
         val dInnerArrayObject = JSONObject()
         //for gyro object
         if (edgeDeviceAttributeGyroMap != null) {
-            for ((key, twbList) in edgeDeviceAttributeGyroMap) {
+            for ((key, twbList) in edgeDeviceAttributeGyroMap.entries()) {
                 if (attributeName == key) {
                     try {
                         var attributeArray: JSONArray? = null
                         if (twbList != null) {
                             for (twb in twbList) {
-                                attributeArray = getEdgeDevicePublishAttributes(twb)
-                                if (attributeArray.length() > 0) {
-                                    dInnerArrayObject.put(twb.attributeName, attributeArray)
+                                if (uniqueId == twb.uniqueId) {
+                                    // if (tag == twb.tag) {
+                                    Log.d("uniqueIdedge", "::" + uniqueId + "" + twb.uniqueId)
+                                    attributeArray = getEdgeDevicePublishAttributes(twb)
+                                    if (attributeArray.length() > 0) {
+                                        dInnerArrayObject.put(twb.attributeName, attributeArray)
+                                    }
+                                    clearObject(twb)
+                                    // }
                                 }
-                                clearObject(twb)
                             }
                         }
                         if (dInnerArrayObject.length() > 0) {
@@ -109,6 +122,7 @@ object EdgeDeviceUtils {
                         dArrayObject.put(D_OBJ, gyroObj)
                         dArray.put(dArrayObject)
                         mainObj.put(D_OBJ, dArray)
+                       // edgeDeviceAttributeGyroMap.remove(key, twbList)
                         return mainObj
                     } catch (e: JSONException) {
                         e.printStackTrace()
@@ -122,6 +136,7 @@ object EdgeDeviceUtils {
             for ((key, twb) in edgeDeviceAttributeMap.entries()) {
                 if (key == attributeName) {
                     if (uniqueId == twb.uniqueId) {
+                        Log.d("uniqueIdedge", "::" + uniqueId + "" + twb.uniqueId)
                         try {
                             val attributeArray = getEdgeDevicePublishAttributes(twb)
                             if (attributeArray.length() > 0) {

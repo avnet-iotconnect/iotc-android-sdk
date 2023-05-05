@@ -10,9 +10,9 @@ public class TumblingWindowBean {
     private double lv; //last value
     private boolean isMinSet = false;
     private boolean isMaxSet = false;
-
     private String uniqueId;
 
+    private String tag;
 
     public String getAttributeName() {
         return attributeName;
@@ -92,5 +92,13 @@ public class TumblingWindowBean {
 
     public void setUniqueId(String uniqueId) {
         this.uniqueId = uniqueId;
+    }
+
+    public String getTag() {
+        return tag;
+    }
+
+    public void setTag(String tag) {
+        this.tag = tag;
     }
 }
