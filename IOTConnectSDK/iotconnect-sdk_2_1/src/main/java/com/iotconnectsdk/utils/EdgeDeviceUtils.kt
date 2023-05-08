@@ -30,7 +30,8 @@ internal object EdgeDeviceUtils {
     ) {
         if (edgeDeviceAttributeGyroMap != null) {
             for ((key1, tlbList) in edgeDeviceAttributeGyroMap.entries()) {
-                if (key1 == key) {
+                val keyLatest = key1.split(",").toTypedArray()
+                if (keyLatest[0] == key) {
                     val inputValue = value.toDouble()
                     if (tlbList != null) {
                         for (bean in tlbList) {
@@ -75,7 +76,6 @@ internal object EdgeDeviceUtils {
     *
     * @Param attributeName     Attribute name (humidity etc...)
     * */
-    @Synchronized
     fun publishEdgeDeviceInputData(
         attributeName: String?,
         tag: String,
@@ -99,33 +99,39 @@ internal object EdgeDeviceUtils {
         //for gyro object
         if (edgeDeviceAttributeGyroMap != null) {
             for ((key, twbList) in edgeDeviceAttributeGyroMap.entries()) {
-                if (attributeName == key) {
-                    try {
-                        var attributeArray: JSONArray? = null
-                        if (twbList != null) {
-                            for (twb in twbList) {
-                                if (uniqueId == twb.uniqueId) {
-                                    // if (tag == twb.tag) {
-                                    Log.d("uniqueIdedge", "::" + uniqueId + "" + twb.uniqueId)
-                                    attributeArray = getEdgeDevicePublishAttributes(twb)
-                                    if (attributeArray.length() > 0) {
-                                        dInnerArrayObject.put(twb.attributeName, attributeArray)
+
+                val keyLatest = key.split(",").toTypedArray()
+                val attributeNameLatest = attributeName?.split(",")?.toTypedArray()
+
+                if (attributeNameLatest!![0] == keyLatest[0]) {
+                    if (attributeNameLatest[1] == keyLatest[1]) {
+                        try {
+                            var attributeArray: JSONArray? = null
+                            if (twbList != null) {
+                                for (twb in twbList) {
+                                    if (uniqueId == twb.uniqueId) {
+                                        // if (tag == twb.tag) {
+                                        Log.d("uniqueIdedge", "::" + uniqueId + "" + twb.uniqueId)
+                                        attributeArray = getEdgeDevicePublishAttributes(twb)
+                                        if (attributeArray.length() > 0) {
+                                            dInnerArrayObject.put(twb.attributeName, attributeArray)
+                                        }
+                                        clearObject(twb)
+                                        // }
                                     }
-                                    clearObject(twb)
-                                    // }
                                 }
                             }
+                            if (dInnerArrayObject.length() > 0) {
+                                gyroObj.put(attributeNameLatest[0], dInnerArrayObject)
+                            }
+                            dArrayObject.put(D_OBJ, gyroObj)
+                            dArray.put(dArrayObject)
+                            mainObj.put(D_OBJ, dArray)
+                            // edgeDeviceAttributeGyroMap.remove(key, twbList)
+                            return mainObj
+                        } catch (e: JSONException) {
+                            e.printStackTrace()
                         }
-                        if (dInnerArrayObject.length() > 0) {
-                            gyroObj.put(attributeName, dInnerArrayObject)
-                        }
-                        dArrayObject.put(D_OBJ, gyroObj)
-                        dArray.put(dArrayObject)
-                        mainObj.put(D_OBJ, dArray)
-                       // edgeDeviceAttributeGyroMap.remove(key, twbList)
-                        return mainObj
-                    } catch (e: JSONException) {
-                        e.printStackTrace()
                     }
                 }
             }

@@ -10,7 +10,6 @@ import android.webkit.URLUtil
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.ListMultimap
 import com.google.gson.Gson
-import com.google.gson.JsonArray
 import com.iotconnectsdk.beans.CommonResponseBean
 import com.iotconnectsdk.beans.GetChildDeviceBean
 import com.iotconnectsdk.beans.GetEdgeRuleBean
@@ -40,6 +39,10 @@ import com.iotconnectsdk.webservices.CallWebServices
 import com.iotconnectsdk.webservices.interfaces.WsResponseInterface
 import com.iotconnectsdk.webservices.responsebean.DiscoveryApiResponse
 import com.iotconnectsdk.webservices.responsebean.IdentityServiceResponse
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -48,8 +51,8 @@ import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
+
 
 /**
  * class for SDKClient
@@ -131,6 +134,8 @@ internal class SDKClientManager(
 
     private val DF = "df"
 
+    private val FREQUENCY_HEART_BEAT = "f"
+
     private val TG = "tg"
 
     private val DIRECTORY_PATH = "logs/offline/"
@@ -159,6 +164,9 @@ internal class SDKClientManager(
     private var reCheckingCountTime = 0
 
     private var isRefreshAttribute = false
+
+    val scope = MainScope()
+    var job: Job? = null
 
 
     /*return singleton object for this class.
@@ -636,8 +644,6 @@ internal class SDKClientManager(
                                 IotSDKPreferences.getInstance(context!!)!!.putStringData(
                                     IotSDKPreferences.ATTRIBUTE_RESPONSE, Gson().toJson(commonModel)
                                 )
-
-
                                 if (response?.d?.meta?.edge == 1) {
                                     idEdgeDevice = true
 
@@ -826,12 +832,13 @@ internal class SDKClientManager(
 
                             /*The device must start sending a heartbeat*/
                             C2DMessageEnums.START_HEARTBEAT.value -> {
-
+                                val frequencyHeartBeat = mainObject.getInt(FREQUENCY_HEART_BEAT)
+                                startUpdates(frequencyHeartBeat)
                             }
 
                             /*The device must stop sending a heartbeat*/
                             C2DMessageEnums.STOP_HEARTBEAT.value -> {
-
+                                stopUpdates()
                             }
                         }
                     }
@@ -1098,6 +1105,7 @@ internal class SDKClientManager(
             mqttService?.clearInstance() //destroy singleton object.
         }
         unregisterReceiver()
+        stopUpdates()
         sdkClientManger = null
     }
 
@@ -1196,9 +1204,10 @@ internal class SDKClientManager(
                 val directory = File(context.filesDir, directoryPath)
                 if (directory.exists()) {
                     val contents = directory.listFiles()
-                    if (contents.size > 0) {
-
-                        checkIsDeviceOnline()
+                    if (contents != null) {
+                        if (contents.isNotEmpty()) {
+                            checkIsDeviceOnline()
+                        }
                     }
                 }
             }
@@ -1242,7 +1251,14 @@ internal class SDKClientManager(
                                 val data = finalOfflineData[i]
                                 try {
                                     val dataObj = JSONObject(data)
+//                                    dataObj.put(OFFLINE_DATA, 1);
 
+                                    //publish offline data.
+                                    val response = getSyncResponse()
+                                    mqttService!!.publishMessage(
+                                        response?.d?.p?.topics?.od!!,
+                                        dataObj.toString()
+                                    )
                                 } catch (e: JSONException) {
                                     iotSDKLogUtils!!.log(true, isDebug, "ERR_OS01", e.message!!)
                                     e.printStackTrace()
@@ -1367,7 +1383,7 @@ internal class SDKClientManager(
         val response = getSyncResponse()
         val mainObject = JSONObject()
         innerObject.put("g", response?.d?.meta?.gtw?.g)
-        mainObject.put("mt", 221)
+        mainObject.put("mt", DeviceIdentityMessages.CREATE_CHILD_DEVICE.value)
         mainObject.put("d", innerObject)
         publishMessage(
             response?.d?.p?.topics?.di!!, mainObject.toString(), false
@@ -1384,7 +1400,7 @@ internal class SDKClientManager(
     fun deleteChild(innerObject: JSONObject) {
         val response = getSyncResponse()
         val mainObject = JSONObject()
-        mainObject.put("mt", 222)
+        mainObject.put("mt", DeviceIdentityMessages.DELETE_CHILD_DEVICE.value)
         mainObject.put("d", innerObject)
         publishMessage(
             response?.d?.p?.topics?.di!!, mainObject.toString(), false
@@ -1726,11 +1742,11 @@ internal class SDKClientManager(
                                     edgeDeviceTWTimerStart(
                                         syncResponse,
                                         beanX.tw,
-                                        bean.p,
+                                        bean.p + "," + bean.tg,
                                         it.tg!!,
                                         it.id!!,
                                         gyroAttributeList,
-                                        attributeLn
+                                        "isGyro"
                                     )
                                 }
 
@@ -1743,11 +1759,11 @@ internal class SDKClientManager(
                             edgeDeviceTWTimerStart(
                                 syncResponse,
                                 beanX.tw,
-                                bean.p,
+                                bean.p + "," + bean.tg,
                                 tg,
                                 id,
                                 gyroAttributeList,
-                                attributeLn
+                                "isGyro"
                             )
                         }
 
@@ -1782,7 +1798,7 @@ internal class SDKClientManager(
                                         it.tg!!,
                                         id,
                                         null,
-                                        ""
+                                        "isSimple"
                                     )
                                 }
 
@@ -1791,7 +1807,15 @@ internal class SDKClientManager(
                         } else {
                             tag = ""
                             id = ""
-                            edgeDeviceTWTimerStart(syncResponse, beanX.tw, ln, tag, id, null, "")
+                            edgeDeviceTWTimerStart(
+                                syncResponse,
+                                beanX.tw,
+                                ln,
+                                tag,
+                                id,
+                                null,
+                                "isSimple"
+                            )
                         }
                     }
                 }
@@ -1813,7 +1837,7 @@ internal class SDKClientManager(
         tag: String,
         uniqueId1: String,
         gyroAttributeList: MutableList<TumblingWindowBean>?,
-        attribute: String
+        checkAttType: String
     ) {
         var id = uniqueId1
         val tw = twTime?.replace("[^\\d.]".toRegex(), "")?.toDouble()
@@ -1847,9 +1871,11 @@ internal class SDKClientManager(
 
         if (ln != null) {
             if (!TextUtils.isEmpty(id)) {
-                val tumblingWindowBean = TumblingWindowBean()
-                tumblingWindowBean.setUniqueId(id)
-                edgeDeviceAttributeMap?.put(ln, tumblingWindowBean)
+                if (checkAttType == "isSimple") {
+                    val tumblingWindowBean = TumblingWindowBean()
+                    tumblingWindowBean.setUniqueId(id)
+                    edgeDeviceAttributeMap?.put(ln, tumblingWindowBean)
+                }
             }
 
         }
@@ -1862,11 +1888,13 @@ internal class SDKClientManager(
                      }
                  }
  */
-                if (!edgeDeviceAttributeGyroMap!!.containsEntry(ln, gyroAttributeList)) {
-                    (edgeDeviceAttributeGyroMap as ListMultimap<String, List<TumblingWindowBean>>).put(
-                        ln,
-                        gyroAttributeList
-                    )
+                if (checkAttType == "isGyro") {
+                    if (!edgeDeviceAttributeGyroMap!!.containsEntry(ln, gyroAttributeList)) {
+                        (edgeDeviceAttributeGyroMap as ListMultimap<String, List<TumblingWindowBean>>).put(
+                            ln,
+                            gyroAttributeList
+                        )
+                    }
                 }
             }
         }
@@ -2173,6 +2201,27 @@ internal class SDKClientManager(
         if (publishObjForRuleMatchEdgeDevice != null) publishMessage(
             syncResponse?.d?.p?.topics?.erm!!, publishObjForRuleMatchEdgeDevice.toString(), false
         )
+    }
+
+    private fun startUpdates(frequencyHeartBeat: Int) {
+        stopUpdates()
+        val response = getSyncResponse()
+        job = scope.launch {
+            while (true) {
+                // the function that should be ran every second
+                 publishMessage(
+                     response?.d?.p?.topics?.hb!!,
+                     JSONObject().toString(),
+                     false
+                 )
+                delay(frequencyHeartBeat.toLong())
+            }
+        }
+    }
+
+    private fun stopUpdates() {
+        job?.cancel()
+        job = null
     }
 
 }
