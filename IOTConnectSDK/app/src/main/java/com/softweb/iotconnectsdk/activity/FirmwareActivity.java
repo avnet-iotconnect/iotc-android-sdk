@@ -286,9 +286,9 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         SdkOptions sdkOptions = new SdkOptions();
 
         Certificate certificate = new Certificate();
-        certificate.setsSLKeyPath("");
-        certificate.setsSLCertPath("");
-        certificate.setsSLCaPath("");
+        certificate.setsSLKeyPath("C:\\Users\\tushar.ojha\\Downloads\\Selfsignedcer\\device.key");
+        certificate.setsSLCertPath("C:\\Users\\tushar.ojha\\Downloads\\Selfsignedcer\\DeviceCertificate.pem");
+        certificate.setsSLCaPath("C:\\Users\\tushar.ojha\\Downloads\\Selfsignedcer\\Self-SignedCertificate.pem");
 
         OfflineStorage offlineStorage = new OfflineStorage();
         offlineStorage.setDisabled(false); //default value false
@@ -297,6 +297,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
 
         sdkOptions.setCertificate(certificate);
         sdkOptions.setOfflineStorage(offlineStorage);
+        sdkOptions.setSkipValidation(false);
 
         String sdkOptionsJsonStr = new Gson().toJson(sdkOptions);
 

@@ -39,7 +39,11 @@ internal object ValidationTelemetryUtils {
 
     @Synchronized
     fun compareForInputValidationNew(
-        key: String, value: String, tag: String, dObj: CommonResponseBean?
+        key: String,
+        value: String,
+        tag: String,
+        dObj: CommonResponseBean?,
+        isSkipValidation: Boolean
     ): Int {
         val attributesList = dObj?.d?.att
         if (attributesList != null) {
@@ -59,7 +63,7 @@ internal object ValidationTelemetryUtils {
                     val dv = data.dv
                     val dt = data.dt
                     if (key.equals(ln, ignoreCase = true) && tag.equals(tg, ignoreCase = true)) {
-                        return validateDataType(dt, value, dv)
+                        return validateDataType(dt, value, dv, isSkipValidation)
 
                     }
                 }
@@ -69,9 +73,16 @@ internal object ValidationTelemetryUtils {
     }
 
 
-    private fun validateDataType(dt: Int, value: String, dv: String): Int {
+    private fun validateDataType(
+        dt: Int,
+        value: String,
+        dv: String,
+        isSkipValidation: Boolean
+    ): Int {
 
-        if (dt == DATA_TYPE_STRING) {
+        if (isSkipValidation) {
+            return REPORTING
+        } else if (dt == DATA_TYPE_STRING) {
             return validateNumber(dt, value, dv)
         } else if (TextUtils.isEmpty(value.trim())) {
             return FAULTY

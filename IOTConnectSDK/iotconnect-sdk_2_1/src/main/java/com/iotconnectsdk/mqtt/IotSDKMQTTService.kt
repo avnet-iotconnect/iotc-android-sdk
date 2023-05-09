@@ -1,14 +1,17 @@
 package com.iotconnectsdk.mqtt
 
 import android.content.Context
+import android.text.TextUtils
 import android.util.Log
 import com.iotconnectsdk.R
 import com.iotconnectsdk.interfaces.HubToSdkCallback
 import com.iotconnectsdk.interfaces.PublishMessageCallback
 import com.iotconnectsdk.interfaces.TwinUpdateCallback
-import com.iotconnectsdk.utils.IotSDKLogUtils
 import com.iotconnectsdk.utils.DateTimeUtils
+import com.iotconnectsdk.utils.IotSDKLogUtils
+import com.iotconnectsdk.utils.IotSDKUrls
 import com.iotconnectsdk.webservices.responsebean.IdentityServiceResponse
+import iotconnect.sdk.common.SecurityHelper.createSocketFactory
 import org.eclipse.paho.android.service.MqttAndroidClient
 import org.eclipse.paho.client.mqttv3.*
 import org.json.JSONObject
@@ -18,7 +21,9 @@ import org.json.JSONObject
  */
 internal class IotSDKMQTTService private constructor(
     private val context: Context,
+    private val sdkOptions: String?,
     private val protocolBean: IdentityServiceResponse.D.P,
+    private val authenticationType: Int,
     private val hubToSdkCallback: HubToSdkCallback,
     private val publishMessageCallback: PublishMessageCallback,
     private val twinCallbackMessage: TwinUpdateCallback,
@@ -51,17 +56,25 @@ internal class IotSDKMQTTService private constructor(
         @Volatile
         private var iotSDKMQTTService: IotSDKMQTTService? = null
         fun getInstance(
-            context: Context, protocolBean: IdentityServiceResponse.D.P,
-            hubToSdkCallback: HubToSdkCallback, publishMessageCallback: PublishMessageCallback,
-            twinCallbackMessage: TwinUpdateCallback, iotSDKLogUtils: IotSDKLogUtils,
-            isDebug: Boolean, uniqueId: String
+            context: Context, sdkOptions: String?, protocolBean: IdentityServiceResponse.D.P,
+            authenticationType: Int, hubToSdkCallback: HubToSdkCallback,
+            publishMessageCallback: PublishMessageCallback, twinCallbackMessage: TwinUpdateCallback,
+            iotSDKLogUtils: IotSDKLogUtils, isDebug: Boolean, uniqueId: String
         ): IotSDKMQTTService? {
 
             synchronized(this) {
                 if (iotSDKMQTTService == null) {
                     iotSDKMQTTService = IotSDKMQTTService(
-                        context, protocolBean, hubToSdkCallback, publishMessageCallback,
-                        twinCallbackMessage, iotSDKLogUtils, isDebug, uniqueId
+                        context,
+                        sdkOptions,
+                        protocolBean,
+                        authenticationType,
+                        hubToSdkCallback,
+                        publishMessageCallback,
+                        twinCallbackMessage,
+                        iotSDKLogUtils,
+                        isDebug,
+                        uniqueId
                     )
                 }
                 return iotSDKMQTTService
@@ -131,6 +144,54 @@ internal class IotSDKMQTTService private constructor(
         val mqttConnectOptions = MqttConnectOptions()
         mqttConnectOptions.isAutomaticReconnect = false
         mqttConnectOptions.isCleanSession = true
+
+        var sdkObj: JSONObject
+        try {
+            if (sdkOptions != null) {
+                sdkObj = JSONObject(sdkOptions)
+                if (sdkObj.has("certificate")) {
+                    val certificate = sdkObj.getJSONObject("certificate")
+
+                    var caFile: String? = null
+                    var clientCrtFile: String? = null
+                    var clientKeyFile: String? = null
+
+
+                    if (authenticationType == IotSDKUrls.AUTH_TYPE_SELF_SIGN || authenticationType == IotSDKUrls.AUTH_TYPE_CA_SIGN) {
+                        if (certificate.has("SSLCaPath")) {
+                            caFile = certificate.getString("SSLCaPath")
+                        }
+
+                        if (certificate.has("SSLCertPath")) {
+                            clientCrtFile = certificate.getString("SSLCertPath")
+                        }
+
+                        if (certificate.has("SSLKeyPath")) {
+                            clientKeyFile = certificate.getString("SSLKeyPath")
+                        }
+                        val clientKeyPassword = ""
+                        if (TextUtils.isEmpty(caFile) && TextUtils.isEmpty(clientCrtFile)
+                            && TextUtils.isEmpty(clientKeyFile)) {
+                            return
+                        }
+                        val socketFactory = createSocketFactory(
+                            caFile,
+                            clientCrtFile,
+                            clientKeyFile,
+                            clientKeyPassword,
+                            "",
+                            ""
+                        )
+                        mqttConnectOptions.socketFactory = socketFactory
+                    }
+
+                }
+            }
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
         mqttConnectOptions.userName = protocolBean.un
         if (protocolBean.pwd != null) {
             mqttConnectOptions.password = protocolBean.pwd.toCharArray()

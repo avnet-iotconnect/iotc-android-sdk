@@ -168,6 +168,8 @@ internal class SDKClientManager(
     val scope = MainScope()
     var job: Job? = null
 
+    var isSkipValidation = false
+
 
     /*return singleton object for this class.
      * */
@@ -229,6 +231,7 @@ internal class SDKClientManager(
         idEdgeDevice = false
         isSaveToOffline = false
         isDebug = false
+        isSkipValidation = false
         fileCount = 0
 
         //get is debug option.
@@ -239,6 +242,11 @@ internal class SDKClientManager(
                 if (sdkObj.has(IS_DEBUG)) {
                     isDebug = sdkObj.getBoolean(IS_DEBUG)
                 }
+
+                if (sdkObj.has("skipValidation")) {
+                    isSkipValidation = sdkObj.getBoolean("skipValidation")
+                }
+
                 if (sdkObj.has("offlineStorage")) {
                     val offlineStorage = sdkObj.getJSONObject("offlineStorage")
                     if (offlineStorage.has("disabled")) {
@@ -457,7 +465,7 @@ internal class SDKClientManager(
             return
         }
         mqttService = IotSDKMQTTService.getInstance(
-            context!!, response.d.p, this, this, this, iotSDKLogUtils!!, isDebug, uniqueId!!
+            context!!, sdkOptions,response.d.p, response.d.meta.at,this, this, this, iotSDKLogUtils!!, isDebug, uniqueId!!
         )
         mqttService!!.connectMQTT()
 
@@ -1508,7 +1516,13 @@ internal class SDKClientManager(
                             val InnerKey = innerJsonKey.next()
                             val InnerKValue = innerObj.getString(InnerKey)
                             val gyroValidationValue =
-                                compareForInputValidationNew(InnerKey, InnerKValue, tag, dObj)
+                                compareForInputValidationNew(
+                                    InnerKey,
+                                    InnerKValue,
+                                    tag,
+                                    dObj,
+                                    isSkipValidation
+                                )
                             if (gyroValidationValue == 0) {
                                 gyroObj_reporting.put(InnerKey, InnerKValue)
                             } else {
@@ -1523,7 +1537,8 @@ internal class SDKClientManager(
                         )
                         if (gyroObj_faulty.length() != 0) innerD_Obj_faulty.put(key, gyroObj_faulty)
                     } else {
-                        val othersValidation = compareForInputValidationNew(key, value, tag, dObj)
+                        val othersValidation =
+                            compareForInputValidationNew(key, value, tag, dObj, isSkipValidation)
                         if (othersValidation == 0) {
                             innerD_Obj_reporting.put(key, value)
                         } else {
@@ -1629,7 +1644,7 @@ internal class SDKClientManager(
 
                                 //check for input validation dv=data validation dv="data validation". {"ln":"x","dt":0,"dv":"10to20","tg":"","sq":1,"agt":63,"tw":"40s"}
                                 val validation: Int = compareForInputValidationNew(
-                                    innerKey, innerKValue, tag, attributeResponse
+                                    innerKey, innerKValue, tag, attributeResponse, isSkipValidation
                                 )
 
                                 //ignore string value for edge device.
@@ -1662,7 +1677,7 @@ internal class SDKClientManager(
 
                             //check for input validation dv="data validation". {"ln":"abc","dt":0,"dv":"10","tg":"","sq":8,"agt":63,"tw":"60s"}
                             val validation: Int = compareForInputValidationNew(
-                                key, value, tag, attributeResponse
+                                key, value, tag, attributeResponse, isSkipValidation
                             )
 
                             //ignore string value for edge device.
@@ -2209,12 +2224,12 @@ internal class SDKClientManager(
         job = scope.launch {
             while (true) {
                 // the function that should be ran every second
-                 publishMessage(
-                     response?.d?.p?.topics?.hb!!,
-                     JSONObject().toString(),
-                     false
-                 )
-                delay(frequencyHeartBeat.toLong())
+                publishMessage(
+                    response?.d?.p?.topics?.hb!!,
+                    JSONObject().toString(),
+                    false
+                )
+                delay(frequencyHeartBeat.toLong()*1000)
             }
         }
     }

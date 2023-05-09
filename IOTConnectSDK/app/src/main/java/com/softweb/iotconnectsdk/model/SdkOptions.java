@@ -16,6 +16,9 @@ public class SdkOptions {
     @SerializedName("isDebug")
     private boolean isDebug = false;
 
+    @SerializedName("skipValidation")
+    private boolean skipValidation = false;
+
     public OfflineStorage getOfflineStorage() {
         return offlineStorage;
     }
@@ -46,5 +49,14 @@ public class SdkOptions {
 
     public void setDebug(boolean debug) {
         isDebug = debug;
+    }
+
+
+    public boolean isSkipValidation() {
+        return skipValidation;
+    }
+
+    public void setSkipValidation(boolean skipValidation) {
+        this.skipValidation = skipValidation;
     }
 }
