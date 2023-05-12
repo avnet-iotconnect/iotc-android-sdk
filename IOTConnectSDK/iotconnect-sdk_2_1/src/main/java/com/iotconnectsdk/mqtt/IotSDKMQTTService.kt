@@ -1,8 +1,12 @@
 package com.iotconnectsdk.mqtt
 
 import android.content.Context
+import android.database.Cursor
+import android.net.Uri
+import android.provider.OpenableColumns
 import android.text.TextUtils
 import android.util.Log
+import android.util.TypedValue
 import com.iotconnectsdk.R
 import com.iotconnectsdk.interfaces.HubToSdkCallback
 import com.iotconnectsdk.interfaces.PublishMessageCallback
@@ -10,11 +14,13 @@ import com.iotconnectsdk.interfaces.TwinUpdateCallback
 import com.iotconnectsdk.utils.DateTimeUtils
 import com.iotconnectsdk.utils.IotSDKLogUtils
 import com.iotconnectsdk.utils.IotSDKUrls
+import com.iotconnectsdk.utils.SecurityHelper2.getSocketFactory2
 import com.iotconnectsdk.webservices.responsebean.IdentityServiceResponse
 import iotconnect.sdk.common.SecurityHelper.createSocketFactory
 import org.eclipse.paho.android.service.MqttAndroidClient
 import org.eclipse.paho.client.mqttv3.*
 import org.json.JSONObject
+
 
 /**
  * Service class for MQTT data upload to cloud
@@ -171,17 +177,20 @@ internal class IotSDKMQTTService private constructor(
                         }
                         val clientKeyPassword = ""
                         if (TextUtils.isEmpty(caFile) && TextUtils.isEmpty(clientCrtFile)
-                            && TextUtils.isEmpty(clientKeyFile)) {
+                            && TextUtils.isEmpty(clientKeyFile)
+                        ) {
                             return
                         }
-                        val socketFactory = createSocketFactory(
-                            caFile,
-                            clientCrtFile,
-                            clientKeyFile,
+
+                        val socketFactory = getSocketFactory2(
+                            caFile!!.byteInputStream(),
+                            clientCrtFile!!.byteInputStream(),
+                            clientKeyFile!!.byteInputStream(),
                             clientKeyPassword,
-                            "",
-                            ""
+                            /*"",
+                            ""*/
                         )
+
                         mqttConnectOptions.socketFactory = socketFactory
                     }
 

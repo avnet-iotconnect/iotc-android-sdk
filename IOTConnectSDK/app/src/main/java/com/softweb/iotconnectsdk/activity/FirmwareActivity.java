@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -31,6 +32,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -285,10 +287,16 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
 
         SdkOptions sdkOptions = new SdkOptions();
 
+
+        InputStream caCrtFile = this.getResources().openRawResource(R.raw.self_signed_certificate);
+        InputStream crtFile = this.getResources().openRawResource(R.raw.device_certificate);
+        InputStream keyFile = this.getResources().openRawResource(R.raw.device);
+
+
         Certificate certificate = new Certificate();
-        certificate.setsSLKeyPath("C:\\Users\\tushar.ojha\\Downloads\\Selfsignedcer\\device.key");
-        certificate.setsSLCertPath("C:\\Users\\tushar.ojha\\Downloads\\Selfsignedcer\\DeviceCertificate.pem");
-        certificate.setsSLCaPath("C:\\Users\\tushar.ojha\\Downloads\\Selfsignedcer\\Self-SignedCertificate.pem");
+        certificate.setsSLKeyPath(keyFile.toString());
+        certificate.setsSLCertPath(crtFile.toString());
+        certificate.setsSLCaPath(caCrtFile.toString());
 
         OfflineStorage offlineStorage = new OfflineStorage();
         offlineStorage.setDisabled(false); //default value false
