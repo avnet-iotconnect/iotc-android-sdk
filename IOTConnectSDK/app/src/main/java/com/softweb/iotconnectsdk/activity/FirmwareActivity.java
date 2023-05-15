@@ -3,11 +3,11 @@ package com.softweb.iotconnectsdk.activity;
 import android.Manifest;
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -32,6 +32,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -48,7 +51,6 @@ import com.softweb.iotconnectsdk.model.Certificate;
 import com.softweb.iotconnectsdk.model.D;
 import com.softweb.iotconnectsdk.model.D2CSendAckBean;
 import com.softweb.iotconnectsdk.model.Device;
-import com.softweb.iotconnectsdk.model.GetDeviceAttributes;
 import com.softweb.iotconnectsdk.model.OfflineStorage;
 import com.softweb.iotconnectsdk.model.SdkOptions;
 import com.softweb.iotconnectsdk.R;
@@ -288,15 +290,21 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         SdkOptions sdkOptions = new SdkOptions();
 
 
-        InputStream caCrtFile = this.getResources().openRawResource(R.raw.self_signed_certificate);
-        InputStream crtFile = this.getResources().openRawResource(R.raw.device_certificate);
+        InputStream caCrtFile = this.getResources().openRawResource(R.raw.root_certificate1);
+        InputStream crtFile = this.getResources().openRawResource(R.raw.device_certificate2);
         InputStream keyFile = this.getResources().openRawResource(R.raw.device);
 
 
         Certificate certificate = new Certificate();
-        certificate.setsSLKeyPath(keyFile.toString());
-        certificate.setsSLCertPath(crtFile.toString());
-        certificate.setsSLCaPath(caCrtFile.toString());
+
+       /* certificate.setsSLKeyPath(Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.device).toString());
+        certificate.setsSLCertPath(Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.device_certificate).toString());
+        certificate.setsSLCaPath(Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.root_certificate).toString());*/
+
+
+        certificate.setsSLKeyPath(getRobotCacheFile(this, "device.key").getAbsolutePath());
+        certificate.setsSLCertPath(getRobotCacheFile(this, "device1.pem").getAbsolutePath());
+        certificate.setsSLCaPath(getRobotCacheFile(this, "ms.pem").getAbsolutePath());
 
         OfflineStorage offlineStorage = new OfflineStorage();
         offlineStorage.setDisabled(false); //default value false
@@ -313,6 +321,27 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
 
         return sdkOptionsJsonStr;
     }
+
+
+    public static File getRobotCacheFile(Context context, String fileName) {
+        File cacheFile = new File(context.getCacheDir(), fileName);
+        try {
+            try (InputStream inputStream = context.getAssets().open(fileName)) {
+                try (FileOutputStream outputStream = new FileOutputStream(cacheFile)) {
+                    byte[] buf = new byte[1024];
+                    int len;
+                    while ((len = inputStream.read(buf)) > 0) {
+                        outputStream.write(buf, 0, len);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+
+        }
+        return cacheFile;
+    }
+
 
     /*
      * Type    : Private function sendInputData()"

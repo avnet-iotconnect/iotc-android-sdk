@@ -1,4 +1,4 @@
-package iotconnect.sdk.common
+package com.iotconnectsdk.utils
 
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider
@@ -57,6 +57,7 @@ internal object SecurityHelper {
             context.init(keyManagers, trustManagers, SecureRandom())
             context.socketFactory
         } catch (e: Exception) {
+            e.printStackTrace()
             //            CustomLogger.writeErrorLog(logger, "ERR_IN01", cpId, uniqueId, "SDK cannot create the TLS socket factory");
             null
         }
@@ -89,6 +90,7 @@ internal object SecurityHelper {
             keyManagerFactory.init(keyStore, clientKeyPassword.toCharArray())
             keyManagerFactory
         } catch (e: Exception) {
+            e.printStackTrace()
             //            CustomLogger.writeErrorLog(logger, "ERR_IN01", cpId, uniqueId, e.getMessage());
             null
         }
@@ -114,6 +116,7 @@ internal object SecurityHelper {
             trustManagerFactory.init(keyStore)
             trustManagerFactory
         } catch (e: Exception) {
+            e.printStackTrace()
             //            CustomLogger.writeErrorLog(logger, "ERR_IN01", cpId, uniqueId, e.getMessage());
             null
         }
@@ -140,6 +143,7 @@ internal object SecurityHelper {
             inputStream.close()
             certificate
         } catch (e: Exception) {
+            e.printStackTrace()
             //            CustomLogger.writeErrorLog(logger, "ERR_IN01", cpId, uniqueId, e.getMessage());
             null
         }
@@ -168,6 +172,7 @@ internal object SecurityHelper {
             val keyFactory = keyFactoryInstance
             keyFactory.generatePrivate(encodedKeySpec)
         } catch (e: Exception) {
+            e.printStackTrace()
             //            CustomLogger.writeErrorLog(logger, "ERR_IN01", cpId, uniqueId, e.toString());
             null
         }
