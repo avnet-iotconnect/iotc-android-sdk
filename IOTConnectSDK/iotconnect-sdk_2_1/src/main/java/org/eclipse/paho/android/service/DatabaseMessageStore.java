@@ -288,7 +288,7 @@ class DatabaseMessageStore implements MessageStore {
 	public Iterator<StoredMessage> getAllArrivedMessages(
 			final String clientHandle) {
 		return new Iterator<StoredMessage>() {
-			private Cursor c;
+			private final Cursor c;
 			private boolean hasNext;
             private final String[] selectionArgs = {
                     clientHandle,
@@ -404,10 +404,10 @@ class DatabaseMessageStore implements MessageStore {
 	}
 
 	private class DbStoredData implements StoredMessage {
-		private String messageId;
+		private final String messageId;
 		private String clientHandle;
-		private String topic;
-		private MqttMessage message;
+		private final String topic;
+		private final MqttMessage message;
 
 		DbStoredData(String messageId, String clientHandle, String topic,
 				MqttMessage message) {

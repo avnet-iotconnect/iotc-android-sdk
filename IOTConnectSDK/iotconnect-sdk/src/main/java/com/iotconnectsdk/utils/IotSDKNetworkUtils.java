@@ -23,9 +23,7 @@ public class IotSDKNetworkUtils {
                         return true;
                     } else if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
                         return true;
-                    } else if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) {
-                        return true;
-                    }
+                    } else return capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET);
                 }
             } else {
 

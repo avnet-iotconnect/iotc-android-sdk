@@ -10,11 +10,11 @@ import org.json.JSONObject;
 
 public class ValidationUtils {
 
-    private Context context;
-    private boolean isDebug;
-    private IotSDKLogUtils iotSDKLogUtils;
+    private final Context context;
+    private final boolean isDebug;
+    private final IotSDKLogUtils iotSDKLogUtils;
 
-    private static ValidationUtils validationUtils = null;
+    private static final ValidationUtils validationUtils = null;
 
     public static ValidationUtils getInstance(IotSDKLogUtils iotSDKLogUtils, Context context, boolean debug) {
         if (validationUtils == null)

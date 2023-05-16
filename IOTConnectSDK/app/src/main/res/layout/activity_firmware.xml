@@ -4,7 +4,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    android:padding="5dp">
 
     <TextView
         android:id="@+id/tvConnStatus"
@@ -19,10 +18,11 @@
         android:id="@+id/tvStatus"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_margin="10dp"
         android:paddingLeft="10dp"
         android:text="@string/device_disconnected"
-        android:textColor="@android:color/darker_gray"
-        android:textSize="12sp"
+        android:textColor="@color/black"
+        android:textSize="18sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -42,7 +42,7 @@
             android:id="@+id/svMain"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:fillViewport="true">-->
+            android:fillViewport="true">
 
 
             <androidx.constraintlayout.widget.ConstraintLayout
@@ -50,13 +50,74 @@
                 android:layout_height="match_parent"
                 android:padding="20dp">
 
+
+                <TextView
+                    android:id="@+id/tvEnv"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:text="Environment:"
+                    android:textSize="20sp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.0"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <RadioGroup
+                    android:id="@+id/rgEnv"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="5dp"
+                    android:orientation="horizontal"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/tvEnv">
+
+                    <RadioButton
+                        android:id="@+id/rbtnAvnet"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:onClick="onRadioButtonClicked"
+                        android:text="avnet" />
+
+                    <RadioButton
+                        android:id="@+id/rbtnDev"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        android:layout_weight="1"
+                        android:onClick="onRadioButtonClicked"
+                        android:text="dev" />
+
+                    <RadioButton
+                        android:id="@+id/rbtnQa"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        android:layout_weight="1"
+                        android:onClick="onRadioButtonClicked"
+                        android:text="qa" />
+
+
+                    <RadioButton
+                        android:id="@+id/rbtnStage"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:onClick="onRadioButtonClicked"
+                        android:text="prod" />
+
+                </RadioGroup>
+
+
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/tilCpid"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     app:layout_constraintLeft_toLeftOf="parent"
                     app:layout_constraintRight_toRightOf="parent"
-                    app:layout_constraintTop_toTopOf="parent">
+                    app:layout_constraintTop_toBottomOf="@+id/rgEnv">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etCpid"
@@ -64,6 +125,8 @@
                         android:layout_height="wrap_content"
                         android:backgroundTint="@color/white"
                         android:hint="CpId"
+                        android:imeOptions="actionNext"
+                        android:inputType="text"
                         android:textSize="20sp" />
 
                 </com.google.android.material.textfield.TextInputLayout>
@@ -85,6 +148,8 @@
                         android:layout_height="wrap_content"
                         android:backgroundTint="@color/white"
                         android:hint="Unique Id"
+                        android:imeOptions="actionDone"
+                        android:inputType="text"
                         android:textSize="20sp" />
 
                 </com.google.android.material.textfield.TextInputLayout>
@@ -172,75 +237,26 @@
 
                 <EditText
                     android:id="@+id/etSubscribe"
-                    android:layout_width="0dp"
-                    android:layout_height="200dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
                     android:layout_marginLeft="5dp"
                     android:layout_marginTop="10dp"
                     android:layout_marginRight="5dp"
                     android:layout_weight="2"
                     android:background="@drawable/edit_border"
-                    android:gravity="left|top"
+                    android:gravity="top|start"
+                    android:inputType="textMultiLine"
+                    android:lines="8"
+                    android:maxLines="100"
+                    android:minLines="6"
                     android:padding="5dp"
+                    android:scrollbars="vertical"
                     android:textSize="20sp"
                     app:layout_constraintLeft_toLeftOf="parent"
                     app:layout_constraintRight_toRightOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/llSubscribe" />
 
-                <TextView
-                    android:id="@+id/tvEnv"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:layout_weight="2"
-                    android:text="With Environment:"
-                    android:textSize="20sp"
-                    app:layout_constraintLeft_toLeftOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/etSubscribe" />
 
-                <RadioGroup
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="5dp"
-                    android:layout_marginRight="5dp"
-                    android:orientation="horizontal"
-                    app:layout_constraintLeft_toLeftOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/tvEnv">
-
-                    <RadioButton
-                        android:id="@+id/rbtnAvnet"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:onClick="onRadioButtonClicked"
-                        android:text="avnet" />
-
-                    <RadioButton
-                        android:id="@+id/rbtnStage"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:onClick="onRadioButtonClicked"
-                        android:text="poc" />
-
-                    <RadioButton
-                        android:id="@+id/rbtnQa"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="16dp"
-                        android:layout_weight="1"
-                        android:onClick="onRadioButtonClicked"
-                        android:text="qa" />
-
-                    <RadioButton
-                        android:id="@+id/rbtnDev"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="16dp"
-                        android:layout_weight="1"
-                        android:onClick="onRadioButtonClicked"
-                        android:text="dev" />
-
-                </RadioGroup>
             </androidx.constraintlayout.widget.ConstraintLayout>
         </ScrollView>
     </LinearLayout>

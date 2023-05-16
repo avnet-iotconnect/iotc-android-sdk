@@ -24,7 +24,7 @@ import android.os.Binder;
  */
 class MqttServiceBinder extends Binder {
 
-	private MqttService mqttService;
+	private final MqttService mqttService;
 	private String activityToken;
 
 	MqttServiceBinder(MqttService mqttService) {

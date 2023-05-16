@@ -33,13 +33,13 @@ class MqttTokenAndroid implements IMqttToken {
 
   private volatile MqttException lastException;
 
-  private Object waitObject = new Object();
+  private final Object waitObject = new Object();
 
-  private MqttAndroidClient client;
+  private final MqttAndroidClient client;
 
   private Object userContext;
 
-  private String[] topics;
+  private final String[] topics;
 
   private IMqttToken delegate; // specifically for getMessageId
 
@@ -77,7 +77,7 @@ class MqttTokenAndroid implements IMqttToken {
    * @see IMqttToken#waitForCompletion()
    */
   @Override
-  public void waitForCompletion() throws MqttException, MqttSecurityException {
+  public void waitForCompletion() throws MqttException {
     synchronized (waitObject) {
       try {
         waitObject.wait();
@@ -95,8 +95,7 @@ class MqttTokenAndroid implements IMqttToken {
    * @see IMqttToken#waitForCompletion(long)
    */
   @Override
-  public void waitForCompletion(long timeout) throws MqttException,
-      MqttSecurityException {
+  public void waitForCompletion(long timeout) throws MqttException {
     synchronized (waitObject) {
       try {
         waitObject.wait(timeout);

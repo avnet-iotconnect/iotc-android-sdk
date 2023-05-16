@@ -38,7 +38,7 @@ data class IdentityServiceResponse(
             @SerializedName("cd")
             val cd: String, // Unique code with 7 or 8 characters.
             @SerializedName("df")
-            val df: Int, // 60--  Data Frequency defined on template to control device data send frequency
+            var df: Int, // 60--  Data Frequency defined on template to control device data send frequency
             @SerializedName("edge")
             val edge: Int, // 0--- 1 – If device is Edge Device
             @SerializedName("gtw")

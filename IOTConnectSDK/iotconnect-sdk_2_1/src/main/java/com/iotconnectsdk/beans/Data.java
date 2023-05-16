@@ -2,82 +2,83 @@ package com.iotconnectsdk.beans;
 
 import com.google.gson.annotations.SerializedName;
 
-public class Data{
+public class Data {
 
-	@SerializedName("ackId")
-	private Object ackId;
+    @SerializedName("ack")
+    private Object ackId;
 
-	@SerializedName("cpid")
-	private String cpid;
+    @SerializedName("cpid")
+    private String cpid;
 
-	@SerializedName("cmdType")
-	private String cmdType;
+    @SerializedName("ct")
+    private int cmdType;
 
-	@SerializedName("ack")
-	private boolean ack;
+    @SerializedName("ackb")
+    private boolean ack;
 
-	@SerializedName("guid")
-	private String guid;
+    @SerializedName("guid")
+    private String guid;
 
-	@SerializedName("uniqueId")
-	private String uniqueId;
+    @SerializedName("uniqueId")
+    private String uniqueId;
 
-	@SerializedName("command")
-	private String command;
+    @SerializedName("command")
+    private String command;
 
-	public void setAckId(Object ackId){
-		this.ackId = ackId;
-	}
 
-	public Object getAckId(){
-		return ackId;
-	}
+    public void setAckId(Object ackId) {
+        this.ackId = ackId;
+    }
 
-	public void setCpid(String cpid){
-		this.cpid = cpid;
-	}
+    public Object getAckId() {
+        return ackId;
+    }
 
-	public String getCpid(){
-		return cpid;
-	}
+    public void setCpid(String cpid) {
+        this.cpid = cpid;
+    }
 
-	public void setCmdType(String cmdType){
-		this.cmdType = cmdType;
-	}
+    public String getCpid() {
+        return cpid;
+    }
 
-	public String getCmdType(){
-		return cmdType;
-	}
+    public void setCmdType(int cmdType) {
+        this.cmdType = cmdType;
+    }
 
-	public void setAck(boolean ack){
-		this.ack = ack;
-	}
+    public int getCmdType() {
+        return cmdType;
+    }
 
-	public boolean isAck(){
-		return ack;
-	}
+    public void setAck(boolean ack) {
+        this.ack = ack;
+    }
 
-	public void setGuid(String guid){
-		this.guid = guid;
-	}
+    public boolean isAck() {
+        return ack;
+    }
 
-	public String getGuid(){
-		return guid;
-	}
+    public void setGuid(String guid) {
+        this.guid = guid;
+    }
 
-	public void setUniqueId(String uniqueId){
-		this.uniqueId = uniqueId;
-	}
+    public String getGuid() {
+        return guid;
+    }
 
-	public String getUniqueId(){
-		return uniqueId;
-	}
+    public void setUniqueId(String uniqueId) {
+        this.uniqueId = uniqueId;
+    }
 
-	public void setCommand(String command){
-		this.command = command;
-	}
+    public String getUniqueId() {
+        return uniqueId;
+    }
 
-	public String getCommand(){
-		return command;
-	}
+    public void setCommand(String command) {
+        this.command = command;
+    }
+
+    public String getCommand() {
+        return command;
+    }
 }

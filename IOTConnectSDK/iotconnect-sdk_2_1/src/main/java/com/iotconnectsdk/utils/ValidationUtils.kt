@@ -81,7 +81,7 @@ internal class ValidationUtils private constructor(
      * */
     fun isValidInputFormat(jsonData: String, uniqueId: String): Boolean {
         //check is input empty.
-        if (jsonData.isEmpty() || jsonData.length == 0) {
+        if (jsonData.isEmpty() || jsonData.isEmpty()) {
             iotSDKLogUtils.log(true, isDebug, "ERR_SD05", context.getString(R.string.ERR_SD05))
             return false
         }
@@ -195,57 +195,122 @@ internal class ValidationUtils private constructor(
         }
     }
 
-    fun responseCodeMessage(rc: Int) {
-        when (rc) {
-            0 -> iotSDKLogUtils.log(
-                false,
-                isDebug,
-                "INFO_IN08",
-                context.getString(R.string.INFO_IN08)
+    fun responseCodeMessage(rc: Int): String = when (rc) {
+        0 -> {
+            iotSDKLogUtils.log(
+                false, isDebug, "INFO_IN08", context.getString(R.string.INFO_IN08)
             )
-            1 -> iotSDKLogUtils.log(
+            ""
+        }
+        1 -> {
+            iotSDKLogUtils.log(
                 false,
                 isDebug,
                 "INFO_IN09",
                 context.getString(R.string.INFO_IN09)
             )
-            2 -> iotSDKLogUtils.log(
+
+            context.getString(R.string.tv_device_not_found)
+        }
+        2 -> {
+            iotSDKLogUtils.log(
                 false,
                 isDebug,
                 "INFO_IN10",
                 context.getString(R.string.INFO_IN10)
             )
-            3 -> iotSDKLogUtils.log(
+
+            context.getString(R.string.tv_device_not_active)
+        }
+        3 -> {
+            iotSDKLogUtils.log(
                 false,
                 isDebug,
                 "INFO_IN11",
                 context.getString(R.string.INFO_IN11)
             )
-            4 -> iotSDKLogUtils.log(
+            context.getString(R.string.tv_device_unassociated)
+        }
+        4 -> {
+            iotSDKLogUtils.log(
                 false,
                 isDebug,
                 "INFO_IN12",
                 context.getString(R.string.INFO_IN12)
             )
-            5 -> iotSDKLogUtils.log(
+            context.getString(R.string.tv_device_not_acquired)
+        }
+        5 -> {
+            iotSDKLogUtils.log(
                 false,
                 isDebug,
                 "INFO_IN13",
                 context.getString(R.string.INFO_IN13)
             )
-            6 -> iotSDKLogUtils.log(
+            context.getString(R.string.tv_device_disabled)
+        }
+        6 -> {
+            iotSDKLogUtils.log(
                 false,
                 isDebug,
                 "INFO_IN14",
                 context.getString(R.string.INFO_IN14)
             )
-            else -> iotSDKLogUtils.log(
+            context.getString(R.string.tv_company_not_found)
+        }
+
+        7 -> {
+            iotSDKLogUtils.log(
+                false,
+                isDebug,
+                "INFO_IN14",
+                context.getString(R.string.INFO_IN14)
+            )
+            context.getString(R.string.tv_subs_expired)
+        }
+
+        8 -> {
+            iotSDKLogUtils.log(
+                false,
+                isDebug,
+                "INFO_IN14",
+                context.getString(R.string.INFO_IN14)
+            )
+            context.getString(R.string.tv_conn_not_allow)
+        }
+
+        9 -> {
+            iotSDKLogUtils.log(
+                false,
+                isDebug,
+                "INFO_IN14",
+                context.getString(R.string.INFO_IN14)
+            )
+            context.getString(R.string.tv_invalid_boot_certificate)
+        }
+
+        10 -> {
+            iotSDKLogUtils.log(
+                false,
+                isDebug,
+                "INFO_IN14",
+                context.getString(R.string.INFO_IN14)
+            )
+            context.getString(R.string.tv_invalid_opp_certificate)
+        }
+
+
+        else -> {
+            iotSDKLogUtils.log(
                 false,
                 isDebug,
                 "INFO_IN15",
                 context.getString(R.string.INFO_IN15)
             )
+            context.getString(R.string.INFO_IN15)
         }
+
+
     }
 
     companion object {
@@ -254,7 +319,7 @@ internal class ValidationUtils private constructor(
             iotSDKLogUtils: IotSDKLogUtils,
             context: Context,
             debug: Boolean
-        ): ValidationUtils? {
+        ): ValidationUtils {
             return validationUtils
                 ?: ValidationUtils(iotSDKLogUtils, context, debug)
         }

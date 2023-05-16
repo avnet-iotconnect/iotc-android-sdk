@@ -25,7 +25,6 @@
     <string name="ERR_SD03">" It does not matched with predefined standard date time format for payload's 'time'"</string>
     <string name="ERR_SD10">Publish data failed : MQTT connection not found</string>
 
-    <string name="INFO_IN01">Device information received successfully</string>
     <string name="INFO_IN02">Device connected </string>
     <string name="INFO_IN03">Device disconnected</string>
     <string name="INFO_IN04">Initializing…</string>
@@ -33,18 +32,11 @@
     <string name="INFO_SD01">Publish data :</string>
     <string name="INFO_TP01">Twin property updated successfully :</string>
 
-    <string name="INFO_CM01">Command : 0x01 : STANDARD_COMMAND</string>
+    <string name="INFO_CM01">Command : 0 : STANDARD_COMMAND</string>
 
-    <string name="INFO_CM02">Command : 0x02 : FIRMWARE_UPDATE</string>
-    <string name="INFO_CM03">Command : 0x10 : ATTRIBUTE_UPDATE</string>
-    <string name="INFO_CM04">Command : 0x11 : SETTING_UPDATE</string>
-    <string name="INFO_CM05">Command : 0x12 : PASSWORD_UPDATE</string>
-    <string name="INFO_CM06">Command : 0x13 : DEVICE_UPDATE</string>
-    <string name="INFO_CM07">Command : 0x15 : RULE_UPDATE</string>
+    <string name="INFO_CM02">Command : 1 : FIRMWARE_UPDATE</string>
     <string name="INFO_CM08">Command : 0x99 : STOP_SDK_CONNECTION</string>
-    <string name="INFO_CM09">Command : 0x16 : SDK_CONNECTION_STATUS</string>
-    <string name="INFO_CM10">Command acknowledgement success></string>
-    <string name="INFO_CM16">Command : 0x16 : DEVICE_CONNECTION_STATUS</string>
+    <string name="INFO_CM16">Command : 116 : DEVICE_CONNECTION_STATUS</string>
 
     <string name="INFO_DC01">Device already disconnected</string>
     <string name="INFO_IN06">Rechecking…</string>
@@ -68,5 +60,16 @@
     <string name="INFO_OS03">File has been created to store offline data.</string>
     <string name="INFO_OS04">Offline log file deleted</string>
     <string name="INFO_OS05">No offline data found</string>
+
+    <string name="tv_device_not_found">Device not found. Device is not whitelisted to platform</string>
+    <string name="tv_device_not_active">Device is not active</string>
+    <string name="tv_device_unassociated">Un-Associated. Device has not any template associated with it</string>
+    <string name="tv_device_not_acquired">Device is not acquired. Device is created but it is in release state</string>
+    <string name="tv_device_disabled">Device is disabled. It’s disabled from IoTHub by Platform Admin</string>
+    <string name="tv_company_not_found">Company not found as SID is not valid</string>
+    <string name="tv_subs_expired">Subscription is expired</string>
+    <string name="tv_conn_not_allow">Connection Not Allowed</string>
+    <string name="tv_invalid_boot_certificate">Invalid Bootstrap Certificate</string>
+    <string name="tv_invalid_opp_certificate">Invalid Operational Certificate</string>
 
 </resources>

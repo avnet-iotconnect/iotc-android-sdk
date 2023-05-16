@@ -18,6 +18,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.gson.Gson;
 import com.iotconnectsdk.SDKClient;
@@ -41,7 +42,9 @@ import com.softweb.iotconnectsdk.model.Attribute;
 import com.softweb.iotconnectsdk.model.AttributesModel;
 import com.softweb.iotconnectsdk.model.Certificate;
 import com.softweb.iotconnectsdk.model.D;
+import com.softweb.iotconnectsdk.model.D2CSendAckBean;
 import com.softweb.iotconnectsdk.model.Device;
+import com.softweb.iotconnectsdk.model.GetDeviceAttributes;
 import com.softweb.iotconnectsdk.model.OfflineStorage;
 import com.softweb.iotconnectsdk.model.SdkOptions;
 import com.softweb.iotconnectsdk.R;
@@ -85,7 +88,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
 
     private HashMap<String, List<TextInputLayout>> inputMap;
     private List<TextInputLayout> editTextInputList;
-    private String[] permissions = new String[]{
+    private final String[] permissions = new String[]{
             Manifest.permission.READ_PHONE_STATE,
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
@@ -105,7 +108,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
 
     private SDKClient sdkClient;
 
-    private static String DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+    private static final String DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -166,12 +169,16 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                      */
                     sdkClient = SDKClient.getInstance(FirmwareActivity.this, cpId, uniqueId, FirmwareActivity.this, FirmwareActivity.this, getSdkOptions(), environment);
 
-                 //   showDialog(FirmwareActivity.this);
+                    showDialog(FirmwareActivity.this);
                 }
             }
         } else if (v.getId() == R.id.btnSendData) {
-           // showDialog(FirmwareActivity.this);
-            sendInputData();
+            // showDialog(FirmwareActivity.this);
+            try {
+                sendInputData();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         } else if (v.getId() == R.id.btnGetAllTwins) {
             if (sdkClient != null) {
                 if (isConnected) {
@@ -181,7 +188,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                      * Input   :
                      * Output  :
                      */
-                   // sdkClient.getAllTwins();
+                    sdkClient.getAllTwins();
                 } else {
                     Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
                 }
@@ -213,15 +220,17 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         return true;
     }
 
+    /*
+     * Check here that permission is granted or not and do accordingly
+     * */
     @Override
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == 100) {
             if (grantResults.length > 0
                     && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // do something
             }
-            return;
         }
     }
 
@@ -314,16 +323,22 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                         //for object type values.
                         objectKeyName = label.split(":")[0];
                         String lab = label.split(":")[1];
-                        gyroObj.put(lab, value);
+
+                        boolean keyExist = keyExists(dObj, objectKeyName);
+                        if (keyExist) {
+                            gyroObj.put(lab, value);
+                            dObj.putOpt(objectKeyName, gyroObj);
+                        } else {
+                            gyroObj = new JSONObject();
+                            gyroObj.put(lab, value);
+                            dObj.putOpt(objectKeyName, gyroObj);
+                        }
+
+
                     } else {
                         //for simple key values.
                         dObj.put(label, value);
                     }
-                }
-
-                // add object type values.
-                if (gyroObj.length() != 0) {
-                    dObj.putOpt(objectKeyName, gyroObj);
                 }
 
                 valueObj.put("data", dObj);
@@ -334,16 +349,31 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
             }
         }
         // Device to Cloud data publish.
-        /*if (isConnected)
-            *//*
+        if (isConnected)
+            /*
              * Type    : Public data Method "sendData()"
              * Usage   : To publish the data on cloud D2C
              * Input   : Predefined data object
              * Output  :
-             *//*
+             */
             sdkClient.sendData(inputArray.toString());
         else
-            Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();*/
+            Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
+    }
+
+
+    private boolean keyExists(JSONObject object, String searchedKey) throws JSONException {
+        boolean exists = object.has(searchedKey);
+        if (!exists) {
+            Iterator<?> keys = object.keys();
+            while (keys.hasNext()) {
+                String key = (String) keys.next();
+                if (object.get(key) instanceof JSONObject) {
+                    exists = keyExists((JSONObject) object.get(key), searchedKey);
+                }
+            }
+        }
+        return exists;
     }
 
     /*
@@ -366,109 +396,134 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
      */
     @Override
     public void onReceiveMsg(String message) {
-        hideDialog(FirmwareActivity.this);
-        Log.d(TAG, "onReceiveMsg => " + message);
 
-        if (!message.isEmpty()) {
-            btnClear.setEnabled(true);
+        btnClear.setEnabled(true);
+        try {
+            Log.d(TAG, "onReceiveMsg => " + message);
 
-            etSubscribe.append("\n--- Device Command Received ---\n");
-            etSubscribe.append(message + "");
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+
+                    etSubscribe.setText(message);
+
+                }
+            });
+
 
             String messageType = "";
+            String ackId = "";
+            String childId = "";
+            int cmdType = -1;
+            JSONObject mainObject = null;
 
-            try {
-                JSONObject mainObject = new JSONObject(message);
+            boolean jsonValid = isJSONValid(message);
 
+            if (jsonValid) {
+                mainObject = new JSONObject(message);
                 //Publish message call back received.
-                if (!mainObject.has("cmdType")) {
+                if (!mainObject.has("ct")) {
                     return;
                 }
 
-                String cmdType = mainObject.getString("cmdType");
+                cmdType = mainObject.getInt("ct");
 
-                String ackId = mainObject.getJSONObject("data").getString("ackId");
-
-                switch (cmdType) {
-                    case "0x01":
-                        Log.d(TAG, "--- Device Command Received ---");
-                        if (ackId != null && !ackId.isEmpty()) {
-                            messageType = "5";
-                            JSONObject objD = getAckObject(mainObject);
-                            objD.put("st", 6);
-
-                            /*
-                             * Type    : Public Method "sendAck()"
-                             * Usage   : Send device command received acknowledgment to cloud
-                             *
-                             * - status Type
-                             *     st = 6; // Device command Ack status
-                             *     st = 4; // Failed Ack
-                             * - Message Type
-                             *     msgType = 5; // for "0x01" device command
-                             */
-                            /*if (isConnected)
-                                sdkClient.sendAck(objD, messageType);
-                            else
-                                Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();*/
-                        }
-                        break;
-                    case "0x02":
-                        Log.d(TAG, "--- Firmware OTA Command Received ---");
-                        if (ackId != null && !ackId.isEmpty()) {
-                            messageType = "11";
-                            JSONObject obj = getAckObject(mainObject);
-                            obj.put("st", 7);
-
-                            /*
-                             * Type    : Public Method "sendAck()"
-                             * Usage   : Send firmware command received acknowledgement to cloud
-                             * - status Type
-                             *     st = 7; // firmware OTA command Ack status
-                             *     st = 4; // Failed Ack
-                             * - Message Type
-                             *     msgType = 11; // for "0x02" Firmware command
-                             */
-
-                           /* if (isConnected)
-                                sdkClient.sendAck(obj, messageType);
-                            else
-                                Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();*/
-                        }
-                        break;
-                    case "0x16":
-                          /*command type "0x16" for Device "Connection Status"
-                          true = connected, false = disconnected*/
-
-                        Log.d(TAG, "--- Device connection status ---");
-                        JSONObject dataObj = mainObject.getJSONObject("data");
-                        Log.d(TAG, "DeviceId ::: [" + dataObj.getString("uniqueId") + "] :: Device status :: " + dataObj.getString("command") + "," + new Date());
-
-                        if (dataObj.has("command")) {
-                            if (dataObj.getBoolean("command")) {
-                                this.isConnected = true;
-                            } else {
-                                this.isConnected = false;
-                            }
-                            onConnectionStateChange(this.isConnected);
-                        }
-                        break;
-
-                    default:
-                        break;
+                if (mainObject.has("ack")) {
+                    ackId = mainObject.getString("ack");
                 }
 
-            } catch (JSONException e) {
-                e.printStackTrace();
+                if (mainObject.has("id")) {
+                    childId = mainObject.getString("id");
+                }
             }
+
+            switch (cmdType) {
+                case 0:
+                    Log.d(TAG, "--- Device Command Received ---");
+                    if (ackId != null && !ackId.isEmpty()) {
+                        messageType = "5";
+
+                        /*
+                         * Type    : Public Method "sendAck()"
+                         * Usage   : Send device command received acknowledgment to cloud
+                         *
+                         * - status Type
+                         *     st = 6; // Device command Ack status
+                         *     st = 4; // Failed Ack
+                         * - Message Type
+                         *     msgType = 5; // for "0x01" device command
+                         */
+
+                        D2CSendAckBean d2CSendAckBean = new D2CSendAckBean(getCurrentTime(), new D2CSendAckBean.Data(ackId, 0, 6, "", childId));
+                        Gson gson = new Gson();
+                        String jsonString = gson.toJson(d2CSendAckBean);
+
+                        if (isConnected)
+                            sdkClient.sendAck(jsonString, messageType);
+                        else
+                            Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
+                    }
+                    break;
+                case 1:
+                    Log.d(TAG, "--- Firmware OTA Command Received ---");
+                    if (ackId != null && !ackId.isEmpty()) {
+                        messageType = "11";
+                        //   JSONObject obj = getAckObject(mainObject);
+                        //  obj.put("st", 7);
+
+                        /*
+                         * Type    : Public Method "sendAck()"
+                         * Usage   : Send firmware command received acknowledgement to cloud
+                         * - status Type
+                         *     st = 0; // firmware OTA command Ack status
+                         *     st = 4; // Failed Ack
+                         * - Message Type
+                         *     msgType = 11; // for "0x02" Firmware command
+                         */
+
+                        D2CSendAckBean d2CSendAckBean = new D2CSendAckBean(getCurrentTime(), new D2CSendAckBean.Data(ackId, 1, 0, "", childId));
+                        Gson gson = new Gson();
+                        String jsonString = gson.toJson(d2CSendAckBean);
+
+                        if (isConnected)
+                            sdkClient.sendAck(jsonString, messageType);
+                        else
+                            Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
+                    }
+                    break;
+
+                case 116:
+                    /*command type "116" for Device "Connection Status"
+                      true = connected, false = disconnected*/
+
+                    Log.d(TAG, "--- Device connection status ---");
+                    // JSONObject dataObj = mainObject.getJSONObject("data");
+                    Log.d(TAG, "DeviceId ::: [" + mainObject.getString("uniqueId") + "] :: Device status :: " + mainObject.getString("command") + "," + new Date());
+
+                    if (mainObject.has("command")) {
+                        isConnected = mainObject.getBoolean("command");
+                        onConnectionStateChange(isConnected);
+                    }
+                    break;
+
+                default:
+                    hideDialog(FirmwareActivity.this);
+                    setStatusText(R.string.device_disconnected);
+                    Toast.makeText(FirmwareActivity.this, message, Toast.LENGTH_LONG).show();
+
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+        // }
     }
 
     /*
      * Type    : Function "onConnectionStateChange()"
      */
     private void onConnectionStateChange(boolean isConnected) {
-        hideDialog(FirmwareActivity.this);
+
         linearLayout.removeAllViews();
         if (isConnected) {
 
@@ -482,21 +537,25 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
              * Input   :
              * Output  :
              */
-         /*   String data = sdkClient.getAttributes();
-            if (data != null) {
+
+            String data = sdkClient.getAttributes();
+            Log.d("attdata", "::" + data);
+            if (data != null && !data.equalsIgnoreCase("[]")) {
                 btnSendData.setEnabled(true);
                 btnGetAllTwins.setEnabled(true);
                 createDynamicViews(data);
-            }*/
+            } else {
+                return;
+            }
 
         } else {
             setStatusText(R.string.device_disconnected);
             tvConnStatus.setSelected(false);
             btnConnect.setText("Connect");
-
             btnSendData.setEnabled(false);
             btnGetAllTwins.setEnabled(false);
         }
+        hideDialog(FirmwareActivity.this);
     }
 
 
@@ -619,7 +678,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
              * Input   :
              * Output  :
              */
-           // sdkClient.dispose();
+            sdkClient.dispose();
         }
     }
 
@@ -691,7 +750,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                         Object value = jsonObject.get(key);
 
                         if (sdkClient != null && isConnected) {
-                          //  sdkClient.updateTwin(key, "" + value);
+                            sdkClient.updateTwin(key, "" + value);
                         }
 
                         break;
@@ -701,7 +760,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                     }
                 }
             }
-        } catch (JSONException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -725,6 +784,21 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         if (activity != null && !activity.isFinishing() && progressDialog != null && progressDialog.isShowing()) {
             progressDialog.dismiss();
         }
+    }
+
+    public boolean isJSONValid(String message) {
+        try {
+            new JSONObject(message);
+        } catch (JSONException ex) {
+            // edited, to include @Arthur's comment
+            // e.g. in case JSONArray is valid as well...
+            try {
+                new JSONArray(message);
+            } catch (JSONException ex1) {
+                return false;
+            }
+        }
+        return true;
     }
 
 }

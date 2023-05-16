@@ -45,9 +45,9 @@ class AlarmPingSender implements MqttPingSender {
 
 	// TODO: Add log.
 	private ClientComms comms;
-	private MqttService service;
+	private final MqttService service;
 	private BroadcastReceiver alarmReceiver;
-	private AlarmPingSender that;
+	private final AlarmPingSender that;
 	private PendingIntent pendingIntent;
 	private volatile boolean hasStarted = false;
 

@@ -1,9 +1,9 @@
 package com.iotconnectsdk.utils
 
 import android.content.Context
-import android.content.SharedPreferences
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.iotconnectsdk.beans.CommonResponseBean
 import com.iotconnectsdk.webservices.responsebean.IdentityServiceResponse
 
 /**
@@ -18,6 +18,11 @@ internal class IotSDKPreferences private constructor(context: Context) {
 
         val SYNC_API = "SYNC_API"
         val SYNC_RESPONSE = "sync_response"
+        val ATTRIBUTE_RESPONSE = "att_response"
+        val SETTING_TWIN_RESPONSE = "setting_response"
+        val EDGE_RULE_RESPONSE = "edge_rule_response"
+        val CHILD_DEVICE_RESPONSE = "child_device_response"
+
         val TEXT_FILE_NAME = "text_file"
 
         @Volatile
@@ -46,9 +51,30 @@ internal class IotSDKPreferences private constructor(context: Context) {
         }
     }
 
+    fun putBooleanData(key: String?, value: Boolean) {
+        val mEditor = mSharedPreferences.edit()
+        mEditor.putBoolean(key, value)
+        mEditor.commit()
+    }
+
+
+    fun getBooleanData(key: String?): Boolean {
+        return try {
+            mSharedPreferences.getBoolean(key, false)
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+            true
+        }
+    }
+
+    fun clearSharedPreferences() {
+        val mEditor = mSharedPreferences.edit()
+        mEditor.clear()
+        mEditor.commit()
+    }
+
     fun getSyncResponse(key: String?): IdentityServiceResponse? {
-        var syncServiceResponse: IdentityServiceResponse? = null
-        syncServiceResponse = try {
+        val syncServiceResponse = try {
             val jsonString = getStringData(key)
             Gson().fromJson(jsonString, IdentityServiceResponse::class.java)
         } catch (e: Exception) {
@@ -56,6 +82,17 @@ internal class IotSDKPreferences private constructor(context: Context) {
         }
         return syncServiceResponse
     }
+
+    fun getDeviceInformation(key: String?): CommonResponseBean? {
+        val attributeResponse = try {
+            val jsonString = getStringData(key)
+            Gson().fromJson(jsonString, CommonResponseBean::class.java)
+        } catch (e: Exception) {
+            return null
+        }
+        return attributeResponse
+    }
+
 
     fun saveList(key: String?, valueList: List<String?>?): Boolean {
         val value = Gson().toJson(valueList)
