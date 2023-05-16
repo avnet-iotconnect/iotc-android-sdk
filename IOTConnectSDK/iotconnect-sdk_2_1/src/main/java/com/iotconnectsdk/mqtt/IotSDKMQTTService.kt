@@ -1,6 +1,7 @@
 package com.iotconnectsdk.mqtt
 
 import android.content.Context
+import android.os.Build
 import android.text.TextUtils
 import android.util.Log
 import com.iotconnectsdk.R
@@ -10,6 +11,9 @@ import com.iotconnectsdk.interfaces.TwinUpdateCallback
 import com.iotconnectsdk.utils.DateTimeUtils
 import com.iotconnectsdk.utils.IotSDKLogUtils
 import com.iotconnectsdk.utils.IotSDKUrls
+
+import com.iotconnectsdk.utils.SDKClientUtils.generateSasToken
+import com.iotconnectsdk.utils.SDKClientUtils.generateSasTokenLatest
 
 import com.iotconnectsdk.webservices.responsebean.IdentityServiceResponse
 import com.iotconnectsdk.utils.SecurityHelper.createSocketFactory
@@ -152,15 +156,16 @@ internal class IotSDKMQTTService private constructor(
         try {
             if (sdkOptions != null) {
                 sdkObj = JSONObject(sdkOptions)
-                if (sdkObj.has("certificate")) {
-                    val certificate = sdkObj.getJSONObject("certificate")
+                if (authenticationType == IotSDKUrls.AUTH_TYPE_SELF_SIGN || authenticationType == IotSDKUrls.AUTH_TYPE_CA_SIGN) {
+                    if (sdkObj.has("certificate")) {
+                        val certificate = sdkObj.getJSONObject("certificate")
 
-                    var caFile: String? = null
-                    var clientCrtFile: String? = null
-                    var clientKeyFile: String? = null
+                        var caFile: String? = null
+                        var clientCrtFile: String? = null
+                        var clientKeyFile: String? = null
 
 
-                    if (authenticationType == IotSDKUrls.AUTH_TYPE_SELF_SIGN || authenticationType == IotSDKUrls.AUTH_TYPE_CA_SIGN) {
+
                         if (certificate.has("SSLCaPath")) {
                             caFile = certificate.getString("SSLCaPath")
                         }
@@ -191,7 +196,29 @@ internal class IotSDKMQTTService private constructor(
                         mqttConnectOptions.socketFactory = socketFactory
                     }
 
+                } else if (authenticationType == IotSDKUrls.AUTH_TYPE_SYMMETRIC_KEY) {
+                    if (sdkObj.has("devicePK")) {
+                        val devicePK = sdkObj.getString("devicePK")
+                        if (TextUtils.isEmpty(devicePK)) {
+                            return
+                        }
+
+                        val resourceUri = "${protocolBean.h}/devices/${protocolBean.id}"
+                        val generateSasToken = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            generateSasTokenLatest(resourceUri, devicePK)
+                        } else {
+                            generateSasToken(resourceUri, devicePK)
+                        }
+                        if (generateSasToken != null) {
+                            mqttConnectOptions.password = generateSasToken.toCharArray()
+                        }
+                    }
+                } else if (authenticationType == IotSDKUrls.AUTH_TYPE_TOKEN) {
+                    if (protocolBean.pwd != null) {
+                        mqttConnectOptions.password = protocolBean.pwd.toCharArray()
+                    }
                 }
+
             }
 
         } catch (e: Exception) {
@@ -199,9 +226,7 @@ internal class IotSDKMQTTService private constructor(
         }
 
         mqttConnectOptions.userName = protocolBean.un
-        if (protocolBean.pwd != null) {
-            mqttConnectOptions.password = protocolBean.pwd.toCharArray()
-        }
+
         try {
             mqttAndroidClient?.connect(mqttConnectOptions, null, object : IMqttActionListener {
                 override fun onSuccess(asyncActionToken: IMqttToken) {
@@ -216,7 +241,7 @@ internal class IotSDKMQTTService private constructor(
                 }
 
                 override fun onFailure(asyncActionToken: IMqttToken, exception: Throwable) {
-                    Log.d("exception","::"+exception.printStackTrace())
+                    Log.d("exception", "::" + exception.printStackTrace())
                     hubToSdkCallback.onConnectionStateChange(false)
                     iotSDKLogUtils.log(
                         true, isDebug, "ERR_IN13", context.getString(R.string.ERR_IN13)

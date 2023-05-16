@@ -289,22 +289,17 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
 
         SdkOptions sdkOptions = new SdkOptions();
 
-
-        InputStream caCrtFile = this.getResources().openRawResource(R.raw.root_certificate1);
-        InputStream crtFile = this.getResources().openRawResource(R.raw.device_certificate2);
-        InputStream keyFile = this.getResources().openRawResource(R.raw.device);
-
-
         Certificate certificate = new Certificate();
 
-       /* certificate.setsSLKeyPath(Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.device).toString());
-        certificate.setsSLCertPath(Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.device_certificate).toString());
-        certificate.setsSLCaPath(Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.root_certificate).toString());*/
+        //put certificate file in asset folder
+        certificate.setsSLKeyPath(getRobotCacheFile(this, "").getAbsolutePath());
+        certificate.setsSLCertPath(getRobotCacheFile(this, "").getAbsolutePath());
+        certificate.setsSLCaPath(getRobotCacheFile(this, "").getAbsolutePath());
 
 
-        certificate.setsSLKeyPath(getRobotCacheFile(this, "device.key").getAbsolutePath());
-        certificate.setsSLCertPath(getRobotCacheFile(this, "device1.pem").getAbsolutePath());
-        certificate.setsSLCaPath(getRobotCacheFile(this, "ms.pem").getAbsolutePath());
+
+        //For using symmetric key authentication type
+        sdkOptions.setDevicePK("");
 
         OfflineStorage offlineStorage = new OfflineStorage();
         offlineStorage.setDisabled(false); //default value false
@@ -322,25 +317,6 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         return sdkOptionsJsonStr;
     }
 
-
-    public static File getRobotCacheFile(Context context, String fileName) {
-        File cacheFile = new File(context.getCacheDir(), fileName);
-        try {
-            try (InputStream inputStream = context.getAssets().open(fileName)) {
-                try (FileOutputStream outputStream = new FileOutputStream(cacheFile)) {
-                    byte[] buf = new byte[1024];
-                    int len;
-                    while ((len = inputStream.read(buf)) > 0) {
-                        outputStream.write(buf, 0, len);
-                    }
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-
-        }
-        return cacheFile;
-    }
 
 
     /*
@@ -873,6 +849,25 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
             }
         }
         return true;
+    }
+
+    private File getRobotCacheFile(Context context, String fileName) {
+        File cacheFile = new File(context.getCacheDir(), fileName);
+        try {
+            try (InputStream inputStream = context.getAssets().open(fileName)) {
+                try (FileOutputStream outputStream = new FileOutputStream(cacheFile)) {
+                    byte[] buf = new byte[1024];
+                    int len;
+                    while ((len = inputStream.read(buf)) > 0) {
+                        outputStream.write(buf, 0, len);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+
+        }
+        return cacheFile;
     }
 
 }

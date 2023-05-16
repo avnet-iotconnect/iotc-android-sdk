@@ -19,6 +19,9 @@ public class SdkOptions {
     @SerializedName("skipValidation")
     private boolean skipValidation = false;
 
+    @SerializedName("devicePK")
+    private String devicePK;
+
     public OfflineStorage getOfflineStorage() {
         return offlineStorage;
     }
@@ -58,5 +61,13 @@ public class SdkOptions {
 
     public void setSkipValidation(boolean skipValidation) {
         this.skipValidation = skipValidation;
+    }
+
+    public String getDevicePK() {
+        return devicePK;
+    }
+
+    public void setDevicePK(String devicePK) {
+        this.devicePK = devicePK;
     }
 }

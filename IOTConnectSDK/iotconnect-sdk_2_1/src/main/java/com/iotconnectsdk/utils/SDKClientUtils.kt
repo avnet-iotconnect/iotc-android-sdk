@@ -1,6 +1,9 @@
 package com.iotconnectsdk.utils
 
 import android.content.Context
+import android.os.Build
+import android.util.Base64
+import androidx.annotation.RequiresApi
 import com.google.gson.Gson
 import com.iotconnectsdk.R
 import com.iotconnectsdk.beans.CommonResponseBean
@@ -9,7 +12,16 @@ import com.iotconnectsdk.beans.GetAttributeBean
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
+import java.time.Instant
+import java.time.ZonedDateTime
+import java.util.Calendar
+import java.util.Date
 import java.util.concurrent.CopyOnWriteArrayList
+import javax.crypto.Mac
+import javax.crypto.spec.SecretKeySpec
+
 
 internal object SDKClientUtils {
     private const val TEXT_FILE_PREFIX = "current"
@@ -57,21 +69,21 @@ internal object SDKClientUtils {
 
 //           if for not empty "p":"gyro"
             if (attribute.p != null && attribute.p.isNotEmpty()) {
-                    try {
-                        val attributeObj = JSONObject(Gson().toJson(attribute))
-                        attributesArray.put(attributeObj)
-                    } catch (e: Exception) {
-                    }
+                try {
+                    val attributeObj = JSONObject(Gson().toJson(attribute))
+                    attributesArray.put(attributeObj)
+                } catch (e: Exception) {
+                }
 
             } else {
                 // "p" : "", is empty.
                 val attributeValues = attribute.d
                 for (attributeValue in attributeValues) {
-                        try {
-                            val attributeObj = JSONObject(Gson().toJson(attributeValue))
-                            attributesArray.put(attributeObj)
-                        } catch (e: Exception) {
-                        }
+                    try {
+                        val attributeObj = JSONObject(Gson().toJson(attributeValue))
+                        attributesArray.put(attributeObj)
+                    } catch (e: Exception) {
+                    }
 
                 }
             }
@@ -133,7 +145,6 @@ internal object SDKClientUtils {
     }
 
 
-
     fun getFileSizeInKB(file: File): Long {
         val fileSizeInBytes = file.length()
         return fileSizeInBytes / 1024 //KB
@@ -188,9 +199,9 @@ internal object SDKClientUtils {
         return textFileName
     }
 
-     fun deleteTextFile(
-         fileNamesList: ArrayList<String?>, context: Context, directoryPath: String?,
-         iotSDKLogUtils: IotSDKLogUtils?, isDebug: Boolean
+    fun deleteTextFile(
+        fileNamesList: ArrayList<String?>, context: Context, directoryPath: String?,
+        iotSDKLogUtils: IotSDKLogUtils?, isDebug: Boolean
     ): Boolean {
         try {
             //Delete from device
@@ -210,4 +221,60 @@ internal object SDKClientUtils {
         }
         return true
     }
+
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    @Throws(Exception::class)
+    fun generateSasTokenLatest(resourceUri: String?, key: String?): String? {
+        // Token will expire in one year
+        val expiry = Instant.now().epochSecond + 31536000
+        val stringToSign = URLEncoder.encode(
+            resourceUri,
+            "UTF-8"
+        ) + "\n" + expiry
+        val decodedKey = java.util.Base64.getDecoder().decode(key)
+        val sha256HMAC = Mac.getInstance("HmacSHA256")
+        val secretKey =
+            SecretKeySpec(decodedKey, "HmacSHA256")
+        sha256HMAC.init(secretKey)
+        val encoder = java.util.Base64.getEncoder()
+        val signature = String(
+            encoder.encode(
+                sha256HMAC.doFinal(stringToSign.toByteArray(StandardCharsets.UTF_8))
+            ), StandardCharsets.UTF_8
+        )
+        return ("SharedAccessSignature sr=" + URLEncoder.encode(resourceUri, "UTF-8")
+                + "&sig=" + URLEncoder.encode(
+            signature,
+            StandardCharsets.UTF_8.name()
+        ) + "&se=" + expiry)
+    }
+
+    @Throws(java.lang.Exception::class)
+    fun generateSasToken(resourceUri: String?, key: String?): String? {
+        // Token will expire in one year
+        val expiry = Instant.now().epochSecond + 31536000
+        val stringToSign = URLEncoder.encode(resourceUri, "UTF-8") + "\n" + expiry
+
+        val decodedKey = Base64.decode(key, Base64.DEFAULT);
+        val sha256HMAC = Mac.getInstance("HmacSHA256")
+        val secretKey = SecretKeySpec(decodedKey, "HmacSHA256")
+        sha256HMAC.init(secretKey)
+
+        val base64String = Base64.encode(
+            sha256HMAC.doFinal(stringToSign.toByteArray(StandardCharsets.UTF_8)),
+            Base64.NO_WRAP
+        )
+
+        val signature = String(base64String, StandardCharsets.UTF_8)
+
+        return ("SharedAccessSignature sr=" + URLEncoder.encode(
+            resourceUri,
+            "UTF-8"
+        ) + "&sig=" + URLEncoder.encode(signature, StandardCharsets.UTF_8.name()) + "&se=" + expiry)
+    }
+
+
+
+
 }
