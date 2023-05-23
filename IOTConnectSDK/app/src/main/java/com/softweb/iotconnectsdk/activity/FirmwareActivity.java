@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -43,6 +44,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TimeZone;
 
 import com.softweb.iotconnectsdk.model.Attribute;
@@ -292,10 +294,9 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         Certificate certificate = new Certificate();
 
         //put certificate file in asset folder
-        certificate.setsSLKeyPath(getRobotCacheFile(this, "").getAbsolutePath());
-        certificate.setsSLCertPath(getRobotCacheFile(this, "").getAbsolutePath());
-        certificate.setsSLCaPath(getRobotCacheFile(this, "").getAbsolutePath());
-
+        certificate.setsSLKeyPath(getRobotCacheFile(this, "device.key").getAbsolutePath());
+        certificate.setsSLCertPath(getRobotCacheFile(this, "device_certificate.pem").getAbsolutePath());
+        certificate.setsSLCaPath(getRobotCacheFile(this, "self_signed_certificate.pem").getAbsolutePath());
 
 
         //For using symmetric key authentication type
@@ -316,7 +317,6 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
 
         return sdkOptionsJsonStr;
     }
-
 
 
     /*
@@ -852,22 +852,27 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
     }
 
     private File getRobotCacheFile(Context context, String fileName) {
-        File cacheFile = new File(context.getCacheDir(), fileName);
-        try {
-            try (InputStream inputStream = context.getAssets().open(fileName)) {
-                try (FileOutputStream outputStream = new FileOutputStream(cacheFile)) {
-                    byte[] buf = new byte[1024];
-                    int len;
-                    while ((len = inputStream.read(buf)) > 0) {
-                        outputStream.write(buf, 0, len);
+
+        if (!TextUtils.isEmpty(fileName)) {
+            File cacheFile = new File(context.getCacheDir(), fileName);
+            try {
+                try (InputStream inputStream = context.getAssets().open(fileName)) {
+                    try (FileOutputStream outputStream = new FileOutputStream(cacheFile)) {
+                        byte[] buf = new byte[1024];
+                        int len;
+                        while ((len = inputStream.read(buf)) > 0) {
+                            outputStream.write(buf, 0, len);
+                        }
                     }
                 }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
 
+            }
+            return cacheFile;
         }
-        return cacheFile;
+
+        return null;
     }
 
 }

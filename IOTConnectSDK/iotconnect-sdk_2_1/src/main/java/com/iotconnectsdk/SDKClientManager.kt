@@ -252,7 +252,7 @@ internal class SDKClientManager(
                     if (offlineStorage.has("disabled")) {
                         isSaveToOffline = offlineStorage.getBoolean("disabled")
                         if (!isSaveToOffline) { // false = offline data storing, true = not storing offline data
-
+                            isSaveToOffline = isSaveToOffline
                             //Add below configuration in respective sdk configuration. We want this setting to be done form firmware. default fileCount 1 and availeSpaceInMb is unlimited.
                             fileCount =
                                 if (offlineStorage.has("fileCount") && offlineStorage.getInt("fileCount") > 0) {
@@ -465,7 +465,16 @@ internal class SDKClientManager(
             return
         }
         mqttService = IotSDKMQTTService.getInstance(
-            context!!, sdkOptions,response.d.p, response.d.meta.at,this, this, this, iotSDKLogUtils!!, isDebug, uniqueId!!
+            context!!,
+            sdkOptions,
+            response.d.p,
+            response.d.meta.at,
+            this,
+            this,
+            this,
+            iotSDKLogUtils!!,
+            isDebug,
+            uniqueId!!
         )
         mqttService!!.connectMQTT()
 
@@ -897,10 +906,7 @@ internal class SDKClientManager(
                                 val file = File(
                                     File(context.filesDir, directoryPath), "$textFile.txt"
                                 )
-                                if (fileSizeToCreateInMb != 0 && SDKClientUtils.getFileSizeInKB(
-                                        file
-                                    ) >= fileSizeToCreateInMb
-                                ) {
+                                if (fileSizeToCreateInMb != 0 && SDKClientUtils.getFileSizeInKB(file) >= fileSizeToCreateInMb) {
                                     //create new text file.
                                     fileToWrite = createTextFile(
                                         context, directoryPath, fileCount, iotSDKLogUtils, isDebug
@@ -1241,10 +1247,12 @@ internal class SDKClientManager(
     private fun publishOfflineData() {
         try {
             syncOfflineData = true
+            val response = getSyncResponse()
             val finalOfflineData = CopyOnWriteArrayList<String>()
             finalOfflineData.addAll(readTextFile())
             if (finalOfflineData.isEmpty()) return
 
+            Thread.sleep(5000)
             //start timer to sync offline data.
             timerOfflineSync = Timer()
             val timerTaskObj: TimerTask = object : TimerTask() {
@@ -1262,7 +1270,7 @@ internal class SDKClientManager(
 //                                    dataObj.put(OFFLINE_DATA, 1);
 
                                     //publish offline data.
-                                    val response = getSyncResponse()
+
                                     mqttService!!.publishMessage(
                                         response?.d?.p?.topics?.od!!,
                                         dataObj.toString()
@@ -1271,8 +1279,9 @@ internal class SDKClientManager(
                                     iotSDKLogUtils!!.log(true, isDebug, "ERR_OS01", e.message!!)
                                     e.printStackTrace()
                                 }
-                                finalOfflineData.removeAt(i)
+                                //finalOfflineData.removeAt(i)
                             }
+                            finalOfflineData.removeAll(readTextFile())
                         }
                         false
                     } else {
@@ -1281,7 +1290,7 @@ internal class SDKClientManager(
                 }
             }
             timerOfflineSync!!.schedule(timerTaskObj, 0, 10000)
-        } catch (e: java.lang.Exception) {
+        } catch (e: Exception) {
             iotSDKLogUtils!!.log(true, isDebug, "ERR_OS01", e.message!!)
             e.printStackTrace()
         }
@@ -1302,18 +1311,26 @@ internal class SDKClientManager(
             val bufferedReader = BufferedReader(
                 FileReader(
                     File(
-                        File(
-                            context.filesDir, directoryPath
-                        ), fileNamesList[0] + ".txt"
+                        File(context.filesDir, directoryPath),
+                        fileNamesList[0] + ".txt"
                     )
                 )
             )
-            var read: String
+            // var read: String? = ""
 
-            while (bufferedReader.readLine().also { read = it } != null) {
+            //val allText = bufferedReader.use(BufferedReader::readText)
 
-                offlineData.add(read)
+            bufferedReader.useLines { lines ->
+                lines.forEach {
+                    offlineData.add(it)
+                }
             }
+
+
+            /* while (bufferedReader.readLine().also { read = it } != null) {
+
+                 offlineData.add(read)
+             }*/
             bufferedReader.close()
 
             //delete text file after reading all records.
@@ -1329,7 +1346,7 @@ internal class SDKClientManager(
                     false, isDebug, "INFO_OS04", context.getString(R.string.INFO_OS04)
                 )
             }
-        } catch (e: java.lang.Exception) {
+        } catch (e: Exception) {
             iotSDKLogUtils!!.log(
                 true, isDebug, "ERR_OS03", context!!.getString(R.string.ERR_OS03) + e.message
             )
