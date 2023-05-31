@@ -106,14 +106,16 @@ internal class IotSDKMQTTService private constructor(
         mqttAndroidClient?.setCallback(object : MqttCallbackExtended {
             override fun connectComplete(reconnect: Boolean, serverURI: String) {
                 // Because Clean Session is true, we need to re-subscribe
-                if (subscriptionTopic != null) {
-                    subscribeToTopic()
+               if (reconnect) {
+                    if (subscriptionTopic != null) {
+                        subscribeToTopic()
+                    }
                 }
 
             }
 
             override fun connectionLost(cause: Throwable?) {
-                hubToSdkCallback.onConnectionStateChange(false)
+                // hubToSdkCallback.onConnectionStateChange(false)
             }
 
             @Throws(Exception::class)
@@ -149,7 +151,7 @@ internal class IotSDKMQTTService private constructor(
             }
         })
         val mqttConnectOptions = MqttConnectOptions()
-        mqttConnectOptions.isAutomaticReconnect = false
+        mqttConnectOptions.isAutomaticReconnect = true
         mqttConnectOptions.isCleanSession = true
 
         var sdkObj: JSONObject

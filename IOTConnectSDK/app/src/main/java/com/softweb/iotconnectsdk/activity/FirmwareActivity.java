@@ -294,9 +294,9 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         Certificate certificate = new Certificate();
 
         //put certificate file in asset folder
-        certificate.setsSLKeyPath(getRobotCacheFile(this, "device.key").getAbsolutePath());
-        certificate.setsSLCertPath(getRobotCacheFile(this, "device_certificate.pem").getAbsolutePath());
-        certificate.setsSLCaPath(getRobotCacheFile(this, "self_signed_certificate.pem").getAbsolutePath());
+        certificate.setsSLKeyPath(getRobotCacheFile(this, "").getAbsolutePath());
+        certificate.setsSLCertPath(getRobotCacheFile(this, "").getAbsolutePath());
+        certificate.setsSLCaPath(getRobotCacheFile(this, "").getAbsolutePath());
 
 
         //For using symmetric key authentication type
