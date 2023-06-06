@@ -1045,7 +1045,7 @@ internal class SDKClientManager(
 
 
     @JvmSynthetic
-    fun getAllTwins() {
+    fun getTwins() {
         if (mqttService != null) {
             iotSDKLogUtils!!.log(
                 false, isDebug, "INFO_TP02", context!!.getString(R.string.INFO_TP02)
@@ -1399,12 +1399,22 @@ internal class SDKClientManager(
         }
     }
 
+    fun getChildDevices() {
+        val response = getSyncResponse()
+        publishMessage(
+            response?.d?.p?.topics!!.di,
+            JSONObject().put(MESSAGE_TYPE, DeviceIdentityMessages.GET_CHILD_DEVICES.value)
+                .toString(),
+            false
+        )
+    }
+
     /*Create child Device
     *
     *{"mt":221,"d":{"dn":"adasdad","id":"asdasd","tg":"qwe","g":"xvxcvx"}}
     * */
     @JvmSynthetic
-    fun createChild(innerObject: JSONObject) {
+    fun createChildDevice(innerObject: JSONObject) {
         val response = getSyncResponse()
         val mainObject = JSONObject()
         innerObject.put("g", response?.d?.meta?.gtw?.g)
@@ -1422,7 +1432,7 @@ internal class SDKClientManager(
     *
     * */
     @JvmSynthetic
-    fun deleteChild(innerObject: JSONObject) {
+    fun deleteChildDevice(innerObject: JSONObject) {
         val response = getSyncResponse()
         val mainObject = JSONObject()
         mainObject.put("mt", DeviceIdentityMessages.DELETE_CHILD_DEVICE.value)

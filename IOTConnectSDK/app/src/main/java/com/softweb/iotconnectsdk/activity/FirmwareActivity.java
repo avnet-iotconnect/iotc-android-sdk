@@ -6,7 +6,6 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -44,14 +43,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.TimeZone;
 
 import com.softweb.iotconnectsdk.model.Attribute;
 import com.softweb.iotconnectsdk.model.AttributesModel;
 import com.softweb.iotconnectsdk.model.Certificate;
 import com.softweb.iotconnectsdk.model.D;
-import com.softweb.iotconnectsdk.model.D2CSendAckBean;
+import com.iotconnectsdk.beans.D2CSendAckBean;
 import com.softweb.iotconnectsdk.model.Device;
 import com.softweb.iotconnectsdk.model.OfflineStorage;
 import com.softweb.iotconnectsdk.model.SdkOptions;
@@ -203,7 +201,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                      * Input   :
                      * Output  :
                      */
-                    sdkClient.getAllTwins();
+                    sdkClient.getTwins();
                 } else {
                     Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
                 }
@@ -482,14 +480,15 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                          *     msgType = 5; // for "0x01" device command
                          */
 
-                        D2CSendAckBean d2CSendAckBean = new D2CSendAckBean(getCurrentTime(), new D2CSendAckBean.Data(ackId, 0, 6, "", childId));
-                        Gson gson = new Gson();
-                        String jsonString = gson.toJson(d2CSendAckBean);
-
-                        if (isConnected)
-                            sdkClient.sendAck(jsonString);
-                        else
+                        if (isConnected) {
+                            if (TextUtils.isEmpty(childId)) {
+                                sdkClient.sendAckCmd(ackId, 6, "");
+                            } else {
+                                sdkClient.sendAckCmd(ackId, 6, "", childId);
+                            }
+                        } else {
                             Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
+                        }
                     }
                     break;
                 case 1:
@@ -506,29 +505,32 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                          *     msgType = 11; // for "0x02" Firmware command
                          */
 
-                        D2CSendAckBean d2CSendAckBean = new D2CSendAckBean(getCurrentTime(), new D2CSendAckBean.Data(ackId, 1, 0, "", childId));
-                        Gson gson = new Gson();
-                        String jsonString = gson.toJson(d2CSendAckBean);
+                        if (isConnected) {
 
-                        if (isConnected)
-                            sdkClient.sendAck(jsonString);
-                        else
+                            if (TextUtils.isEmpty(childId)) {
+                                sdkClient.sendOTAAckCmd(ackId, 0, "");
+                            } else {
+                                sdkClient.sendOTAAckCmd(ackId, 0, "", childId);
+                            }
+                        } else {
                             Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
+                        }
                     }
                     break;
 
                 case 2:
                     Log.d(TAG, "---Module Command Received ---");
                     if (ackId != null && !ackId.isEmpty()) {
+                        if (isConnected) {
 
-                        D2CSendAckBean d2CSendAckBean = new D2CSendAckBean(getCurrentTime(), new D2CSendAckBean.Data(ackId, 2, 0, "", childId));
-                        Gson gson = new Gson();
-                        String jsonString = gson.toJson(d2CSendAckBean);
-
-                        if (isConnected)
-                            sdkClient.sendAck(jsonString);
-                        else
+                            if (TextUtils.isEmpty(childId)) {
+                                sdkClient.sendAckModule(ackId, 0, "");
+                            } else {
+                                sdkClient.sendAckModule(ackId, 0, "", childId);
+                            }
+                        } else {
                             Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
+                        }
                     }
 
                     break;

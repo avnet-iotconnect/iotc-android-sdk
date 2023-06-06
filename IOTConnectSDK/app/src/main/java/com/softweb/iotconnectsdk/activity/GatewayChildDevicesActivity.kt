@@ -45,11 +45,8 @@ class GatewayChildDevicesActivity : AppCompatActivity(), AdapterView.OnItemSelec
 
         btnCreateDevice.setOnClickListener {
             if (checkValidation()) {
-                val innerObject = JSONObject()
-                innerObject.put("dn", etDisplayName.text.toString())
-                innerObject.put("id", etUniqueId.text.toString())
-                innerObject.put("tg", spTags.selectedItem.toString())
-                sdkClient.createChild(innerObject)
+
+                sdkClient.createChildDevice(etUniqueId.text.toString(),spTags.selectedItem.toString(),etDisplayName.text.toString())
             }
         }
 
@@ -61,9 +58,8 @@ class GatewayChildDevicesActivity : AppCompatActivity(), AdapterView.OnItemSelec
                     Toast.LENGTH_SHORT
                 ).show()
             } else {
-                val innerObject = JSONObject()
-                innerObject.put("id", etUniqueId.text.toString())
-                sdkClient.deleteChild(innerObject)
+
+                sdkClient.deleteChildDevice(etUniqueId.text.toString())
             }
 
         }

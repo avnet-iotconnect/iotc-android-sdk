@@ -1,4 +1,4 @@
-package com.softweb.iotconnectsdk.model
+package com.iotconnectsdk.beans
 
 
 import com.google.gson.annotations.SerializedName
