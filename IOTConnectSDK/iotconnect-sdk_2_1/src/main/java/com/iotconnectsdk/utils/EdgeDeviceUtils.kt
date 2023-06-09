@@ -110,14 +110,12 @@ internal object EdgeDeviceUtils {
                             if (twbList != null) {
                                 for (twb in twbList) {
                                     if (uniqueId == twb.uniqueId) {
-                                        // if (tag == twb.tag) {
                                         Log.d("uniqueIdedge", "::" + uniqueId + "" + twb.uniqueId)
                                         attributeArray = getEdgeDevicePublishAttributes(twb)
                                         if (attributeArray.length() > 0) {
                                             dInnerArrayObject.put(twb.attributeName, attributeArray)
                                         }
                                         clearObject(twb)
-                                        // }
                                     }
                                 }
                             }
@@ -127,7 +125,6 @@ internal object EdgeDeviceUtils {
                             dArrayObject.put(D_OBJ, gyroObj)
                             dArray.put(dArrayObject)
                             mainObj.put(D_OBJ, dArray)
-                            // edgeDeviceAttributeGyroMap.remove(key, twbList)
                             return mainObj
                         } catch (e: JSONException) {
                             e.printStackTrace()

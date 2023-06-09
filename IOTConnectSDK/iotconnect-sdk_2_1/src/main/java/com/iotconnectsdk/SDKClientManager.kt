@@ -1901,27 +1901,9 @@ internal class SDKClientManager(
     ) {
         var id = uniqueId1
         val tw = twTime?.replace("[^\\d.]".toRegex(), "")?.toDouble()
-        /*if (ln != null) {
-            edgeDeviceAttributeMap?.put(ln, TumblingWindowBean())
-        }
-
-        if (ln != null) {
-            if (gyroAttributeList != null) {
-                (edgeDeviceAttributeGyroMap as ListMultimap<String, List<TumblingWindowBean>>).put(
-                    ln, gyroAttributeList
-                )
-            }
-        }*/
 
         if (syncResponse.d.meta.gtw != null) {
-            /* val gatewayChildResponse = getGatewayChildResponse()
-             val getChildDeviceBean = GetChildDeviceBean()
 
-             getChildDeviceBean.tg = syncResponse.d.meta.gtw.tg
-             getChildDeviceBean.id = uniqueId
-             gatewayChildResponse?.d?.childDevice?.add(getChildDeviceBean)
-
-             id = gatewayChildResponse?.d?.childDevice?.find { it.tg == tag }?.id.toString()*/
         } else {
             if (uniqueId != null) {
                 id = uniqueId
@@ -1942,12 +1924,7 @@ internal class SDKClientManager(
 
         if (ln != null) {
             if (gyroAttributeList != null) {
-                /* if (!TextUtils.isEmpty(id)) {
-                     gyroAttributeList.forEach {
-                         it.setUniqueId(id)
-                     }
-                 }
- */
+
                 if (checkAttType == "isGyro") {
                     if (!edgeDeviceAttributeGyroMap!!.containsEntry(ln, gyroAttributeList)) {
                         (edgeDeviceAttributeGyroMap as ListMultimap<String, List<TumblingWindowBean>>).put(
