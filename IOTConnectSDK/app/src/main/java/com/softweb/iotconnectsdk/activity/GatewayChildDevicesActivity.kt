@@ -73,6 +73,34 @@ class GatewayChildDevicesActivity : AppCompatActivity(), AdapterView.OnItemSelec
 
     }
 
+    override fun onDeviceCommand(message: String?) {
+        TODO("Not yet implemented")
+    }
+
+    override fun onOTACommand(message: String?) {
+        TODO("Not yet implemented")
+    }
+
+    override fun onModuleCommand(message: String?) {
+        TODO("Not yet implemented")
+    }
+
+    override fun onAttrChangeCommand(message: String?) {
+        TODO("Not yet implemented")
+    }
+
+    override fun onTwinChangeCommand(message: String?) {
+        TODO("Not yet implemented")
+    }
+
+    override fun onRuleChangeCommand(message: String?) {
+        TODO("Not yet implemented")
+    }
+
+    override fun onDeviceChangeCommand(message: String?) {
+        TODO("Not yet implemented")
+    }
+
     override fun onReceiveMsg(message: String?) {
         if (!message.isNullOrBlank()) {
             Toast.makeText(this@GatewayChildDevicesActivity, message, Toast.LENGTH_LONG).show()

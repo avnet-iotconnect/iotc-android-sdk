@@ -18,6 +18,7 @@ import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -43,6 +44,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TimeZone;
 
 import com.softweb.iotconnectsdk.model.Attribute;
@@ -120,6 +122,11 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
     static SDKClient sdkClient;
 
     private static final String DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+
+    String ackId = "";
+    String childId = "";
+    int cmdType = -1;
+    JSONObject mainObject = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -424,32 +431,144 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
     @Override
     public void onReceiveMsg(String message) {
 
-        btnClear.setEnabled(true);
         try {
-            Log.d(TAG, "onReceiveMsg => " + message);
+            getJsonMessage(message);
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
+            if (cmdType == 0 || cmdType == 1 || cmdType == 2) {
+            } else if (cmdType == 116) {
+                /*command type "116" for Device "Connection Status"
+                      true = connected, false = disconnected*/
 
-                    etSubscribe.setText(message);
+                Log.d(TAG, "--- Device connection status ---");
+                // JSONObject dataObj = mainObject.getJSONObject("data");
+                //  Log.d(TAG, "DeviceId ::: [" + mainObject.getString("uniqueId") + "] :: Device status :: " + mainObject.getString("command") + "," + new Date());
 
+                if (mainObject.has("command")) {
+                    isConnected = mainObject.getBoolean("command");
+                    onConnectionStateChange(isConnected);
                 }
-            });
+            } else if (cmdType == -1) {
+                hideDialog(FirmwareActivity.this);
+                setStatusText(R.string.device_disconnected);
+                Toast.makeText(FirmwareActivity.this, message, Toast.LENGTH_LONG).show();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
 
-            // String messageType = "";
-            String ackId = "";
-            String childId = "";
-            int cmdType = -1;
-            JSONObject mainObject = null;
+    @Override
+    public void onDeviceCommand(@Nullable String message) {
 
-            boolean jsonValid = isJSONValid(message);
+        getJsonMessage(message);
 
-            if (jsonValid) {
+        /*
+         * Type    : Public Method "sendAck()"
+         * Usage   : Send device command received acknowledgment to cloud
+         *
+         * - status Type
+         *     st = 6; // Device command Ack status
+         *     st = 4; // Failed Ack
+         *
+         */
+
+        if (isConnected) {
+            if (TextUtils.isEmpty(childId)) {
+                sdkClient.sendAckCmd(ackId, 6, "");
+            } else {
+                sdkClient.sendAckCmd(ackId, 6, "", childId);
+            }
+        } else {
+            Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
+        }
+
+    }
+
+    @Override
+    public void onOTACommand(@Nullable String message) {
+
+        getJsonMessage(message);
+
+        /*
+         * Type    : Public Method "sendAck()"
+         * Usage   : Send firmware command received acknowledgement to cloud
+         * - status Type
+         *     st = 0; // firmware OTA command Ack status
+         *     st = 4; // Failed Ack
+         *
+         */
+
+        if (isConnected) {
+
+            if (TextUtils.isEmpty(childId)) {
+                sdkClient.sendOTAAckCmd(ackId, 0, "");
+            } else {
+                sdkClient.sendOTAAckCmd(ackId, 0, "", childId);
+            }
+        } else {
+            Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override
+    public void onModuleCommand(@Nullable String message) {
+        getJsonMessage(message);
+        if (isConnected) {
+
+            if (TextUtils.isEmpty(childId)) {
+                sdkClient.sendAckModule(ackId, 0, "");
+            } else {
+                sdkClient.sendAckModule(ackId, 0, "", childId);
+            }
+        } else {
+            Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override
+    public void onAttrChangeCommand(@Nullable String message) {
+        getJsonMessage(message);
+    }
+
+    @Override
+    public void onTwinChangeCommand(@Nullable String message) {
+        getJsonMessage(message);
+    }
+
+    @Override
+    public void onRuleChangeCommand(@Nullable String message) {
+        getJsonMessage(message);
+    }
+
+    @Override
+    public void onDeviceChangeCommand(@Nullable String message) {
+        getJsonMessage(message);
+    }
+
+
+    private void getJsonMessage(String message) {
+        btnClear.setEnabled(true);
+        Log.d(TAG, "onReceiveMsg => " + message);
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+
+                etSubscribe.setText(message);
+
+            }
+        });
+
+        boolean jsonValid = isJSONValid(message);
+
+        if (jsonValid) {
+            try {
                 mainObject = new JSONObject(message);
                 //Publish message call back received.
                 if (!mainObject.has("ct")) {
+                    cmdType = -2;
                     return;
                 }
 
@@ -462,104 +581,12 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                 if (mainObject.has("id")) {
                     childId = mainObject.getString("id");
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-
-            switch (cmdType) {
-                case 0:
-                    Log.d(TAG, "--- Device Command Received ---");
-                    if (ackId != null && !ackId.isEmpty()) {
-
-                        /*
-                         * Type    : Public Method "sendAck()"
-                         * Usage   : Send device command received acknowledgment to cloud
-                         *
-                         * - status Type
-                         *     st = 6; // Device command Ack status
-                         *     st = 4; // Failed Ack
-                         * - Message Type
-                         *     msgType = 5; // for "0x01" device command
-                         */
-
-                        if (isConnected) {
-                            if (TextUtils.isEmpty(childId)) {
-                                sdkClient.sendAckCmd(ackId, 6, "");
-                            } else {
-                                sdkClient.sendAckCmd(ackId, 6, "", childId);
-                            }
-                        } else {
-                            Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
-                        }
-                    }
-                    break;
-                case 1:
-                    Log.d(TAG, "--- Firmware OTA Command Received ---");
-                    if (ackId != null && !ackId.isEmpty()) {
-
-                        /*
-                         * Type    : Public Method "sendAck()"
-                         * Usage   : Send firmware command received acknowledgement to cloud
-                         * - status Type
-                         *     st = 0; // firmware OTA command Ack status
-                         *     st = 4; // Failed Ack
-                         * - Message Type
-                         *     msgType = 11; // for "0x02" Firmware command
-                         */
-
-                        if (isConnected) {
-
-                            if (TextUtils.isEmpty(childId)) {
-                                sdkClient.sendOTAAckCmd(ackId, 0, "");
-                            } else {
-                                sdkClient.sendOTAAckCmd(ackId, 0, "", childId);
-                            }
-                        } else {
-                            Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
-                        }
-                    }
-                    break;
-
-                case 2:
-                    Log.d(TAG, "---Module Command Received ---");
-                    if (ackId != null && !ackId.isEmpty()) {
-                        if (isConnected) {
-
-                            if (TextUtils.isEmpty(childId)) {
-                                sdkClient.sendAckModule(ackId, 0, "");
-                            } else {
-                                sdkClient.sendAckModule(ackId, 0, "", childId);
-                            }
-                        } else {
-                            Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
-                        }
-                    }
-
-                    break;
-
-                case 116:
-                    /*command type "116" for Device "Connection Status"
-                      true = connected, false = disconnected*/
-
-                    Log.d(TAG, "--- Device connection status ---");
-                    // JSONObject dataObj = mainObject.getJSONObject("data");
-                    Log.d(TAG, "DeviceId ::: [" + mainObject.getString("uniqueId") + "] :: Device status :: " + mainObject.getString("command") + "," + new Date());
-
-                    if (mainObject.has("command")) {
-                        isConnected = mainObject.getBoolean("command");
-                        onConnectionStateChange(isConnected);
-                    }
-                    break;
-
-                default:
-                    hideDialog(FirmwareActivity.this);
-                    setStatusText(R.string.device_disconnected);
-                    Toast.makeText(FirmwareActivity.this, message, Toast.LENGTH_LONG).show();
-
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        } else {
+            cmdType = -1;
         }
-        // }
     }
 
     /*
@@ -874,7 +901,6 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
             return cacheFile;
         }
 
-        return null;
+        return new File("");
     }
-
 }

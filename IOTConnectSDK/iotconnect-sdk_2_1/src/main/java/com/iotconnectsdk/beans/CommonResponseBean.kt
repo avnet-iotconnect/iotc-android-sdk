@@ -5,7 +5,7 @@ import com.google.gson.JsonDeserializer
 import com.google.gson.annotations.SerializedName
 
 
-data class CommonResponseBean(
+internal data class CommonResponseBean(
     @SerializedName("d")
     val d: D? = D()
 ) {

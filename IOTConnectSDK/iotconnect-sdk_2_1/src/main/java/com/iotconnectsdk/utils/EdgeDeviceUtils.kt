@@ -211,72 +211,72 @@ internal object EdgeDeviceUtils {
 
     fun setObjectValue(bean: TumblingWindowBean, inputValue: Double) {
 
-        val oldMin = bean.getMin()
+        val oldMin = bean.min
 
         if (inputValue < 0.0) {
             if (oldMin == 0.0 || inputValue < oldMin) {
-                bean.setMinSet(true)
-                bean.setMin(inputValue)
+                bean.isMinSet=true
+                bean.min = inputValue
 
             }
 
         } else {
             if (inputValue == 0.0) {
-                if (!bean.isMinSet()) {
-                    bean.setMin(0.0)
-                    bean.setMinSet(true)
+                if (!bean.isMinSet) {
+                    bean.min = 0.0
+                    bean.isMinSet=true
                 }
 
             } else if (oldMin == 0.0 || inputValue < oldMin) {
-                if (!bean.isMinSet()) {
-                    bean.setMin(inputValue)
+                if (!bean.isMinSet) {
+                    bean.min = inputValue
                 }
 
             }
         }
 
-        val oldMax = bean.getMax()
+        val oldMax = bean.max
 
         if (inputValue < 0.0) {
             if (oldMax == 0.0 || inputValue > oldMax) {
-                if (!bean.isMaxSet()) {
-                    bean.setMax(inputValue)
+                if (!bean.isMaxSet) {
+                    bean.max = inputValue
                 }
             }
         } else {
             if (inputValue == 0.0) {
-                if (!bean.isMaxSet()) {
-                    bean.setMax(0.0)
-                    bean.setMaxSet(true)
+                if (!bean.isMaxSet) {
+                    bean.max = 0.0
+                    bean.isMaxSet=true
                 }
             } else if (oldMax == 0.0 || inputValue > oldMax) {
-                bean.setMaxSet(true)
-                bean.setMax(inputValue)
+                bean.isMaxSet=true
+                bean.max = inputValue
 
             }
         }
 
-        val sum: Double = inputValue + bean.getSum()
+        val sum: Double = inputValue + bean.sum
         val df_obj = DecimalFormat("#.####")
 
-        bean.setSum(df_obj.format(sum).toDouble())
-        var count: Int = bean.getCount()
+        bean.sum = df_obj.format(sum).toDouble()
+        var count: Int = bean.count
         count++
-        bean.setAvg(df_obj.format(sum / count).toDouble())
-        bean.setCount(count)
-        bean.setLv(inputValue)
+        bean.avg = df_obj.format(sum / count).toDouble()
+        bean.count = count
+        bean.lv = inputValue
     }
 
     private fun clearObject(twb: TumblingWindowBean) {
         //clear object on publish success.
-        twb.setMin(0.0)
-        twb.setMax(0.0)
-        twb.setSum(0.0)
-        twb.setAvg(0.0)
-        twb.setCount(0)
-        twb.setLv(0.0)
-        twb.setMinSet(false)
-        twb.setMaxSet(false)
+        twb.min = 0.0
+        twb.max = 0.0
+        twb.sum = 0.0
+        twb.avg = 0.0
+        twb.count = 0
+        twb.lv = 0.0
+        twb.isMaxSet=false
+        twb.isMinSet=false
     }
 
     fun getAttributeName(con: String): String? {

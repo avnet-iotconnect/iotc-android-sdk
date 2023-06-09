@@ -12,27 +12,24 @@ import java.util.regex.Pattern
 
 internal object ValidationTelemetryUtils {
 
+    private  const val FAULTY = 1 //"flt";
 
-    const val M_ANDROID = "M_android"
+    private  const val REPORTING = 0 //"rpt";
 
-    const val FAULTY = 1 //"flt";
+    private const val ERR = 0 //"ERR";
 
-    const val REPORTING = 0 //"rpt";
+    private const val DATA_TYPE_INTEGER = 1
+    private const val DATA_TYPE_LONG = 2
+    private const val DATA_TYPE_DECIMAL = 3
+    private const val DATA_TYPE_STRING = 4
+    private const val DATA_TYPE_TIME = 5
+    private const val DATA_TYPE_DATE = 6
+    private const val DATA_TYPE_DATETIME = 7
+    private const val DATA_TYPE_BIT = 8 // [0 / 1]
 
-    const val ERR = 0 //"ERR";
+    private const val DATA_TYPE_BOOLEAN = 9 // [true / false | True/False]
 
-    const val DATA_TYPE_INTEGER = 1
-    const val DATA_TYPE_LONG = 2
-    const val DATA_TYPE_DECIMAL = 3
-    const val DATA_TYPE_STRING = 4
-    const val DATA_TYPE_TIME = 5
-    const val DATA_TYPE_DATE = 6
-    const val DATA_TYPE_DATETIME = 7
-    const val DATA_TYPE_BIT = 8 // [0 / 1]
-
-    const val DATA_TYPE_BOOLEAN = 9 // [true / false | True/False]
-
-    const val DATA_TYPE_LATLONG = 10 // [Decimal Array, Decimal (10,8), Decimal (11,8)]
+    private const val DATA_TYPE_LATLONG = 10 // [Decimal Array, Decimal (10,8), Decimal (11,8)]
 
     var isBit = false
 

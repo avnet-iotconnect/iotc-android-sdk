@@ -748,7 +748,7 @@ internal class SDKClientManager(
                                 )
 
                                 try {
-                                    deviceCallback?.onReceiveMsg(message)
+                                    deviceCallback?.onDeviceCommand(message)
                                 } catch (e: Exception) {
                                     e.printStackTrace()
                                 }
@@ -764,7 +764,7 @@ internal class SDKClientManager(
                                     "INFO_CM02",
                                     context!!.getString(R.string.INFO_CM02)
                                 )
-                                deviceCallback!!.onReceiveMsg(message)
+                                deviceCallback!!.onOTACommand(message)
                             }
 
                             /*Module Command received by the device from the cloud*/
@@ -775,7 +775,7 @@ internal class SDKClientManager(
                                     "INFO_CM02",
                                     context!!.getString(R.string.INFO_CM02Module)
                                 )
-                                deviceCallback!!.onReceiveMsg(message)
+                                deviceCallback!!.onModuleCommand(message)
                             }
 
                             /*The device must send a message of type 201 to get updated attributes*/
@@ -791,6 +791,8 @@ internal class SDKClientManager(
                                         DeviceIdentityMessages.GET_DEVICE_TEMPLATE_ATTRIBUTES.value
                                     ).toString(), false
                                 )
+
+                                deviceCallback!!.onAttrChangeCommand(message)
                             }
 
                             /*The device must send a message of type 202 to get updated settings or twin*/
@@ -802,6 +804,8 @@ internal class SDKClientManager(
                                         DeviceIdentityMessages.GET_DEVICE_TEMPLATE_SETTINGS_TWIN.value
                                     ).toString(), false
                                 )
+
+                                deviceCallback!!.onTwinChangeCommand(message)
                             }
 
                             /*The device must send a message of type 203 to get updated Edge rules*/
@@ -812,6 +816,8 @@ internal class SDKClientManager(
                                         MESSAGE_TYPE, DeviceIdentityMessages.GET_EDGE_RULE.value
                                     ).toString(), false
                                 )
+
+                                deviceCallback!!.onRuleChangeCommand(message)
                             }
 
                             /*The device must send a message of type 204 to get updated child devices*/
@@ -822,17 +828,14 @@ internal class SDKClientManager(
                                         MESSAGE_TYPE, DeviceIdentityMessages.GET_CHILD_DEVICES.value
                                     ).toString(), false
                                 )
+                                deviceCallback!!.onDeviceChangeCommand(message)
                             }
 
                             /*The device needs to update the frequency received in this message*/
 
                             C2DMessageEnums.DATA_FREQUENCY_CHANGE.value -> {
                                 if (context != null) {
-                                    val response = getSyncResponse()
-                                    response?.d?.meta?.df = mainObject.getInt(DF)
-                                    IotSDKPreferences.getInstance(context)?.putStringData(
-                                        IotSDKPreferences.SYNC_RESPONSE, Gson().toJson(response)
-                                    )
+                                    onFrequencyChangeCommand(mainObject.getInt(DF))
                                 }
                             }
 
@@ -850,24 +853,39 @@ internal class SDKClientManager(
                             /*The device must start sending a heartbeat*/
                             C2DMessageEnums.START_HEARTBEAT.value -> {
                                 val frequencyHeartBeat = mainObject.getInt(FREQUENCY_HEART_BEAT)
-                                startUpdates(frequencyHeartBeat)
+                                onHeartbeatCommand(frequencyHeartBeat)
                             }
 
                             /*The device must stop sending a heartbeat*/
                             C2DMessageEnums.STOP_HEARTBEAT.value -> {
-                                stopUpdates()
+                                onHeartbeatCommand()
+                            }
+
+                            C2DMessageEnums.VALIDATION_SKIP.value -> {
+                                onValidationSkipCommand()
                             }
                         }
                     }
                 }
 
-
             } catch (e: JSONException) {
                 e.printStackTrace()
             }
         }
+    }
 
+    private fun onValidationSkipCommand() {
 
+    }
+
+    private fun onFrequencyChangeCommand(frequency: Int) {
+        if (context != null) {
+            val response = getSyncResponse()
+            response?.d?.meta?.df = frequency
+            IotSDKPreferences.getInstance(context)?.putStringData(
+                IotSDKPreferences.SYNC_RESPONSE, Gson().toJson(response)
+            )
+        }
     }
 
     /*Call publish method of IotSDKMQTTService class to publish to web.
@@ -1119,7 +1137,7 @@ internal class SDKClientManager(
             mqttService?.clearInstance() //destroy singleton object.
         }
         unregisterReceiver()
-        stopUpdates()
+        onHeartbeatCommand()
         sdkClientManger = null
     }
 
@@ -1915,7 +1933,7 @@ internal class SDKClientManager(
             if (!TextUtils.isEmpty(id)) {
                 if (checkAttType == "isSimple") {
                     val tumblingWindowBean = TumblingWindowBean()
-                    tumblingWindowBean.setUniqueId(id)
+                    tumblingWindowBean.uniqueId = id
                     edgeDeviceAttributeMap?.put(ln, tumblingWindowBean)
                 }
             }
@@ -2245,8 +2263,8 @@ internal class SDKClientManager(
         )
     }
 
-    private fun startUpdates(frequencyHeartBeat: Int) {
-        stopUpdates()
+    private fun onHeartbeatCommand(frequencyHeartBeat: Int) {
+        onHeartbeatCommand()
         val response = getSyncResponse()
         job = scope.launch {
             while (true) {
@@ -2256,12 +2274,12 @@ internal class SDKClientManager(
                     JSONObject().toString(),
                     false
                 )
-                delay(frequencyHeartBeat.toLong()*1000)
+                delay(frequencyHeartBeat.toLong() * 1000)
             }
         }
     }
 
-    private fun stopUpdates() {
+    private fun onHeartbeatCommand() {
         job?.cancel()
         job = null
     }

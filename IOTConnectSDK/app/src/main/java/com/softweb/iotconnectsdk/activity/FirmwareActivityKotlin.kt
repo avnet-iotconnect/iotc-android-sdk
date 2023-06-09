@@ -18,7 +18,6 @@ import androidx.core.content.ContextCompat
 import com.google.android.material.textfield.TextInputLayout
 import com.google.gson.Gson
 import com.iotconnectsdk.SDKClient
-import com.iotconnectsdk.beans.D2CSendAckBean
 import com.iotconnectsdk.interfaces.DeviceCallback
 import com.iotconnectsdk.interfaces.TwinUpdateCallback
 import com.softweb.iotconnectsdk.R
@@ -74,6 +73,12 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
     private var tagsList: ArrayList<String>? = null
 
     private val DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+
+    var ackId = ""
+    var childId = ""
+    var cmdType = -1
+    var mainObject: JSONObject? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_firmware)
@@ -253,9 +258,9 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
             val certificate = Certificate()
 
             //put certificate file in asset folder
-            certificate.setsSLKeyPath(getRobotCacheFile(this, "")!!.absolutePath)
-            certificate.setsSLCertPath(getRobotCacheFile(this, "")!!.absolutePath)
-            certificate.setsSLCaPath(getRobotCacheFile(this, "")!!.absolutePath)
+            certificate.setsSLKeyPath(getRobotCacheFile(this, "")?.absolutePath)
+            certificate.setsSLCertPath(getRobotCacheFile(this, "")?.absolutePath)
+            certificate.setsSLCaPath(getRobotCacheFile(this, "")?.absolutePath)
 
 
             //For using symmetric key authentication type
@@ -356,153 +361,140 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
      * Output  : Receive device command, firmware command and other device initialize error response
      */
     override fun onReceiveMsg(message: String?) {
-        btnClear!!.isEnabled = true
         try {
-            Log.d(
-                TAG,
-                "onReceiveMsg => $message"
-            )
-            runOnUiThread { etSubscribe!!.setText(message) }
-
-
-            // String messageType = "";
-            var ackId = ""
-            var childId = ""
-            var cmdType = -1
-            var mainObject: JSONObject? = null
-            val jsonValid = isJSONValid(message)
-            if (jsonValid) {
-                mainObject = JSONObject(message)
-                //Publish message call back received.
-                if (!mainObject.has("ct")) {
-                    return
+            getJsonMessage(message)
+            if (cmdType == 0 || cmdType == 1 || cmdType == 2) {
+            } else if (cmdType == 116) {
+                /*command type "116" for Device "Connection Status"
+                      true = connected, false = disconnected*/
+                Log.d(FirmwareActivityKotlin.TAG, "--- Device connection status ---")
+                // JSONObject dataObj = mainObject.getJSONObject("data");
+                //  Log.d(TAG, "DeviceId ::: [" + mainObject.getString("uniqueId") + "] :: Device status :: " + mainObject.getString("command") + "," + new Date());
+                if (mainObject!!.has("command")) {
+                    isConnected = mainObject!!.getBoolean("command")
+                    onConnectionStateChange(isConnected)
                 }
-                cmdType = mainObject.getInt("ct")
-                if (mainObject.has("ack")) {
-                    ackId = mainObject.getString("ack")
-                }
-                if (mainObject.has("id")) {
-                    childId = mainObject.getString("id")
-                }
+            } else if (cmdType == -1) {
+                hideDialog(this@FirmwareActivityKotlin)
+                setStatusText(R.string.device_disconnected)
+                Toast.makeText(this@FirmwareActivityKotlin, message, Toast.LENGTH_LONG).show()
             }
-            when (cmdType) {
-                0 -> {
-                    Log.d(TAG, "--- Device Command Received ---")
-                    if (ackId != null && !ackId.isEmpty()) {
-
-                        /*
-                         * Type    : Public Method "sendAck()"
-                         * Usage   : Send device command received acknowledgment to cloud
-                         *
-                         * - status Type
-                         *     st = 6; // Device command Ack status
-                         *     st = 4; // Failed Ack
-                         * - Message Type
-                         *     msgType = 5; // for "0x01" device command
-                         */
-                        if (isConnected) {
-                            if (TextUtils.isEmpty(childId)) {
-                                sdkClient!!.sendAckCmd(ackId, 6, "")
-                            } else {
-                                sdkClient!!.sendAckCmd(
-                                    ackId, 6, "",
-                                    childId
-                                )
-                            }
-                        } else {
-                            Toast.makeText(
-                                this@FirmwareActivityKotlin,
-                                getString(R.string.string_connection_not_found),
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
-                    }
-                }
-
-                1 -> {
-                    Log.d(TAG, "--- Firmware OTA Command Received ---")
-                    if (ackId != null && !ackId.isEmpty()) {
-
-                        /*
-                         * Type    : Public Method "sendAck()"
-                         * Usage   : Send firmware command received acknowledgement to cloud
-                         * - status Type
-                         *     st = 0; // firmware OTA command Ack status
-                         *     st = 4; // Failed Ack
-                         * - Message Type
-                         *     msgType = 11; // for "0x02" Firmware command
-                         */
-                        if (isConnected) {
-                            if (TextUtils.isEmpty(childId)) {
-                                sdkClient!!.sendOTAAckCmd(ackId, 0, "")
-                            } else {
-                                sdkClient!!.sendOTAAckCmd(
-                                    ackId, 0, "",
-                                    childId
-                                )
-                            }
-                        } else {
-                            Toast.makeText(
-                                this@FirmwareActivityKotlin,
-                                getString(R.string.string_connection_not_found),
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
-                    }
-                }
-
-                2 -> {
-                    Log.d(TAG, "---Module Command Received ---")
-                    if (ackId != null && !ackId.isEmpty()) {
-
-                        if (isConnected) {
-                            if (TextUtils.isEmpty(childId)) {
-                                sdkClient!!.sendAckModule(ackId, 0, "")
-                            } else {
-                                sdkClient!!.sendAckModule(
-                                    ackId, 0, "",
-                                    childId
-                                )
-                            }
-                        } else {
-                            Toast.makeText(
-                                this@FirmwareActivityKotlin,
-                                getString(R.string.string_connection_not_found),
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
-                    }
-                }
-
-                116 -> {
-                    /*command type "116" for Device "Connection Status"
-                      true = connected, false = disconnected*/Log.d(
-                        TAG,
-                        "--- Device connection status ---"
-                    )
-                    // JSONObject dataObj = mainObject.getJSONObject("data");
-                    Log.d(
-                        TAG,
-                        "DeviceId ::: [" + mainObject!!.getString("uniqueId") + "] :: Device status :: " + mainObject.getString(
-                            "command"
-                        ) + "," + Date()
-                    )
-                    if (mainObject.has("command")) {
-                        isConnected = mainObject.getBoolean("command")
-                        onConnectionStateChange(isConnected)
-                    }
-                }
-
-                else -> {
-                    hideDialog(this@FirmwareActivityKotlin)
-                    setStatusText(R.string.device_disconnected)
-                    Toast.makeText(this@FirmwareActivityKotlin, message, Toast.LENGTH_LONG).show()
-                }
-            }
-        } catch (e: Exception) {
+        } catch (e: java.lang.Exception) {
             e.printStackTrace()
         }
-        // }
+    }
+
+    override fun onDeviceCommand(message: String?) {
+        getJsonMessage(message)
+
+        /*
+         * Type    : Public Method "sendAck()"
+         * Usage   : Send device command received acknowledgment to cloud
+         *
+         * - status Type
+         *     st = 6; // Device command Ack status
+         *     st = 4; // Failed Ack
+         *
+         */if (isConnected) {
+            if (TextUtils.isEmpty(childId)) {
+                FirmwareActivity.sdkClient.sendAckCmd(ackId, 6, "")
+            } else {
+                FirmwareActivity.sdkClient.sendAckCmd(ackId, 6, "", childId)
+            }
+        } else {
+            Toast.makeText(
+                this@FirmwareActivityKotlin,
+                getString(R.string.string_connection_not_found),
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
+    override fun onOTACommand(message: String?) {
+        getJsonMessage(message)
+
+        /*
+         * Type    : Public Method "sendAck()"
+         * Usage   : Send firmware command received acknowledgement to cloud
+         * - status Type
+         *     st = 0; // firmware OTA command Ack status
+         *     st = 4; // Failed Ack
+         *
+         */if (isConnected) {
+            if (TextUtils.isEmpty(childId)) {
+                FirmwareActivity.sdkClient.sendOTAAckCmd(ackId, 0, "")
+            } else {
+                FirmwareActivity.sdkClient.sendOTAAckCmd(ackId, 0, "", childId)
+            }
+        } else {
+            Toast.makeText(
+                this@FirmwareActivityKotlin,
+                getString(R.string.string_connection_not_found),
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
+    override fun onModuleCommand(message: String?) {
+        getJsonMessage(message)
+        if (isConnected) {
+            if (TextUtils.isEmpty(childId)) {
+                FirmwareActivity.sdkClient.sendAckModule(ackId, 0, "")
+            } else {
+                FirmwareActivity.sdkClient.sendAckModule(ackId, 0, "", childId)
+            }
+        } else {
+            Toast.makeText(
+                this@FirmwareActivityKotlin,
+                getString(R.string.string_connection_not_found),
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
+    override fun onAttrChangeCommand(message: String?) {
+        getJsonMessage(message)
+    }
+
+    override fun onTwinChangeCommand(message: String?) {
+        getJsonMessage(message)
+    }
+
+    override fun onRuleChangeCommand(message: String?) {
+        getJsonMessage(message)
+    }
+
+    override fun onDeviceChangeCommand(message: String?) {
+        getJsonMessage(message)
+    }
+
+
+    private fun getJsonMessage(message: String?) {
+        btnClear.isEnabled = true
+        Log.d(FirmwareActivityKotlin.TAG, "onReceiveMsg => $message")
+        runOnUiThread { etSubscribe.setText(message) }
+        val jsonValid = isJSONValid(message)
+        if (jsonValid) {
+            try {
+                mainObject = JSONObject(message)
+                //Publish message call back received.
+                if (!mainObject!!.has("ct")) {
+                    cmdType = -2
+                    return
+                }
+                cmdType = mainObject!!.getInt("ct")
+                if (mainObject!!.has("ack")) {
+                    ackId = mainObject!!.getString("ack")
+                }
+                if (mainObject!!.has("id")) {
+                    childId = mainObject!!.getString("id")
+                }
+            } catch (e: java.lang.Exception) {
+                e.printStackTrace()
+            }
+        } else {
+            cmdType = -1
+        }
     }
 
     /*
@@ -788,7 +780,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
             }
             return cacheFile
         }
-        return null
+        return File("")
     }
 
     companion object {

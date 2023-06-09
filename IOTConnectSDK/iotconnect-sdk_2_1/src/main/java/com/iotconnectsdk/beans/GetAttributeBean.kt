@@ -4,7 +4,7 @@ package com.iotconnectsdk.beans
 import com.google.gson.annotations.SerializedName
 
 
-data class GetAttributeBean(
+internal data class GetAttributeBean(
     @SerializedName("p")
     val p: String,
     @SerializedName("dt")

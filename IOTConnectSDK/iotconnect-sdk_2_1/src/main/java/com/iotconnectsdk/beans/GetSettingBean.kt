@@ -4,7 +4,7 @@ package com.iotconnectsdk.beans
 import com.google.gson.annotations.SerializedName
 
 
-data class GetSettingBean(
+internal data class GetSettingBean(
     @SerializedName("ln")
     val ln: String,
     @SerializedName("dt")
