@@ -19,7 +19,6 @@ import com.google.android.material.textfield.TextInputLayout
 import com.google.gson.Gson
 import com.iotconnectsdk.SDKClient
 import com.iotconnectsdk.interfaces.DeviceCallback
-import com.iotconnectsdk.interfaces.TwinUpdateCallback
 import com.softweb.iotconnectsdk.R
 import com.softweb.iotconnectsdk.model.*
 import kotlinx.android.synthetic.main.activity_firmware.*
@@ -44,7 +43,7 @@ import java.util.*
  * Hope you have imported SDK v3.1.2 in build.gradle as guided in README.md file or from documentation portal.
  */
 class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
-    DeviceCallback, TwinUpdateCallback {
+    DeviceCallback {
     private val TAG = FirmwareActivityKotlin::class.java.simpleName
 
     private var inputMap: MutableMap<String, List<TextInputLayout>>? = null
@@ -82,6 +81,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_firmware)
+
 
         btnConnect.setOnClickListener(this)
         btnSendData.setOnClickListener(this)
@@ -121,7 +121,6 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
                         this@FirmwareActivityKotlin,
                         cpId,
                         uniqueId,
-                        this@FirmwareActivityKotlin,
                         this@FirmwareActivityKotlin,
                         sdkOptions,
                         environment

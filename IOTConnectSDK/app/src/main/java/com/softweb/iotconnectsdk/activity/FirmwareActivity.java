@@ -27,7 +27,6 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.google.gson.Gson;
 import com.iotconnectsdk.SDKClient;
 import com.iotconnectsdk.interfaces.DeviceCallback;
-import com.iotconnectsdk.interfaces.TwinUpdateCallback;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -71,7 +70,7 @@ import com.softweb.iotconnectsdk.R;
  * Hope you have imported SDK v3.1.2 in build.gradle as guided in README.md file or from documentation portal.
  */
 
-public class FirmwareActivity extends AppCompatActivity implements View.OnClickListener, DeviceCallback, TwinUpdateCallback {
+public class FirmwareActivity extends AppCompatActivity implements View.OnClickListener, DeviceCallback {
 
     private static final String TAG = FirmwareActivity.class.getSimpleName();
 
@@ -187,7 +186,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                      * Input   : context, cpId, uniqueId, deviceCallback, twinUpdateCallback, sdkOptions, env.
                      * Output  : Callback methods for device command and twin properties
                      */
-                    sdkClient = SDKClient.getInstance(FirmwareActivity.this, cpId, uniqueId, FirmwareActivity.this, FirmwareActivity.this, getSdkOptions(), environment);
+                    sdkClient = SDKClient.getInstance(FirmwareActivity.this, cpId, uniqueId, FirmwareActivity.this, getSdkOptions(), environment);
 
                     showDialog(FirmwareActivity.this);
                 }

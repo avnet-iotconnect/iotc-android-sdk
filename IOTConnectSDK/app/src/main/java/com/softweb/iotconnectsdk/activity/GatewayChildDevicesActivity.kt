@@ -107,6 +107,10 @@ class GatewayChildDevicesActivity : AppCompatActivity(), AdapterView.OnItemSelec
         }
     }
 
+    override fun twinUpdateCallback(data: JSONObject?) {
+        TODO("Not yet implemented")
+    }
+
     /*
      * ## Function to check prerequisite configuration to run this sample code
      * cpId               : It need to get from the IoTConnect platform "Settings->Key Vault".

@@ -63,7 +63,6 @@ internal class SDKClientManager(
     private val cpId: String?,
     private val uniqueId: String?,
     private val deviceCallback: DeviceCallback?,
-    private val twinUpdateCallback: TwinUpdateCallback?,
     private val sdkOptions: String?,
     private val environment: String?,
 
@@ -184,7 +183,6 @@ internal class SDKClientManager(
             cpId: String?,
             uniqueId: String?,
             deviceCallback: DeviceCallback?,
-            twinUpdateCallback: TwinUpdateCallback?,
             sdkOptions: String?,
             environment: String?
         ): SDKClientManager {
@@ -195,7 +193,6 @@ internal class SDKClientManager(
                         cpId,
                         uniqueId,
                         deviceCallback,
-                        twinUpdateCallback,
                         sdkOptions,
                         environment
                     )
@@ -1212,7 +1209,7 @@ internal class SDKClientManager(
     override fun twinUpdateCallback(data: JSONObject?) {
         try {
             data?.put(UNIQUE_ID_View, uniqueId)
-            twinUpdateCallback?.twinUpdateCallback(data)
+            deviceCallback?.twinUpdateCallback(data)
         } catch (e: JSONException) {
             e.printStackTrace()
         }

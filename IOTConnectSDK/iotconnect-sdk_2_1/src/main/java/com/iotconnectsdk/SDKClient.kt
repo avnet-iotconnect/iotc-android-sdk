@@ -4,10 +4,8 @@ import android.content.Context
 import com.google.gson.Gson
 import com.iotconnectsdk.beans.D2CSendAckBean
 import com.iotconnectsdk.interfaces.DeviceCallback
-import com.iotconnectsdk.interfaces.TwinUpdateCallback
 import com.iotconnectsdk.utils.*
 import com.iotconnectsdk.utils.DateTimeUtils.currentDate
-import com.iotconnectsdk.utils.DateTimeUtils.getCurrentTime
 import org.json.JSONObject
 import java.util.*
 
@@ -40,7 +38,6 @@ class SDKClient(
             cpId: String?,
             uniqueId: String?,
             deviceCallback: DeviceCallback?,
-            twinUpdateCallback: TwinUpdateCallback?,
             sdkOptions: String?,
             environment: String?
         ): SDKClient {
@@ -56,7 +53,6 @@ class SDKClient(
                     cpId,
                     uniqueId,
                     deviceCallback,
-                    twinUpdateCallback,
                     sdkOptions,
                     environment
                 )
@@ -73,7 +69,6 @@ class SDKClient(
         cpId: String?,
         uniqueId: String?,
         deviceCallback: DeviceCallback?,
-        twinUpdateCallback: TwinUpdateCallback?,
         sdkOptions: String?,
         environment: String?
     ) {
@@ -82,7 +77,6 @@ class SDKClient(
             cpId,
             uniqueId,
             deviceCallback,
-            twinUpdateCallback,
             sdkOptions,
             environment
         )

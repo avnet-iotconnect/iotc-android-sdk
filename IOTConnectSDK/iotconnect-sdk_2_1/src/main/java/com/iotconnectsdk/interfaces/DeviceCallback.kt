@@ -1,6 +1,8 @@
 package com.iotconnectsdk.interfaces
 
- interface DeviceCallback {
+import org.json.JSONObject
+
+interface DeviceCallback {
     fun onDeviceCommand(message: String?)
     fun onOTACommand(message: String?)
     fun onModuleCommand(message: String?)
@@ -9,4 +11,5 @@ package com.iotconnectsdk.interfaces
     fun onRuleChangeCommand(message: String?)
     fun onDeviceChangeCommand(message: String?)
     fun onReceiveMsg(message: String?)
+    fun twinUpdateCallback(data: JSONObject?)
 }
