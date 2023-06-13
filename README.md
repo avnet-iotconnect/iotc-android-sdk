@@ -47,11 +47,11 @@ This library only abstract JSON responses from both end D2C and C2D
 		}
 	}
 ```
-"certificate": It is indicated to define the path of the certificate file. Mandatory for X.509/SSL device CA signed or self-signed authentication type only.
+* "certificate": It is indicated to define the path of the certificate file. Mandatory for X.509/SSL device CA signed or self-signed authentication type only.
 	- SSLKeyPath: your device key
 	- SSLCertPath: your device certificate
 	- SSLCaPath : Root CA certificate
-"offlineStorage" : Define the configuration related to the off-line data storage 
+* "offlineStorage" : Define the configuration related to the off-line data storage 
 	- disabled : false = off-line data storing, true = not storing off-line data 
 	- availSpaceInMb : Define the file size of off-line data which should be in (MB)
 	- fileCount : Number of files need to create for off-line data
@@ -61,7 +61,7 @@ If you do not provide off-line storage, it will set the default settings as per 
 	
 - To Initialize the SDK object and connect to the cloud.
 ```java		
-	SDKClient sdkClient = SDKClient.getInstance(Context, cpId, uniqueId, DeviceCallback, TwinUpdateCallback, sdkOptions, environment);
+	SDKClient sdkClient = SDKClient.getInstance(Context, cpId, uniqueId, DeviceCallback, sdkOptions, environment);
 ```
 
 - To receive the command from Cloud to Device(C2D).	
@@ -74,18 +74,9 @@ If you do not provide off-line storage, it will set the default settings as per 
                 JSONObject dataObj = mainObject.getJSONObject("data");
 				
 			 switch (cmdType) {
-                   case "0x01":
+                   case "116":
                         // Device Command
                    break;
-
-                   case "0x02":
-                        // Firmware Command
-                   break;
-
-                   case "0x16":
-                       // Device Connection status (command : true [connected] and command : false [disconnected])
-                   break;
-
                    default:
                    break;
              }
@@ -97,16 +88,73 @@ If you do not provide off-line storage, it will set the default settings as per 
 - To receive the twin from Cloud to Device(C2D)
 ```java	
 	@Override
-    public void twinUpdateCallback(JSONObject data) {
+    	public void twinUpdateCallback(JSONObject data) {
 		Log.d(TAG, data);
+	}
+```
+- To receive Device Command C2D(C2D)
+```java	
+	@Override
+    	public void onDeviceCommand(String message) {
+		Log.d(TAG, message);
+	}
+```
+- To receive OTA Command(C2D)
+```java	
+	@Override
+    public void onOTACommand(String message) {
+		Log.d(TAG, message);
+	}
+```
+- To receive Module Command(C2D)
+```java	
+	@Override
+    	public void onModuleCommand(String message) {
+		Log.d(TAG, message);
+	}
+```
+- To receive Module Command(C2D)
+```java	
+	@Override
+    	public void onModuleCommand(String message) {
+		Log.d(TAG, message);
+	}
+```
+- To receive Attributes Change Command(C2D)
+```java	
+	@Override
+    	public void onAttrChangeCommand(String message) {
+		Log.d(TAG, message);
+	}
+```
+- To receive Twin Change Command(C2D)
+```java	
+	@Override
+    	public void onTwinChangeCommand(String message) {
+		Log.d(TAG, message);
+	}
+```
+- To receive Rule Change Command(C2D)
+```java	
+	@Override
+    	public void onRuleChangeCommand(String message) {
+		Log.d(TAG, message);
+	}
+```
+- To receive Device Change Command(C2D)
+```java	
+	@Override
+    	public void onDeviceChangeCommand(String message) {
+		Log.d(TAG, message);
 	}
 ```
 	
 - To get the list of attributes with respective device.
 ```java
 	String data = sdkClient.getAttributes();
-    Log.d("Attribute list device wise :", data);	
+    	Log.d("Attribute list device wise :", data);	
 ```
+
 
 - This is the standard data input format for Gateway and non Gateway device to send the data on IoTConnect cloud(D2C).
 ```json
@@ -146,15 +194,15 @@ If you do not provide off-line storage, it will set the default settings as per 
 	sdkClient.sendAck(JSONObject obj, String messageType)	
 ```
 
-"ackId(*)" 	: Command Acknowledgment GUID which will receive from command payload (data.ackId)
-"st(*)"		: Acknowledgment status sent to cloud (4 = Fail, 6 = Device command[0x01], 7 = Firmware OTA command[0x02])
-"msg" 		: It is used to send your custom message
-"childId" 	: It is used for Gateway's child device OTA update only
+* "ackId(*)" 	: Command Acknowledgment GUID which will receive from command payload (data.ackId)
+* "st(*)"		: Acknowledgment status sent to cloud (4 = Fail, 6 = Device command[0x01], 7 = Firmware OTA command[0x02])
+* "msg" 		: It is used to send your custom message
+* "childId" 	: It is used for Gateway's child device OTA update only
 				0x01 : null or "" for Device command
 			  	0x02 : null or "" for Gateway device and mandatory for Gateway child device's OTA update.
 		   		How to get the "childId" .?
 		   		- You will get child uniqueId for child device OTA command from payload "data.urls[~].uniqueId"
-"msgType" 	: Message type (5 = "0x01" device command, 11 = "0x02" Firmware OTA command)
+* "msgType" 	: Message type (5 = "0x01" device command, 11 = "0x02" Firmware OTA command)
 Note : (*) indicates the mandatory element of the object.
 
 - To update the Twin Property.
@@ -173,16 +221,16 @@ Note : (*) indicates the mandatory element of the object.
 
 - To get the all twin property Desired and Reported
 ```java
-	sdkClient.getAllTwins();
+	sdkClient.getTwins();
 ```
 
 - Disconnect iotConnect on Activity onDestroy
 ```java
 	@Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (sdkClient != null) {
-            sdkClient.dispose();
+    	protected void onDestroy() {
+        	super.onDestroy();
+        	if (sdkClient != null) {
+            	sdkClient.dispose();
         }
     }
 ```
@@ -213,26 +261,3 @@ Note : (*) indicates the mandatory element of the object.
 - Java 8 ( or above )
 - Android software development kit
 - Android Studio
-
-
-## Release Note :
-
-** Improvements **
-1. We have updated the below methods name:
-   To Initialize the SDK object:
-	- Old : new sdk(cpid, uniqueId, callbackMessage, twinCallbackMessage, env, sdkOptions);
-	- New : SDKClient.getInstance(Activity.this, cpId, uniqueId, DeviceCallback, TwinUpdateCallback, sdkOptions, environment);
-   To send the data :
-    - Old : SendData(data)
-    - New : sendData(data)
-   To update the Twin Reported Property :
-    - Old : UpdateTwin(key, value)
-    - New : updateTwin(key, value)
-   To receive Device command callback :
-    - Old : callbackMessage(data);
-	- New : deviceCallback(data);
-   To receive OTA command callback :
-    - Old : twinCallbackMessage(data);
-	- New : twinUpdateCallback(data);
-2. Update the OTA command receiver payload for multiple OTA files
-3. Use the "df" Data Frequency feature to control the flow of data which publish on cloud (For Non-Edge device only).
