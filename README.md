@@ -1,4 +1,4 @@
-# IOT Connect SDK: iotconnect-Android-sdk
+# IOT Connect SDK: iotconnect-Android-sdk(Device Message 2.1)
 
 This is Android library to connect with IoTConnect cloud by MQTT
 This library only abstract JSON responses from both end D2C and C2D 
@@ -7,7 +7,7 @@ This library only abstract JSON responses from both end D2C and C2D
 
 * The SDK supports to send telemetry data and receive commands from IoTConnect portal.
 * User can update firmware Over The Air using "OTA update" Feature supported by SDK.
-* SDK support SAS authentication as well as x509 certificate authentication.  
+* SDK support SAS authentication as well as Certificate Authority(CA) Signed and Self Signed authentication.  
 * SDK consists of Gateway device with multiple child devices support.
 * SDK supports to receive and update the Twin property. 
 * SDK supports device and OTA command acknowledgment.
@@ -17,6 +17,7 @@ This library only abstract JSON responses from both end D2C and C2D
 * It allows sending the OTA command acknowledgment for Gateway and child device.
 * It manages the sensor data sending flow over the cloud by using data frequency("df") configuration.
 * It allows to disconnect the device from firmware.
+* Offline Storage is used to store device data in a text file when the internet is not available.
 
 # Example Usage:
 	
@@ -27,9 +28,9 @@ This library only abstract JSON responses from both end D2C and C2D
 	String environment = <<environment>>; 
 ```
 
-"uniqueId" 	: Your device uniqueId
-"cpId" 		: It is the company code. It gets from the IoTConnect UI portal "Settings->Key Vault"
-"env" 		: It is the UI platform environment. It gets from the IoTConnect UI portal "Settings->Key Vault"
+* "uniqueId" 	: Your device uniqueId
+* "cpId" 		: It is the company code. It gets from the IoTConnect UI portal "Settings->Key Vault"
+* "env" 		: It is the UI platform environment. It gets from the IoTConnect UI portal "Settings->Key Vault"
 
 - SdkOptions is for the SDK configuration and needs to parse in SDK object initialize call. You need to manage the below configuration as per your device authentication type.
 ```json
