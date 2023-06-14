@@ -154,6 +154,23 @@ If you do not provide off-line storage, it will set the default settings as per 
 	String data = sdkClient.getAttributes();
     	Log.d("Attribute list device wise :", data);	
 ```
+- To get the all twin property Desired and Reported
+```java
+	sdkClient.getTwins();
+```
+- To get the child devices
+```java
+	sdkClient.getChildDevices();
+```
+- To create child device
+```java
+	sdkClient.createChildDevice(deviceId,deviceTag,displayName);
+```
+- To delete child device
+```java
+	sdkClient.deleteChildDevice(deviceId);
+```
+    
 
 
 - This is the standard data input format for Gateway and non Gateway device to send the data on IoTConnect cloud(D2C).
@@ -217,11 +234,6 @@ Note : (*) indicates the mandatory element of the object.
 - To disconnect the device from the cloud
 ```java
 	sdkClient.dispose()
-```
-
-- To get the all twin property Desired and Reported
-```java
-	sdkClient.getTwins();
 ```
 
 - Disconnect iotConnect on Activity onDestroy
