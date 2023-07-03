@@ -22,6 +22,9 @@ public class SdkOptions {
     @SerializedName("devicePK")
     private String devicePK;
 
+    @SerializedName("brokerType")
+    private String brokerType;
+
     public OfflineStorage getOfflineStorage() {
         return offlineStorage;
     }
@@ -69,5 +72,13 @@ public class SdkOptions {
 
     public void setDevicePK(String devicePK) {
         this.devicePK = devicePK;
+    }
+
+    public String getBrokerType() {
+        return brokerType;
+    }
+
+    public void setBrokerType(String brokerType) {
+        this.brokerType = brokerType;
     }
 }

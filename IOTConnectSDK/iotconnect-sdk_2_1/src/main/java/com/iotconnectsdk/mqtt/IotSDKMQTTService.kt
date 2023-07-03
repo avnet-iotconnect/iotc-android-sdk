@@ -17,6 +17,8 @@ import com.iotconnectsdk.utils.SDKClientUtils.generateSasTokenLatest
 
 import com.iotconnectsdk.webservices.responsebean.IdentityServiceResponse
 import com.iotconnectsdk.utils.SecurityHelper.createSocketFactory
+import com.iotconnectsdk.utils.SecurityHelper1.getSSLSocketFactory
+import com.iotconnectsdk.utils.SecurityHelper1.getSSLSocketFactoryLatest123
 
 import org.eclipse.paho.android.service.MqttAndroidClient
 import org.eclipse.paho.client.mqttv3.*
@@ -54,8 +56,9 @@ internal class IotSDKMQTTService private constructor(
 
     private val UNIQUE_ID = "uniqueId"
 
-    private var subscriptionTopic: String? =
-        null // = "devices/520uta-sdk003/messages/devicebound/#";
+    private var subscriptionTopic: String? = null
+
+    private var brokerType = ""
 
 
     companion object {
@@ -106,7 +109,7 @@ internal class IotSDKMQTTService private constructor(
         mqttAndroidClient?.setCallback(object : MqttCallbackExtended {
             override fun connectComplete(reconnect: Boolean, serverURI: String) {
                 // Because Clean Session is true, we need to re-subscribe
-               if (reconnect) {
+                if (reconnect) {
                     if (subscriptionTopic != null) {
                         subscribeToTopic()
                     }
@@ -158,6 +161,11 @@ internal class IotSDKMQTTService private constructor(
         try {
             if (sdkOptions != null) {
                 sdkObj = JSONObject(sdkOptions)
+
+                if (sdkObj.has("brokerType")) {
+                    brokerType = sdkObj.getString("brokerType")
+                }
+
                 if (authenticationType == IotSDKUrls.AUTH_TYPE_SELF_SIGN || authenticationType == IotSDKUrls.AUTH_TYPE_CA_SIGN) {
                     if (sdkObj.has("certificate")) {
                         val certificate = sdkObj.getJSONObject("certificate")
@@ -180,20 +188,26 @@ internal class IotSDKMQTTService private constructor(
                             clientKeyFile = certificate.getString("SSLKeyPath")
                         }
                         val clientKeyPassword = ""
-                        if (TextUtils.isEmpty(caFile) && TextUtils.isEmpty(clientCrtFile)
+                        /*if (TextUtils.isEmpty(caFile) && TextUtils.isEmpty(clientCrtFile)
                             && TextUtils.isEmpty(clientKeyFile)
                         ) {
                             return
-                        }
+                        }*/
 
-                        val socketFactory = createSocketFactory(
+                        /*val socketFactory = createSocketFactory(
                             caFile!!,
                             clientCrtFile!!,
                             clientKeyFile!!,
                             "",
                             "",
                             ""
+                        )*/
+
+
+                        val socketFactory = getSSLSocketFactoryLatest123(
+                            caFile!!,false
                         )
+
 
                         mqttConnectOptions.socketFactory = socketFactory
                     }

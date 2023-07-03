@@ -298,9 +298,9 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         Certificate certificate = new Certificate();
 
         //put certificate file in asset folder
-        certificate.setsSLKeyPath(getRobotCacheFile(this, "").getAbsolutePath());
-        certificate.setsSLCertPath(getRobotCacheFile(this, "").getAbsolutePath());
-        certificate.setsSLCaPath(getRobotCacheFile(this, "").getAbsolutePath());
+      //  certificate.setsSLKeyPath(getRobotCacheFile(this, "pk_AJune1501.pem").getAbsolutePath());
+        //certificate.setsSLCertPath(getRobotCacheFile(this, "cert_AJune1501.crt").getAbsolutePath());
+        certificate.setsSLCaPath(getRobotCacheFile(this, "rootCA_aws.pem").getAbsolutePath());
 
 
         //For using symmetric key authentication type
@@ -314,6 +314,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         sdkOptions.setCertificate(certificate);
         sdkOptions.setOfflineStorage(offlineStorage);
         sdkOptions.setSkipValidation(false);
+        sdkOptions.setBrokerType("aws");    //pass broker type either "az" or "aws"
 
         String sdkOptionsJsonStr = new Gson().toJson(sdkOptions);
 

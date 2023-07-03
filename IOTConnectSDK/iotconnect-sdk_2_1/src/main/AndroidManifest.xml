@@ -9,6 +9,7 @@
 
     <application
         android:allowBackup="true"
+        android:usesCleartextTraffic="true"
         android:supportsRtl="true">
         <!-- Mqtt Service -->
         <service android:name="org.eclipse.paho.android.service.MqttService" />

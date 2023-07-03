@@ -22,11 +22,7 @@ import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManagerFactory
 
-/**
- * @Author uttam.kachhad
- * @Create 16/03/2022
- * @Description
- */
+
 internal object SecurityHelper {
     fun createSocketFactory(
         caFile: String?,

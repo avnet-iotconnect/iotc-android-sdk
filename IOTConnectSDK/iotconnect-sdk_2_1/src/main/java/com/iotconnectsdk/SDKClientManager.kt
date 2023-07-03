@@ -93,7 +93,9 @@ internal class SDKClientManager(
 
     private var discoveryUrl = ""
 
-    private val DEFAULT_DISCOVERY_URL = "https://discovery.iotconnect.io/"
+    private val DEFAULT_DISCOVERY_URL_AZ = "https://discovery.iotconnect.io/"
+
+    private val DEFAULT_DISCOVERY_URL_AWS = "http://54.160.162.148:219/"
 
     private val URL_PATH = "api/$appVersion/dsdk/"
 
@@ -169,6 +171,8 @@ internal class SDKClientManager(
 
     var isSkipValidation = false
 
+    var brokerType = ""
+
 
     /*return singleton object for this class.
      * */
@@ -229,6 +233,7 @@ internal class SDKClientManager(
         isSaveToOffline = false
         isDebug = false
         isSkipValidation = false
+        brokerType = ""
         fileCount = 0
 
         //get is debug option.
@@ -242,6 +247,10 @@ internal class SDKClientManager(
 
                 if (sdkObj.has("skipValidation")) {
                     isSkipValidation = sdkObj.getBoolean("skipValidation")
+                }
+
+                if (sdkObj.has("brokerType")) {
+                    brokerType = sdkObj.getString("brokerType")
                 }
 
                 if (sdkObj.has("offlineStorage")) {
@@ -293,8 +302,12 @@ internal class SDKClientManager(
                         e.printStackTrace()
                     }
                 }
-                discoveryUrl =
-                    DEFAULT_DISCOVERY_URL //set default discovery url when it is empty from client end.
+                if(brokerType=="az"){
+                    discoveryUrl = DEFAULT_DISCOVERY_URL_AZ //set default discovery url when it is empty from client end.
+                }else if (brokerType=="aws"){
+                    discoveryUrl = DEFAULT_DISCOVERY_URL_AWS //set default discovery url when it is empty from client end.
+                }
+
             } else {
                 discoveryUrl = try {
                     sdkObj.getString(DISCOVERY_URL)
@@ -305,7 +318,12 @@ internal class SDKClientManager(
                 }
             }
         } else {
-            discoveryUrl = DEFAULT_DISCOVERY_URL //set default discovery url when sdkOption is null.
+
+            if(brokerType=="az"){
+                discoveryUrl = DEFAULT_DISCOVERY_URL_AZ //set default discovery url when sdkOption is null.
+            }else if (brokerType=="aws"){
+                discoveryUrl = DEFAULT_DISCOVERY_URL_AWS //set default discovery url when sdkOption is null.
+            }
         }
         if (!validationUtils!!.isEmptyValidation(
                 cpId, "ERR_IN04", context.getString(R.string.ERR_IN04)
@@ -324,10 +342,18 @@ internal class SDKClientManager(
     private fun callDiscoveryService() {
         if (!validationUtils!!.networkConnectionCheck()) return
 
-//        appVersion = VERSION_NAME;
+        val discoveryApi: String
+
         if (appVersion != null) {
-            val discoveryApi =
-                discoveryUrl + URL_PATH + CPID + cpId /*+ LANG_ANDROID_VER + appVersion*/ + ENV + environment
+
+            if (brokerType == "az") {
+                discoveryApi = discoveryUrl + URL_PATH + CPID + cpId + ENV + environment
+            } else if (brokerType == "aws") {
+                discoveryApi = discoveryUrl + URL_PATH + CPID + cpId + ENV + "preqa"+"?pf=aws"
+            } else {
+                discoveryApi = discoveryUrl + URL_PATH + CPID + cpId  + ENV + environment
+            }
+
             CallWebServices().getDiscoveryApi(discoveryApi, this)
         }
     }
@@ -1025,7 +1051,6 @@ internal class SDKClientManager(
         } else {
             if (attributeResponse != null) {
 
-                //CREATE DEVICE OBJECT, "device":{"id":"dee02","tg":"gateway"}
                 val deviceObj = JSONObject()
                 deviceObj.put(DEVICE_ID, uniqueId)
                 deviceObj.put(DEVICE_TAG, "")
