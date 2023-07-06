@@ -12,27 +12,19 @@ import org.bouncycastle.openssl.PEMKeyPair
 import org.bouncycastle.openssl.PEMParser
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter
 import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder
-import org.bouncycastle.util.io.pem.PemReader
-import java.io.File
-import java.io.FileInputStream
 import java.io.FileReader
 import java.io.IOException
-import java.io.InputStream
 import java.net.Socket
-import java.security.KeyFactory
 import java.security.KeyManagementException
 import java.security.KeyStore
 import java.security.KeyStoreException
 import java.security.NoSuchAlgorithmException
 import java.security.PrivateKey
-import java.security.SecureRandom
 import java.security.Security
 import java.security.UnrecoverableKeyException
 import java.security.cert.Certificate
 import java.security.cert.CertificateException
-import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
-import java.security.spec.PKCS8EncodedKeySpec
 import javax.net.ssl.KeyManagerFactory
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLEngine
@@ -142,8 +134,8 @@ internal object SecurityHelper1 {
         /**
          * Load Certificate Authority (CA) certificate
          */
-       // val caCertHolder = readPEMFile(caCrtFile) as X509CertificateHolder?
-       // val caCert: X509Certificate = certificateConverter.getCertificate(caCertHolder)
+        val caCertHolder = readPEMFile(caCrtFile) as X509CertificateHolder?
+        val caCert = certificateConverter.getCertificate(caCertHolder)
 
         /**
          * Load client certificate
@@ -174,7 +166,7 @@ internal object SecurityHelper1 {
          */
         val caKeyStore = KeyStore.getInstance(KeyStore.getDefaultType())
         caKeyStore.load(null, null)
-     //   caKeyStore.setCertificateEntry("ca-certificate", caCert)
+        caKeyStore.setCertificateEntry("ca-certificate", caCert)
         /**
          * Client key and certificates are sent to server so it can authenticate the
          * client. (server send CertificateRequest message in TLS handshake step).
@@ -182,7 +174,12 @@ internal object SecurityHelper1 {
         val clientKeyStore = KeyStore.getInstance(KeyStore.getDefaultType())
         clientKeyStore.load(null, null)
         clientKeyStore.setCertificateEntry("certificate", cert)
-        clientKeyStore.setKeyEntry("private-key", privateKey, password.toCharArray(), arrayOf(cert))
+        clientKeyStore.setKeyEntry(
+            "private-key",
+            privateKey,
+            password.toCharArray(),
+            arrayOf<Certificate>(cert)
+        )
         val keyManagerFactory =
             KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm())
         keyManagerFactory.init(clientKeyStore, password.toCharArray())
@@ -229,12 +226,12 @@ internal object SecurityHelper1 {
         return arrayOf<TrustManager>(@RequiresApi(Build.VERSION_CODES.N)
         object : X509ExtendedTrustManager() {
             @Throws(CertificateException::class)
-            override fun checkClientTrusted(chain: Array<X509Certificate?>?, authType: String?) {
+            override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {
                 standardTrustManager.checkClientTrusted(chain, authType)
             }
 
             @Throws(CertificateException::class)
-            override fun checkServerTrusted(chain: Array<X509Certificate?>?, authType: String?) {
+            override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {
                 standardTrustManager.checkServerTrusted(chain, authType)
             }
 
@@ -244,36 +241,36 @@ internal object SecurityHelper1 {
 
             @Throws(CertificateException::class)
             override fun checkClientTrusted(
-                chain: Array<X509Certificate?>?,
-                authType: String?,
-                socket: Socket?
+                chain: Array<X509Certificate>,
+                authType: String,
+                socket: Socket
             ) {
                 standardTrustManager.checkClientTrusted(chain, authType)
             }
 
             @Throws(CertificateException::class)
             override fun checkServerTrusted(
-                chain: Array<X509Certificate?>?,
-                authType: String?,
-                socket: Socket?
+                chain: Array<X509Certificate>,
+                authType: String,
+                socket: Socket
             ) {
                 standardTrustManager.checkServerTrusted(chain, authType)
             }
 
             @Throws(CertificateException::class)
             override fun checkClientTrusted(
-                chain: Array<X509Certificate?>?,
-                authType: String?,
-                engine: SSLEngine?
+                chain: Array<X509Certificate>,
+                authType: String,
+                engine: SSLEngine
             ) {
                 standardTrustManager.checkClientTrusted(chain, authType)
             }
 
             @Throws(CertificateException::class)
             override fun checkServerTrusted(
-                chain: Array<X509Certificate?>?,
-                authType: String?,
-                engine: SSLEngine?
+                chain: Array<X509Certificate>,
+                authType: String,
+                engine: SSLEngine
             ) {
                 standardTrustManager.checkServerTrusted(chain, authType)
             }

@@ -12,9 +12,9 @@ import java.util.regex.Pattern
 
 internal object ValidationTelemetryUtils {
 
-    private  const val FAULTY = 1 //"flt";
+    private const val FAULTY = 1 //"flt";
 
-    private  const val REPORTING = 0 //"rpt";
+    private const val REPORTING = 0 //"rpt";
 
     private const val ERR = 0 //"ERR";
 
@@ -81,14 +81,16 @@ internal object ValidationTelemetryUtils {
             return REPORTING
         } else if (dt == DATA_TYPE_STRING) {
             return validateNumber(dt, value, dv)
-        } else if (TextUtils.isEmpty(value.trim())) {
+        } /*else if (TextUtils.isEmpty(value.trim())) {
             return FAULTY
-        } else if (dt == DATA_TYPE_INTEGER || dt == DATA_TYPE_LONG || dt == DATA_TYPE_DECIMAL) {
-            if (!SDKClientUtils.isDigit(value)) {
-                return FAULTY
-            } else {
+        }*/ else if (dt == DATA_TYPE_INTEGER || dt == DATA_TYPE_LONG || dt == DATA_TYPE_DECIMAL) {
+            if (TextUtils.isEmpty(value.trim())) {
                 return validateNumber(dt, value, dv)
-            }
+            } else if (!SDKClientUtils.isDigit(value)) {
+                return FAULTY
+            } /*else {
+
+            }*/
 
         } else if (dt == DATA_TYPE_BIT) {
             isBit = true
@@ -110,10 +112,14 @@ internal object ValidationTelemetryUtils {
 
     @Throws(Exception::class)
     private fun validateNumber(dt: Int, value: String, range: String): Int {
-
         var range = range
         var start: Double
         var end: Double
+
+        if ((value == null || value.isEmpty()) && (range == null || range.isEmpty())) {
+            return REPORTING
+        }
+
         range = range.replace(",\\s".toRegex(), ",")
         val array = range.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
         val list = ArrayList<String>()
@@ -225,7 +231,7 @@ internal object ValidationTelemetryUtils {
     private fun validateBoolean(value: String, dataValidation: String?): Int {
         return try {
 
-            if (dataValidation != null && dataValidation.isNotEmpty()) {
+            if (dataValidation != null && dataValidation.isEmpty()) {
                 if (dataValidation == value) {
                     REPORTING
                 } else {

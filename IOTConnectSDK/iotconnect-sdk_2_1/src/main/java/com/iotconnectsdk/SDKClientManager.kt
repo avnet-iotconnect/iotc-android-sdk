@@ -497,7 +497,8 @@ internal class SDKClientManager(
             this,
             iotSDKLogUtils!!,
             isDebug,
-            uniqueId!!
+            uniqueId!!,
+            cpId!!
         )
         mqttService!!.connectMQTT()
 
@@ -618,7 +619,6 @@ internal class SDKClientManager(
         if (message != null) {
             try {
                 val mainObject = JSONObject(message)
-                Log.d("mainObject", "::$mainObject")
                 var cmdType: Int? = -1
                 var responseCode: Int? = -1
                 if (mainObject.has("d")) {
@@ -915,8 +915,6 @@ internal class SDKClientManager(
     * 1.When device is not connected to network and offline storage is true from client, than save all published message to device memory.
     * */
     private fun publishMessage(topics: String, publishMessage: String, isUpdate: Boolean) {
-
-        Log.d("publishMessage", "::$publishMessage")
 
         try {
             if (validationUtils!!.networkConnectionCheck()) {
@@ -1356,9 +1354,6 @@ internal class SDKClientManager(
                     )
                 )
             )
-            // var read: String? = ""
-
-            //val allText = bufferedReader.use(BufferedReader::readText)
 
             bufferedReader.useLines { lines ->
                 lines.forEach {
@@ -1367,10 +1362,6 @@ internal class SDKClientManager(
             }
 
 
-            /* while (bufferedReader.readLine().also { read = it } != null) {
-
-                 offlineData.add(read)
-             }*/
             bufferedReader.close()
 
             //delete text file after reading all records.
@@ -1958,12 +1949,6 @@ internal class SDKClientManager(
             }
         }
 
-
-        Log.d(
-            "gatewayid",
-            "::$id ${edgeDeviceAttributeGyroMap?.size()} ${edgeDeviceAttributeMap?.size()}"
-        )
-
         val timerTumblingWindow = Timer()
         edgeDeviceTimersList?.add(timerTumblingWindow)
         val timerTask: TimerTask = object : TimerTask() {
@@ -1993,7 +1978,6 @@ internal class SDKClientManager(
                                 isPublish = false
                             }
                         }
-                        Log.d("publishMessage1", "::$publishObj")
                     }
 
 

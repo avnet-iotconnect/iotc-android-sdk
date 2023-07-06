@@ -264,14 +264,16 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
 
             //For using symmetric key authentication type
             sdkOptions.devicePK = ""
+
             val offlineStorage = OfflineStorage()
             offlineStorage.isDisabled = false //default value false
-            offlineStorage.availSpaceInMb =
-                1 //This will be in MB. mean total available space is 1 MB.
+            offlineStorage.availSpaceInMb = 1 //This will be in MB. mean total available space is 1 MB.
             offlineStorage.fileCount = 5 //5 files can be created.
             sdkOptions.certificate = certificate
             sdkOptions.offlineStorage = offlineStorage
             sdkOptions.isSkipValidation = false
+            sdkOptions.brokerType = "" //pass broker type either "az" or "aws"
+
             val sdkOptionsJsonStr = Gson().toJson(sdkOptions)
             Log.d(
                 TAG,

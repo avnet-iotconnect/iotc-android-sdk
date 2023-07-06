@@ -74,7 +74,6 @@ internal class IotSDKLogUtils private constructor(
             writer.newLine()
             writer.close()
         } catch (e: Exception) {
-            //Log.d("writeToFile", e.getMessage());
             e.printStackTrace()
         }
     }

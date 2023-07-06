@@ -43,14 +43,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.TimeZone;
+import java.util.logging.LogManager;
 
 import com.softweb.iotconnectsdk.model.Attribute;
 import com.softweb.iotconnectsdk.model.AttributesModel;
 import com.softweb.iotconnectsdk.model.Certificate;
 import com.softweb.iotconnectsdk.model.D;
-import com.iotconnectsdk.beans.D2CSendAckBean;
 import com.softweb.iotconnectsdk.model.Device;
 import com.softweb.iotconnectsdk.model.OfflineStorage;
 import com.softweb.iotconnectsdk.model.SdkOptions;
@@ -298,9 +297,9 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         Certificate certificate = new Certificate();
 
         //put certificate file in asset folder
-      //  certificate.setsSLKeyPath(getRobotCacheFile(this, "pk_AJune1501.pem").getAbsolutePath());
-        //certificate.setsSLCertPath(getRobotCacheFile(this, "cert_AJune1501.crt").getAbsolutePath());
-        certificate.setsSLCaPath(getRobotCacheFile(this, "rootCA_aws.pem").getAbsolutePath());
+        certificate.setsSLKeyPath(getRobotCacheFile(this, "").getAbsolutePath());
+        certificate.setsSLCertPath(getRobotCacheFile(this, "").getAbsolutePath());
+        certificate.setsSLCaPath(getRobotCacheFile(this, "").getAbsolutePath());
 
 
         //For using symmetric key authentication type
@@ -314,7 +313,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         sdkOptions.setCertificate(certificate);
         sdkOptions.setOfflineStorage(offlineStorage);
         sdkOptions.setSkipValidation(false);
-        sdkOptions.setBrokerType("aws");    //pass broker type either "az" or "aws"
+        sdkOptions.setBrokerType("");    //pass broker type either "az" or "aws"
 
         String sdkOptionsJsonStr = new Gson().toJson(sdkOptions);
 

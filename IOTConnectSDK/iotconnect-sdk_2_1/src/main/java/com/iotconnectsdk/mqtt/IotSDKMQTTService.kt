@@ -11,15 +11,10 @@ import com.iotconnectsdk.interfaces.TwinUpdateCallback
 import com.iotconnectsdk.utils.DateTimeUtils
 import com.iotconnectsdk.utils.IotSDKLogUtils
 import com.iotconnectsdk.utils.IotSDKUrls
-
 import com.iotconnectsdk.utils.SDKClientUtils.generateSasToken
 import com.iotconnectsdk.utils.SDKClientUtils.generateSasTokenLatest
-
-import com.iotconnectsdk.webservices.responsebean.IdentityServiceResponse
 import com.iotconnectsdk.utils.SecurityHelper.createSocketFactory
-import com.iotconnectsdk.utils.SecurityHelper1.getSSLSocketFactory
-import com.iotconnectsdk.utils.SecurityHelper1.getSSLSocketFactoryLatest123
-
+import com.iotconnectsdk.webservices.responsebean.IdentityServiceResponse
 import org.eclipse.paho.android.service.MqttAndroidClient
 import org.eclipse.paho.client.mqttv3.*
 import org.json.JSONObject
@@ -37,20 +32,22 @@ internal class IotSDKMQTTService private constructor(
     private val publishMessageCallback: PublishMessageCallback,
     private val twinCallbackMessage: TwinUpdateCallback,
     private val iotSDKLogUtils: IotSDKLogUtils,
-    private val isDebug: Boolean, private val uniqueId: String
+    private val isDebug: Boolean,
+    private val uniqueId: String,
+    private val cpId: String,
 ) {
 
     private var mqttAndroidClient: MqttAndroidClient? = null
 
     //- To receive the desired property and update the Reported Property
-    private val TWIN_PUB_TOPIC = "\$iothub/twin/PATCH/properties/reported/?\$rid=1"
+    private var TWIN_SHADOW_PUB_TOPIC = ""
 
-    private val TWIN_SUB_TOPIC = "\$iothub/twin/PATCH/properties/desired/#"
+    private var TWIN_SHADOW_SUB_TOPIC = ""
 
     // - To Publish the blank message on publish and Subscribe message with desired and reported property
-    private val TWIN_PUB_TOPIC_BLANK_MSG = "\$iothub/twin/GET/?\$rid=0"
+    private var TWIN_SHADOW_PUB_TOPIC_BLANK_MSG = ""
 
-    private val TWIN_SUB_TOPIC_BLANK_MSG = "\$iothub/twin/res/#"
+    private var TWIN_SHADOW_SUB_TOPIC_BLANK_MSG = ""
 
     private val DESIRED = "desired"
 
@@ -59,6 +56,8 @@ internal class IotSDKMQTTService private constructor(
     private var subscriptionTopic: String? = null
 
     private var brokerType = ""
+
+    private val CPID_DEVICEID = "$cpId-$uniqueId"
 
 
     companion object {
@@ -69,7 +68,7 @@ internal class IotSDKMQTTService private constructor(
             context: Context, sdkOptions: String?, protocolBean: IdentityServiceResponse.D.P,
             authenticationType: Int, hubToSdkCallback: HubToSdkCallback,
             publishMessageCallback: PublishMessageCallback, twinCallbackMessage: TwinUpdateCallback,
-            iotSDKLogUtils: IotSDKLogUtils, isDebug: Boolean, uniqueId: String
+            iotSDKLogUtils: IotSDKLogUtils, isDebug: Boolean, uniqueId: String, cpId: String
         ): IotSDKMQTTService? {
 
             synchronized(this) {
@@ -84,7 +83,8 @@ internal class IotSDKMQTTService private constructor(
                         twinCallbackMessage,
                         iotSDKLogUtils,
                         isDebug,
-                        uniqueId
+                        uniqueId,
+                        cpId
                     )
                 }
                 return iotSDKMQTTService
@@ -127,14 +127,21 @@ internal class IotSDKMQTTService private constructor(
                     if (message.payload.toString().isEmpty()) {
                         return
                     }
-                    if (topic.contains(TWIN_SUB_TOPIC.substring(0, TWIN_SUB_TOPIC.length - 1))) {
+                    if (topic.contains(
+                            TWIN_SHADOW_SUB_TOPIC.substring(
+                                0,
+                                TWIN_SHADOW_SUB_TOPIC.length - 1
+                            )
+                        )
+                    ) {
                         val mainObj = JSONObject()
                         mainObj.put(DESIRED, JSONObject(String(message.payload)))
                         mainObj.put(UNIQUE_ID, uniqueId)
                         twinCallbackMessage.twinUpdateCallback(mainObj)
                     } else if (topic.contains(
-                            TWIN_SUB_TOPIC_BLANK_MSG.substring(
-                                0, TWIN_SUB_TOPIC_BLANK_MSG.length - 1
+                            TWIN_SHADOW_SUB_TOPIC_BLANK_MSG.substring(
+                                0,
+                                TWIN_SHADOW_SUB_TOPIC_BLANK_MSG.length - 1
                             )
                         )
                     ) {
@@ -150,7 +157,6 @@ internal class IotSDKMQTTService private constructor(
             }
 
             override fun deliveryComplete(token: IMqttDeliveryToken) {
-                Log.d("deliveryComplete", "::$token")
             }
         })
         val mqttConnectOptions = MqttConnectOptions()
@@ -164,6 +170,24 @@ internal class IotSDKMQTTService private constructor(
 
                 if (sdkObj.has("brokerType")) {
                     brokerType = sdkObj.getString("brokerType")
+                }
+
+                if (brokerType == "az") {
+                    TWIN_SHADOW_PUB_TOPIC = "\$iothub/twin/PATCH/properties/reported/?\$rid=1"
+                    TWIN_SHADOW_SUB_TOPIC = "\$iothub/twin/PATCH/properties/desired/#"
+
+                    TWIN_SHADOW_PUB_TOPIC_BLANK_MSG = "\$iothub/twin/GET/?\$rid=0"
+                    TWIN_SHADOW_SUB_TOPIC_BLANK_MSG = "\$iothub/twin/res/#"
+                } else if (brokerType == "aws") {
+                    TWIN_SHADOW_PUB_TOPIC =
+                        "\$rid=1\$aws/things/$CPID_DEVICEID/shadow/name/${CPID_DEVICEID}_twin_shadow/report"
+                    TWIN_SHADOW_SUB_TOPIC =
+                        "\$aws/things/$CPID_DEVICEID/shadow/name/${CPID_DEVICEID}_twin_shadow/property-shadow"
+
+                    TWIN_SHADOW_PUB_TOPIC_BLANK_MSG =
+                        "\$aws/things/$CPID_DEVICEID/shadow/name/${CPID_DEVICEID}_twin_shadow/get"
+                    TWIN_SHADOW_SUB_TOPIC_BLANK_MSG =
+                        "\$aws/things/$CPID_DEVICEID/shadow/name/${CPID_DEVICEID}_twin_shadow/get/all"
                 }
 
                 if (authenticationType == IotSDKUrls.AUTH_TYPE_SELF_SIGN || authenticationType == IotSDKUrls.AUTH_TYPE_CA_SIGN) {
@@ -188,27 +212,20 @@ internal class IotSDKMQTTService private constructor(
                             clientKeyFile = certificate.getString("SSLKeyPath")
                         }
                         val clientKeyPassword = ""
-                        /*if (TextUtils.isEmpty(caFile) && TextUtils.isEmpty(clientCrtFile)
+                        if (TextUtils.isEmpty(caFile) && TextUtils.isEmpty(clientCrtFile)
                             && TextUtils.isEmpty(clientKeyFile)
                         ) {
                             return
-                        }*/
+                        }
 
-                        /*val socketFactory = createSocketFactory(
+                        val socketFactory = createSocketFactory(
                             caFile!!,
                             clientCrtFile!!,
                             clientKeyFile!!,
                             "",
                             "",
                             ""
-                        )*/
-
-
-                        val socketFactory = getSSLSocketFactoryLatest123(
-                            caFile!!,false
                         )
-
-
                         mqttConnectOptions.socketFactory = socketFactory
                     }
 
@@ -257,7 +274,6 @@ internal class IotSDKMQTTService private constructor(
                 }
 
                 override fun onFailure(asyncActionToken: IMqttToken, exception: Throwable) {
-                    Log.d("exception", "::" + exception.printStackTrace())
                     hubToSdkCallback.onConnectionStateChange(false)
                     iotSDKLogUtils.log(
                         true, isDebug, "ERR_IN13", context.getString(R.string.ERR_IN13)
@@ -273,7 +289,8 @@ internal class IotSDKMQTTService private constructor(
     fun subscribeToTopic() {
         iotSDKLogUtils.log(false, isDebug, "INFO_IN05", context.getString(R.string.INFO_IN05))
         try {
-            val topics = arrayOf(subscriptionTopic, TWIN_SUB_TOPIC, TWIN_SUB_TOPIC_BLANK_MSG)
+            val topics =
+                arrayOf(subscriptionTopic, TWIN_SHADOW_SUB_TOPIC, TWIN_SHADOW_SUB_TOPIC_BLANK_MSG)
             mqttAndroidClient?.subscribe(topics, intArrayOf(0, 0, 0), null,
                 object : IMqttActionListener {
                     override fun onSuccess(asyncActionToken: IMqttToken) {
@@ -310,7 +327,7 @@ internal class IotSDKMQTTService private constructor(
             try {
                 val message = MqttMessage()
                 message.payload = "".toByteArray()
-                mqttAndroidClient!!.publish(TWIN_PUB_TOPIC_BLANK_MSG, message)
+                mqttAndroidClient!!.publish(TWIN_SHADOW_PUB_TOPIC_BLANK_MSG, message)
             } catch (e: MqttException) {
                 e.printStackTrace()
             }
@@ -323,7 +340,7 @@ internal class IotSDKMQTTService private constructor(
             try {
                 val message = MqttMessage()
                 message.payload = msgPublish.toByteArray()
-                mqttAndroidClient!!.publish(TWIN_PUB_TOPIC, message)
+                mqttAndroidClient!!.publish(TWIN_SHADOW_PUB_TOPIC, message)
                 iotSDKLogUtils.log(
                     false, isDebug, "INFO_TP01",
                     context.getString(R.string.INFO_TP01) + " " + DateTimeUtils.currentDate

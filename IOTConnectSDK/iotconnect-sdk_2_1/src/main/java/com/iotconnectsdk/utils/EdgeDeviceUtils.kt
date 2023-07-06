@@ -110,7 +110,6 @@ internal object EdgeDeviceUtils {
                             if (twbList != null) {
                                 for (twb in twbList) {
                                     if (uniqueId == twb.uniqueId) {
-                                        Log.d("uniqueIdedge", "::" + uniqueId + "" + twb.uniqueId)
                                         attributeArray = getEdgeDevicePublishAttributes(twb)
                                         if (attributeArray.length() > 0) {
                                             dInnerArrayObject.put(twb.attributeName, attributeArray)
@@ -139,7 +138,6 @@ internal object EdgeDeviceUtils {
             for ((key, twb) in edgeDeviceAttributeMap.entries()) {
                 if (key == attributeName) {
                     if (uniqueId == twb.uniqueId) {
-                        Log.d("uniqueIdedge", "::" + uniqueId + "" + twb.uniqueId)
                         try {
                             val attributeArray = getEdgeDevicePublishAttributes(twb)
                             if (attributeArray.length() > 0) {
