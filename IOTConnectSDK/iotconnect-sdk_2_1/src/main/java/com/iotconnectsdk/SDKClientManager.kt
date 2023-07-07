@@ -306,6 +306,8 @@ internal class SDKClientManager(
                     discoveryUrl = DEFAULT_DISCOVERY_URL_AZ //set default discovery url when it is empty from client end.
                 }else if (brokerType=="aws"){
                     discoveryUrl = DEFAULT_DISCOVERY_URL_AWS //set default discovery url when it is empty from client end.
+                }else{
+                    discoveryUrl = DEFAULT_DISCOVERY_URL_AZ //set default discovery url when it is empty from client end.
                 }
 
             } else {
@@ -323,6 +325,8 @@ internal class SDKClientManager(
                 discoveryUrl = DEFAULT_DISCOVERY_URL_AZ //set default discovery url when sdkOption is null.
             }else if (brokerType=="aws"){
                 discoveryUrl = DEFAULT_DISCOVERY_URL_AWS //set default discovery url when sdkOption is null.
+            }else{
+                discoveryUrl = DEFAULT_DISCOVERY_URL_AZ //set default discovery url when sdkOption is null.
             }
         }
         if (!validationUtils!!.isEmptyValidation(

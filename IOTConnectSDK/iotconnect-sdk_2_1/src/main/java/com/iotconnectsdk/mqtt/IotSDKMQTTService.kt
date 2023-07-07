@@ -188,9 +188,16 @@ internal class IotSDKMQTTService private constructor(
                         "\$aws/things/$CPID_DEVICEID/shadow/name/${CPID_DEVICEID}_twin_shadow/get"
                     TWIN_SHADOW_SUB_TOPIC_BLANK_MSG =
                         "\$aws/things/$CPID_DEVICEID/shadow/name/${CPID_DEVICEID}_twin_shadow/get/all"
+                } else {
+                    TWIN_SHADOW_PUB_TOPIC = "\$iothub/twin/PATCH/properties/reported/?\$rid=1"
+                    TWIN_SHADOW_SUB_TOPIC = "\$iothub/twin/PATCH/properties/desired/#"
+
+                    TWIN_SHADOW_PUB_TOPIC_BLANK_MSG = "\$iothub/twin/GET/?\$rid=0"
+                    TWIN_SHADOW_SUB_TOPIC_BLANK_MSG = "\$iothub/twin/res/#"
                 }
 
-                if (authenticationType == IotSDKUrls.AUTH_TYPE_SELF_SIGN || authenticationType == IotSDKUrls.AUTH_TYPE_CA_SIGN) {
+                if (authenticationType == IotSDKUrls.AUTH_TYPE_SELF_SIGN || authenticationType == IotSDKUrls.AUTH_TYPE_CA_SIGN||
+                    authenticationType == IotSDKUrls.AUTH_TYPE_CA_SIGN_INDI) {
                     if (sdkObj.has("certificate")) {
                         val certificate = sdkObj.getJSONObject("certificate")
 
