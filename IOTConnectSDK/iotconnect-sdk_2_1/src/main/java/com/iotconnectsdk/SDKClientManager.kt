@@ -353,7 +353,7 @@ internal class SDKClientManager(
             if (brokerType == "az") {
                 discoveryApi = discoveryUrl + URL_PATH + CPID + cpId + ENV + environment
             } else if (brokerType == "aws") {
-                discoveryApi = discoveryUrl + URL_PATH + CPID + cpId + ENV + "preqa"+"?pf=aws"
+                discoveryApi = discoveryUrl + URL_PATH + CPID + cpId + ENV + environment+"?pf=aws"
             } else {
                 discoveryApi = discoveryUrl + URL_PATH + CPID + cpId  + ENV + environment
             }
