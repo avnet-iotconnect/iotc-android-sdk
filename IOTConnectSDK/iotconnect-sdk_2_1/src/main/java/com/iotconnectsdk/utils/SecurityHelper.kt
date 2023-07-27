@@ -44,7 +44,7 @@ internal object SecurityHelper {
                 clientKeyPassword,
                 companySID,
                 deviceUniqueID
-            )!!.keyManagers
+            )?.keyManagers
             val trustManagers = createTrustManagerFactory(caFile, companySID, deviceUniqueID)!!
                 .trustManagers
 

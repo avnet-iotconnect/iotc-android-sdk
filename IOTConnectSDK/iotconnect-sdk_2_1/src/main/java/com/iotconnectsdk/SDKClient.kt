@@ -229,10 +229,11 @@ class SDKClient(
     }
 
 
-    /**
-     *Get child device from IOT connect portal
+    /*
      *https://docs.iotconnect.io/iotconnect/resources/device-message-2-1-2/device-identity-messages/#devices
      *
+     * If device is of gateway type then below function will get child device from IOT connect portal
+     * {"d": {"d": [{"tg": "","id": ""}],"ct": 204,"ec": 0 }}
      *
      */
     fun getChildDevices() {

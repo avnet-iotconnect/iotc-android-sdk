@@ -25,6 +25,7 @@ import javax.crypto.spec.SecretKeySpec
 
 internal object SDKClientUtils {
     private const val TEXT_FILE_PREFIX = "current"
+    private const val YEARS = 31536000 // 1 year
 
     fun getAttributesList(
         attributesLists: List<GetAttributeBean>, tag: String?
@@ -227,7 +228,7 @@ internal object SDKClientUtils {
     @Throws(Exception::class)
     fun generateSasTokenLatest(resourceUri: String?, key: String?): String? {
         // Token will expire in one year
-        val expiry = Instant.now().epochSecond + 31536000
+        val expiry = Instant.now().epochSecond + YEARS
         val stringToSign = URLEncoder.encode(
             resourceUri,
             "UTF-8"
@@ -253,7 +254,7 @@ internal object SDKClientUtils {
     @Throws(java.lang.Exception::class)
     fun generateSasToken(resourceUri: String?, key: String?): String? {
         // Token will expire in one year
-        val expiry = Instant.now().epochSecond + 31536000
+        val expiry = Instant.now().epochSecond + YEARS
         val stringToSign = URLEncoder.encode(resourceUri, "UTF-8") + "\n" + expiry
 
         val decodedKey = Base64.decode(key, Base64.DEFAULT);
@@ -273,8 +274,6 @@ internal object SDKClientUtils {
             "UTF-8"
         ) + "&sig=" + URLEncoder.encode(signature, StandardCharsets.UTF_8.name()) + "&se=" + expiry)
     }
-
-
 
 
 }
