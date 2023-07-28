@@ -32,7 +32,7 @@ class GatewayChildDevicesActivity : AppCompatActivity(), AdapterView.OnItemSelec
 
         // showing the back button in action bar
         setSupportActionBar(toolbar)
-        supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_back_arrow);
+        supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_back_arrow)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
 
@@ -74,31 +74,31 @@ class GatewayChildDevicesActivity : AppCompatActivity(), AdapterView.OnItemSelec
     }
 
     override fun onDeviceCommand(message: String?) {
-        TODO("Not yet implemented")
+        //These needs to be implemented from app side
     }
 
     override fun onOTACommand(message: String?) {
-        TODO("Not yet implemented")
+        //These needs to be implemented from app side
     }
 
     override fun onModuleCommand(message: String?) {
-        TODO("Not yet implemented")
+        //These needs to be implemented from app side
     }
 
     override fun onAttrChangeCommand(message: String?) {
-        TODO("Not yet implemented")
+        //These needs to be implemented from app side
     }
 
     override fun onTwinChangeCommand(message: String?) {
-        TODO("Not yet implemented")
+        //These needs to be implemented from app side
     }
 
     override fun onRuleChangeCommand(message: String?) {
-        TODO("Not yet implemented")
+        //These needs to be implemented from app side
     }
 
     override fun onDeviceChangeCommand(message: String?) {
-        TODO("Not yet implemented")
+        //These needs to be implemented from app side
     }
 
     override fun onReceiveMsg(message: String?) {
@@ -108,7 +108,7 @@ class GatewayChildDevicesActivity : AppCompatActivity(), AdapterView.OnItemSelec
     }
 
     override fun twinUpdateCallback(data: JSONObject?) {
-        TODO("Not yet implemented")
+        //These needs to be implemented from app side
     }
 
     /*

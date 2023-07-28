@@ -1,10 +1,10 @@
 package com.iotconnectsdk.iotconnectconfigs
 
 enum class EnvironmentType(val value:String) {
-    DEV("DEV"),
+    AVNET("avnet"),
+    DEV("dev"),
+    QA("qa"),
+    PROD("prod"),
     STAGE("STAGE"),
-    POC("POC"),
-    QA("QA"),
-    AVNETPOC("AVNETPOC"),
-    PROD("PROD")
+    POC("POC")
 }

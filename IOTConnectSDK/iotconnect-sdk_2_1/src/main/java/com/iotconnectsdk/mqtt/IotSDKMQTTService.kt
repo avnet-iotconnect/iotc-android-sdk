@@ -3,8 +3,8 @@ package com.iotconnectsdk.mqtt
 import android.content.Context
 import android.os.Build
 import android.text.TextUtils
-import android.util.Log
 import com.iotconnectsdk.R
+import com.iotconnectsdk.enums.BrokerType
 import com.iotconnectsdk.interfaces.HubToSdkCallback
 import com.iotconnectsdk.interfaces.PublishMessageCallback
 import com.iotconnectsdk.interfaces.TwinUpdateCallback
@@ -172,13 +172,13 @@ internal class IotSDKMQTTService private constructor(
                     brokerType = sdkObj.getString("brokerType")
                 }
 
-                if (brokerType == "az") {
+                if (brokerType == BrokerType.AZ.value) {
                     TWIN_SHADOW_PUB_TOPIC = "\$iothub/twin/PATCH/properties/reported/?\$rid=1"
                     TWIN_SHADOW_SUB_TOPIC = "\$iothub/twin/PATCH/properties/desired/#"
 
                     TWIN_SHADOW_PUB_TOPIC_BLANK_MSG = "\$iothub/twin/GET/?\$rid=0"
                     TWIN_SHADOW_SUB_TOPIC_BLANK_MSG = "\$iothub/twin/res/#"
-                } else if (brokerType == "aws") {
+                } else if (brokerType == BrokerType.AWS.value) {
                     TWIN_SHADOW_PUB_TOPIC =
                         "\$rid=1\$aws/things/$CPID_DEVICEID/shadow/name/${CPID_DEVICEID}_twin_shadow/report"
                     TWIN_SHADOW_SUB_TOPIC =
@@ -196,8 +196,9 @@ internal class IotSDKMQTTService private constructor(
                     TWIN_SHADOW_SUB_TOPIC_BLANK_MSG = "\$iothub/twin/res/#"
                 }
 
-                if (authenticationType == IotSDKUrls.AUTH_TYPE_SELF_SIGN || authenticationType == IotSDKUrls.AUTH_TYPE_CA_SIGN||
-                    authenticationType == IotSDKUrls.AUTH_TYPE_CA_SIGN_INDI) {
+                if (authenticationType == IotSDKUrls.AUTH_TYPE_SELF_SIGN || authenticationType == IotSDKUrls.AUTH_TYPE_CA_SIGN ||
+                    authenticationType == IotSDKUrls.AUTH_TYPE_CA_SIGN_INDI
+                ) {
                     if (sdkObj.has("certificate")) {
                         val certificate = sdkObj.getJSONObject("certificate")
 

@@ -44,15 +44,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
-import java.util.logging.LogManager;
 
+import com.iotconnectsdk.iotconnectconfigs.EnvironmentType;
 import com.softweb.iotconnectsdk.model.Attribute;
 import com.softweb.iotconnectsdk.model.AttributesModel;
-import com.softweb.iotconnectsdk.model.Certificate;
+import com.iotconnectsdk.iotconnectconfigs.Certificate;
 import com.softweb.iotconnectsdk.model.D;
 import com.softweb.iotconnectsdk.model.Device;
-import com.softweb.iotconnectsdk.model.OfflineStorage;
-import com.softweb.iotconnectsdk.model.SdkOptions;
+import com.iotconnectsdk.iotconnectconfigs.OfflineStorage;
+import com.iotconnectsdk.iotconnectconfigs.SdkOptions;
 import com.softweb.iotconnectsdk.R;
 
 
@@ -89,7 +89,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
 
     private RadioButton rbtnDev;
     private RadioButton rbtnAvnet;
-    private RadioButton rbtnStage;
+    private RadioButton rbtnProd;
     private RadioButton rbtnQa;
 
     private LinearLayout linearLayout;
@@ -154,7 +154,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
 
         rbtnDev = findViewById(R.id.rbtnDev);
         rbtnAvnet = findViewById(R.id.rbtnAvnet);
-        rbtnStage = findViewById(R.id.rbtnStage);
+        rbtnProd = findViewById(R.id.rbtnProd);
         rbtnQa = findViewById(R.id.rbtnQa);
 
         checkPermissions();
@@ -191,7 +191,6 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                 }
             }
         } else if (v.getId() == R.id.btnSendData) {
-            // showDialog(FirmwareActivity.this);
             try {
                 sendInputData();
             } catch (Exception e) {
@@ -303,17 +302,17 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
 
 
         //For using symmetric key authentication type
-        sdkOptions.setDevicePK("");
+        sdkOptions.devicePK = "";
 
         OfflineStorage offlineStorage = new OfflineStorage();
         offlineStorage.setDisabled(false); //default value false
-        offlineStorage.setAvailSpaceInMb(1); //This will be in MB. mean total available space is 1 MB.
-        offlineStorage.setFileCount(5); //5 files can be created.
+        offlineStorage.availSpaceInMb = 1; //This will be in MB. mean total available space is 1 MB.
+        offlineStorage.fileCount = 5; //5 files can be created.
 
-        sdkOptions.setCertificate(certificate);
-        sdkOptions.setOfflineStorage(offlineStorage);
+        sdkOptions.certificate = certificate;
+        sdkOptions.offlineStorage = offlineStorage;
         sdkOptions.setSkipValidation(false);
-        sdkOptions.setBrokerType("");    //pass broker type either "az" or "aws"
+        sdkOptions.brokerType = "";    //pass broker type either "az" or "aws"
 
         String sdkOptionsJsonStr = new Gson().toJson(sdkOptions);
 
@@ -450,6 +449,9 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                 hideDialog(FirmwareActivity.this);
                 setStatusText(R.string.device_disconnected);
                 Toast.makeText(FirmwareActivity.this, message, Toast.LENGTH_LONG).show();
+            } else {
+                hideDialog(FirmwareActivity.this);
+               // Toast.makeText(FirmwareActivity.this, message, Toast.LENGTH_LONG).show();
             }
 
         } catch (Exception e) {
@@ -629,44 +631,6 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
     }
 
 
-    private JSONObject getAckObject(JSONObject mainObject) {
-
-        JSONObject objD = null;
-        String childId = "";
-        try {
-            JSONObject dataObj = mainObject.getJSONObject("data");
-            String ackId = dataObj.getString("ackId");
-
-//                var obj = {
-//                        "ackId": command.ackId,
-//                        "st": st, // 6 (Device '0x01'), 7 (Firmware '0x02' )
-//                        "msg": "", //Leave it blank
-//                        "childId": "" //Leave it blank
-//                 }
-
-            try {
-                if (dataObj.has("urls")) {
-                    JSONArray urlsObj = dataObj.getJSONArray("urls");
-                    JSONObject arObject = (JSONObject) urlsObj.get(0);
-
-                    if (arObject.has("uniqueId"))
-                        childId = arObject.getString("uniqueId");
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
-            //create json object.
-            objD = new JSONObject();
-            objD.put("ackId", ackId);
-            objD.put("msg", "OTA updated successfully..!!");
-            objD.put("childId", childId);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        return objD;
-    }
-
     /*
      * Type    : private function "createDynamicViews()"
      * Usage   : To create views according to device attributes.
@@ -774,19 +738,19 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         switch (view.getId()) {
             case R.id.rbtnDev:
                 if (checked)
-                    environment = rbtnDev.getText().toString();
+                    environment = EnvironmentType.DEV.getValue();
                 break;
-            case R.id.rbtnStage:
+            case R.id.rbtnProd:
                 if (checked)
-                    environment = rbtnStage.getText().toString();
+                    environment = EnvironmentType.PROD.getValue();
                 break;
             case R.id.rbtnAvnet:
                 if (checked)
-                    environment = rbtnAvnet.getText().toString();
+                    environment = EnvironmentType.AVNET.getValue();
                 break;
             case R.id.rbtnQa:
                 if (checked)
-                    environment = rbtnQa.getText().toString();
+                    environment = EnvironmentType.QA.getValue();
                 break;
         }
     }

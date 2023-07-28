@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.IntentFilter
 import android.net.ConnectivityManager
 import android.text.TextUtils
-import android.util.Log
 import android.webkit.URLUtil
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.ListMultimap
@@ -14,6 +13,7 @@ import com.iotconnectsdk.beans.CommonResponseBean
 import com.iotconnectsdk.beans.GetChildDeviceBean
 import com.iotconnectsdk.beans.GetEdgeRuleBean
 import com.iotconnectsdk.beans.TumblingWindowBean
+import com.iotconnectsdk.enums.BrokerType
 import com.iotconnectsdk.enums.C2DMessageEnums
 import com.iotconnectsdk.enums.DeviceIdentityMessages
 import com.iotconnectsdk.interfaces.DeviceCallback
@@ -98,6 +98,8 @@ internal class SDKClientManager(
     private val DEFAULT_DISCOVERY_URL_AWS = "http://54.160.162.148:219/"
 
     private val URL_PATH = "api/$appVersion/dsdk/"
+
+    private val END_POINT_AWS = "?pf=aws"
 
     private val CPID = "cpid/"
 
@@ -302,12 +304,15 @@ internal class SDKClientManager(
                         e.printStackTrace()
                     }
                 }
-                if(brokerType=="az"){
-                    discoveryUrl = DEFAULT_DISCOVERY_URL_AZ //set default discovery url when it is empty from client end.
-                }else if (brokerType=="aws"){
-                    discoveryUrl = DEFAULT_DISCOVERY_URL_AWS //set default discovery url when it is empty from client end.
-                }else{
-                    discoveryUrl = DEFAULT_DISCOVERY_URL_AZ //set default discovery url when it is empty from client end.
+                if (brokerType == BrokerType.AZ.value) {
+                    discoveryUrl =
+                        DEFAULT_DISCOVERY_URL_AZ //set default discovery url when it is empty from client end.
+                } else if (brokerType == BrokerType.AWS.value) {
+                    discoveryUrl =
+                        DEFAULT_DISCOVERY_URL_AWS //set default discovery url when it is empty from client end.
+                } else {
+                    discoveryUrl =
+                        DEFAULT_DISCOVERY_URL_AZ //set default discovery url when it is empty from client end.
                 }
 
             } else {
@@ -321,12 +326,15 @@ internal class SDKClientManager(
             }
         } else {
 
-            if(brokerType=="az"){
-                discoveryUrl = DEFAULT_DISCOVERY_URL_AZ //set default discovery url when sdkOption is null.
-            }else if (brokerType=="aws"){
-                discoveryUrl = DEFAULT_DISCOVERY_URL_AWS //set default discovery url when sdkOption is null.
-            }else{
-                discoveryUrl = DEFAULT_DISCOVERY_URL_AZ //set default discovery url when sdkOption is null.
+            if (brokerType == BrokerType.AZ.value) {
+                discoveryUrl =
+                    DEFAULT_DISCOVERY_URL_AZ //set default discovery url when sdkOption is null.
+            } else if (brokerType == BrokerType.AWS.value) {
+                discoveryUrl =
+                    DEFAULT_DISCOVERY_URL_AWS //set default discovery url when sdkOption is null.
+            } else {
+                discoveryUrl =
+                    DEFAULT_DISCOVERY_URL_AZ //set default discovery url when sdkOption is null.
             }
         }
         if (!validationUtils!!.isEmptyValidation(
@@ -350,12 +358,13 @@ internal class SDKClientManager(
 
         if (appVersion != null) {
 
-            if (brokerType == "az") {
+            if (brokerType == BrokerType.AZ.value) {
                 discoveryApi = discoveryUrl + URL_PATH + CPID + cpId + ENV + environment
-            } else if (brokerType == "aws") {
-                discoveryApi = discoveryUrl + URL_PATH + CPID + cpId + ENV + environment+"?pf=aws"
+            } else if (brokerType == BrokerType.AWS.value) {
+                discoveryApi =
+                    discoveryUrl + URL_PATH + CPID + cpId + ENV + environment + END_POINT_AWS
             } else {
-                discoveryApi = discoveryUrl + URL_PATH + CPID + cpId  + ENV + environment
+                discoveryApi = discoveryUrl + URL_PATH + CPID + cpId + ENV + environment
             }
 
             CallWebServices().getDiscoveryApi(discoveryApi, this)
@@ -750,6 +759,10 @@ internal class SDKClientManager(
                                 )
                                 deviceCallback!!.onReceiveMsg(message)
                             }
+
+                            else -> {
+                                deviceCallback!!.onReceiveMsg(message)
+                            }
                         }
                     } else {
 
@@ -890,6 +903,10 @@ internal class SDKClientManager(
 
                             C2DMessageEnums.VALIDATION_SKIP.value -> {
                                 onValidationSkipCommand()
+                            }
+
+                            else -> {
+                                deviceCallback!!.onReceiveMsg(message)
                             }
                         }
                     }
@@ -1434,6 +1451,15 @@ internal class SDKClientManager(
         }
     }
 
+    /*
+    *https://docs.iotconnect.io/iotconnect/resources/device-message-2-1-2/device-identity-messages/#devices
+    *
+    * If device is of gateway type then below function will get child device from IOT connect portal
+    * {"d": {"d": [{"tg": "","id": ""}],"ct": 204,"ec": 0 }}
+    *
+    */
+
+    @JvmSynthetic
     fun getChildDevices() {
         val response = getSyncResponse()
         publishMessage(

@@ -19,6 +19,10 @@ import com.google.android.material.textfield.TextInputLayout
 import com.google.gson.Gson
 import com.iotconnectsdk.SDKClient
 import com.iotconnectsdk.interfaces.DeviceCallback
+import com.iotconnectsdk.iotconnectconfigs.Certificate
+import com.iotconnectsdk.iotconnectconfigs.EnvironmentType
+import com.iotconnectsdk.iotconnectconfigs.OfflineStorage
+import com.iotconnectsdk.iotconnectconfigs.SdkOptions
 import com.softweb.iotconnectsdk.R
 import com.softweb.iotconnectsdk.model.*
 import kotlinx.android.synthetic.main.activity_firmware.*
@@ -265,9 +269,11 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
             //For using symmetric key authentication type
             sdkOptions.devicePK = ""
 
-            val offlineStorage = OfflineStorage()
+            val offlineStorage =
+                OfflineStorage()
             offlineStorage.isDisabled = false //default value false
-            offlineStorage.availSpaceInMb = 1 //This will be in MB. mean total available space is 1 MB.
+            offlineStorage.availSpaceInMb =
+                1 //This will be in MB. mean total available space is 1 MB.
             offlineStorage.fileCount = 5 //5 files can be created.
             sdkOptions.certificate = certificate
             sdkOptions.offlineStorage = offlineStorage
@@ -379,6 +385,9 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
                 hideDialog(this@FirmwareActivityKotlin)
                 setStatusText(R.string.device_disconnected)
                 Toast.makeText(this@FirmwareActivityKotlin, message, Toast.LENGTH_LONG).show()
+            } else {
+                hideDialog(this@FirmwareActivityKotlin)
+                //Toast.makeText(this@FirmwareActivityKotlin, message, Toast.LENGTH_LONG).show()
             }
         } catch (e: java.lang.Exception) {
             e.printStackTrace()
@@ -534,40 +543,6 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
         hideDialog(this@FirmwareActivityKotlin)
     }
 
-    private fun getAckObject(mainObject: JSONObject): JSONObject? {
-        var objD: JSONObject? = null
-        var childId = ""
-        try {
-            val dataObj = mainObject.getJSONObject("data")
-            val ackId = dataObj.getString("ackId")
-
-//                var obj = {
-//                        "ackId": command.ackId,
-//                        "st": st, // 6 (Device '0x01'), 7 (Firmware '0x02' )
-//                        "msg": "", //Leave it blank
-//                        "childId": "" //Leave it blank
-//                 }
-            try {
-                if (dataObj.has("urls")) {
-                    val urlsObj = dataObj.getJSONArray("urls")
-                    val arObject = urlsObj[0] as JSONObject
-                    if (arObject.has("uniqueId")) childId = arObject.getString("uniqueId")
-                }
-            } catch (e: JSONException) {
-                e.printStackTrace()
-            }
-
-            //create json object.
-            objD = JSONObject()
-            objD.put("ackId", ackId)
-            objD.put("msg", "OTA updated successfully..!!")
-            objD.put("childId", childId)
-        } catch (e: JSONException) {
-            e.printStackTrace()
-        }
-        return objD
-    }
-
     /*
      * Type    : private function "createDynamicViews()"
      * Usage   : To create views according to device attributes.
@@ -673,10 +648,10 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
         // Is the button now checked?
         val checked = (view as RadioButton).isChecked
         when (view.getId()) {
-            R.id.rbtnDev -> if (checked) environment = rbtnDev!!.text.toString()
-            R.id.rbtnStage -> if (checked) environment = rbtnStage!!.text.toString()
-            R.id.rbtnAvnet -> if (checked) environment = rbtnAvnet!!.text.toString()
-            R.id.rbtnQa -> if (checked) environment = rbtnQa!!.text.toString()
+            R.id.rbtnDev -> if (checked) environment = EnvironmentType.DEV.value;
+            R.id.rbtnProd -> if (checked) environment = EnvironmentType.PROD.value;
+            R.id.rbtnAvnet -> if (checked) environment = EnvironmentType.AVNET.value;
+            R.id.rbtnQa -> if (checked) environment = EnvironmentType.QA.value;
         }
     }
 
