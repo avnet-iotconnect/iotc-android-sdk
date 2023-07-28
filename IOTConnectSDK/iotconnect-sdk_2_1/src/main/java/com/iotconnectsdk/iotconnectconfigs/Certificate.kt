@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName
 
 class Certificate {
     @SerializedName("SSLCaPath")
-    var sSLCaPath: String? = null
+    var sSLCaPath: String? =  null
         private set
 
     @SerializedName("SSLKeyPath")
