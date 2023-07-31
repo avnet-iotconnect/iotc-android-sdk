@@ -12,34 +12,35 @@ import java.util.regex.Pattern
 
 internal object ValidationTelemetryUtils {
 
+    private const val FAULTY = 1 //"flt";
 
-    const val M_ANDROID = "M_android"
+    private const val REPORTING = 0 //"rpt";
 
-    const val FAULTY = 1 //"flt";
+    private const val ERR = 0 //"ERR";
 
-    const val REPORTING = 0 //"rpt";
+    private const val DATA_TYPE_INTEGER = 1
+    private const val DATA_TYPE_LONG = 2
+    private const val DATA_TYPE_DECIMAL = 3
+    private const val DATA_TYPE_STRING = 4
+    private const val DATA_TYPE_TIME = 5
+    private const val DATA_TYPE_DATE = 6
+    private const val DATA_TYPE_DATETIME = 7
+    private const val DATA_TYPE_BIT = 8 // [0 / 1]
 
-    const val ERR = 0 //"ERR";
+    private const val DATA_TYPE_BOOLEAN = 9 // [true / false | True/False]
 
-    const val DATA_TYPE_INTEGER = 1
-    const val DATA_TYPE_LONG = 2
-    const val DATA_TYPE_DECIMAL = 3
-    const val DATA_TYPE_STRING = 4
-    const val DATA_TYPE_TIME = 5
-    const val DATA_TYPE_DATE = 6
-    const val DATA_TYPE_DATETIME = 7
-    const val DATA_TYPE_BIT = 8 // [0 / 1]
-
-    const val DATA_TYPE_BOOLEAN = 9 // [true / false | True/False]
-
-    const val DATA_TYPE_LATLONG = 10 // [Decimal Array, Decimal (10,8), Decimal (11,8)]
+    private const val DATA_TYPE_LATLONG = 10 // [Decimal Array, Decimal (10,8), Decimal (11,8)]
 
     var isBit = false
 
 
     @Synchronized
     fun compareForInputValidationNew(
-        key: String, value: String, tag: String, dObj: CommonResponseBean?
+        key: String,
+        value: String,
+        tag: String,
+        dObj: CommonResponseBean?,
+        isSkipValidation: Boolean
     ): Int {
         val attributesList = dObj?.d?.att
         if (attributesList != null) {
@@ -59,7 +60,7 @@ internal object ValidationTelemetryUtils {
                     val dv = data.dv
                     val dt = data.dt
                     if (key.equals(ln, ignoreCase = true) && tag.equals(tg, ignoreCase = true)) {
-                        return validateDataType(dt, value, dv)
+                        return validateDataType(dt, value, dv, isSkipValidation)
 
                     }
                 }
@@ -69,18 +70,27 @@ internal object ValidationTelemetryUtils {
     }
 
 
-    private fun validateDataType(dt: Int, value: String, dv: String): Int {
+    private fun validateDataType(
+        dt: Int,
+        value: String,
+        dv: String,
+        isSkipValidation: Boolean
+    ): Int {
 
-        if (dt == DATA_TYPE_STRING) {
+        if (isSkipValidation) {
+            return REPORTING
+        } else if (dt == DATA_TYPE_STRING) {
             return validateNumber(dt, value, dv)
-        } else if (TextUtils.isEmpty(value.trim())) {
+        } /*else if (TextUtils.isEmpty(value.trim())) {
             return FAULTY
-        } else if (dt == DATA_TYPE_INTEGER || dt == DATA_TYPE_LONG || dt == DATA_TYPE_DECIMAL) {
-            if (!SDKClientUtils.isDigit(value)) {
-                return FAULTY
-            } else {
+        }*/ else if (dt == DATA_TYPE_INTEGER || dt == DATA_TYPE_LONG || dt == DATA_TYPE_DECIMAL) {
+            if (TextUtils.isEmpty(value.trim())) {
                 return validateNumber(dt, value, dv)
-            }
+            } else if (!SDKClientUtils.isDigit(value)) {
+                return FAULTY
+            } /*else {
+
+            }*/
 
         } else if (dt == DATA_TYPE_BIT) {
             isBit = true
@@ -102,10 +112,14 @@ internal object ValidationTelemetryUtils {
 
     @Throws(Exception::class)
     private fun validateNumber(dt: Int, value: String, range: String): Int {
-
         var range = range
         var start: Double
         var end: Double
+
+        if ((value == null || value.isEmpty()) && (range == null || range.isEmpty())) {
+            return REPORTING
+        }
+
         range = range.replace(",\\s".toRegex(), ",")
         val array = range.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
         val list = ArrayList<String>()
@@ -217,7 +231,7 @@ internal object ValidationTelemetryUtils {
     private fun validateBoolean(value: String, dataValidation: String?): Int {
         return try {
 
-            if (dataValidation != null && dataValidation.isNotEmpty()) {
+            if (dataValidation != null && dataValidation.isEmpty()) {
                 if (dataValidation == value) {
                     REPORTING
                 } else {

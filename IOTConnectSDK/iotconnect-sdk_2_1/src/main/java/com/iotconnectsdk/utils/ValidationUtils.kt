@@ -177,11 +177,7 @@ internal class ValidationUtils private constructor(
         return true
     }
 
-    fun validateAckParameters(obj: JSONObject?, messageType: String): Boolean {
-        if (obj == null || messageType.isEmpty()) {
-            iotSDKLogUtils.log(true, isDebug, "ERR_CM02", context.getString(R.string.ERR_CM02))
-            return false
-        }
+    fun validateAckParameters(obj: JSONObject?): Boolean {
         return if (obj is JSONObject) {
             true
         } else {
@@ -300,6 +296,144 @@ internal class ValidationUtils private constructor(
         }
 
 
+        else -> {
+            iotSDKLogUtils.log(
+                false,
+                isDebug,
+                "INFO_IN15",
+                context.getString(R.string.INFO_IN15)
+            )
+            context.getString(R.string.INFO_IN15)
+        }
+
+
+    }
+
+    fun rcMessageChildDevice(rc: Int): String = when (rc) {
+        0 -> {
+            iotSDKLogUtils.log(
+                false, isDebug, "INFO_IN08", context.getString(R.string.INFO_IN08)
+            )
+            context.getString(R.string.tv_device_created)
+        }
+        1 -> {
+            iotSDKLogUtils.log(
+                false,
+                isDebug,
+                "INFO_IN09",
+                context.getString(R.string.tv_missing_child_tag)
+            )
+
+            context.getString(R.string.tv_missing_child_tag)
+        }
+        2 -> {
+            iotSDKLogUtils.log(
+                false,
+                isDebug,
+                "INFO_IN10",
+                context.getString(R.string.tv_missing_uniqueid)
+            )
+
+            context.getString(R.string.tv_missing_uniqueid)
+        }
+        3 -> {
+            iotSDKLogUtils.log(
+                false,
+                isDebug,
+                "INFO_IN11",
+                context.getString(R.string.tv_missing_name)
+            )
+            context.getString(R.string.tv_missing_name)
+        }
+        4 -> {
+            iotSDKLogUtils.log(
+                false,
+                isDebug,
+                "INFO_IN12",
+                context.getString(R.string.tv_missing_gatewaydevice)
+            )
+            context.getString(R.string.tv_missing_gatewaydevice)
+        }
+        5 -> {
+            iotSDKLogUtils.log(
+                false,
+                isDebug,
+                "INFO_IN13",
+                context.getString(R.string.tv_something_wrong)
+            )
+            context.getString(R.string.tv_something_wrong)
+        }
+        6 -> {
+            iotSDKLogUtils.log(
+                false,
+                isDebug,
+                "INFO_IN14",
+                context.getString(R.string.tv_tag_not_valid)
+            )
+            context.getString(R.string.tv_tag_not_valid)
+        }
+
+        7 -> {
+            iotSDKLogUtils.log(
+                false,
+                isDebug,
+                "INFO_IN14",
+                context.getString(R.string.tv_tag_issue)
+            )
+            context.getString(R.string.tv_tag_issue)
+        }
+
+        8 -> {
+            iotSDKLogUtils.log(
+                false,
+                isDebug,
+                "INFO_IN14",
+                context.getString(R.string.tv_id_exist)
+            )
+            context.getString(R.string.tv_id_exist)
+        }
+
+        9 -> {
+            iotSDKLogUtils.log(
+                false,
+                isDebug,
+                "INFO_IN14",
+                context.getString(R.string.tv_id_limit)
+            )
+            context.getString(R.string.tv_id_limit)
+        }
+
+        else -> {
+            iotSDKLogUtils.log(
+                false,
+                isDebug,
+                "INFO_IN15",
+                context.getString(R.string.INFO_IN15)
+            )
+            context.getString(R.string.INFO_IN15)
+        }
+
+
+    }
+
+    fun rcMessageDelChildDevice(rc: Int): String = when (rc) {
+        0 -> {
+            iotSDKLogUtils.log(
+                false, isDebug, "INFO_IN08", context.getString(R.string.INFO_IN08)
+            )
+            context.getString(R.string.tv_device_deleted)
+        }
+        1 -> {
+            iotSDKLogUtils.log(
+                false,
+                isDebug,
+                "INFO_IN09",
+                context.getString(R.string.tv_child_device_not_found)
+            )
+
+            context.getString(R.string.tv_child_device_not_found)
+        }
+        
         else -> {
             iotSDKLogUtils.log(
                 false,

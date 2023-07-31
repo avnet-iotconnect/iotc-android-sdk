@@ -9,4 +9,5 @@
     <string name="string_connection_not_found">Connection not found.</string>
     <string name="alert_enter_cpid">Please enter cpId.</string>
     <string name="alert_enter_unique_id">Please enter Unique Id.</string>
+    <string name="alert_enter_display_name">Please enter Display name.</string>
 </resources>

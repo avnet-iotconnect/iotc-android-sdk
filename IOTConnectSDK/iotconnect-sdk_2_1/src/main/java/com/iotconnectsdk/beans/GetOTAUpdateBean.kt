@@ -4,7 +4,7 @@ package com.iotconnectsdk.beans
 import com.google.gson.annotations.SerializedName
 
 
-data class GetOTAUpdateBean(
+internal data class GetOTAUpdateBean(
     @SerializedName("cmd")
     val cmd: String? = null, // ota
     @SerializedName("ack")

@@ -7,8 +7,8 @@ import android.net.ConnectivityManager
 import android.net.NetworkInfo
 
 internal class NetworkStateReceiver : BroadcastReceiver() {
-    protected var listeners: MutableSet<NetworkStateReceiverListener> = HashSet()
-    protected var connected: Boolean?
+     var listeners: MutableSet<NetworkStateReceiverListener> = HashSet()
+     var connected: Boolean?
 
     init {
         connected = null

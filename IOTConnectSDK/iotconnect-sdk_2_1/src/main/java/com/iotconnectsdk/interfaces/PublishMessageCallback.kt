@@ -1,6 +1,6 @@
 package com.iotconnectsdk.interfaces
 
-interface PublishMessageCallback {
+internal interface PublishMessageCallback {
     fun onSendMsg()
 
 }

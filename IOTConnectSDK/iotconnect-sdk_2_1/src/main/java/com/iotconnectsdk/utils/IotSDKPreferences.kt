@@ -16,12 +16,12 @@ internal class IotSDKPreferences private constructor(context: Context) {
 
     companion object {
 
-        val SYNC_API = "SYNC_API"
-        val SYNC_RESPONSE = "sync_response"
-        val ATTRIBUTE_RESPONSE = "att_response"
-        val SETTING_TWIN_RESPONSE = "setting_response"
-        val EDGE_RULE_RESPONSE = "edge_rule_response"
-        val CHILD_DEVICE_RESPONSE = "child_device_response"
+        const  val SYNC_API = "SYNC_API"
+        const  val SYNC_RESPONSE = "sync_response"
+        const  val ATTRIBUTE_RESPONSE = "att_response"
+        const val SETTING_TWIN_RESPONSE = "setting_response"
+        const val EDGE_RULE_RESPONSE = "edge_rule_response"
+        const val CHILD_DEVICE_RESPONSE = "child_device_response"
 
         val TEXT_FILE_NAME = "text_file"
 

@@ -24,6 +24,8 @@ internal data class DiscoveryApiResponse(
         val ec: Int, // 0 Error Code:  0 – No error
         @SerializedName("log:https")
         val logHttps: String, // HTTPS url where log message needs to send [POST API]
+        @SerializedName("pf")
+        val pf: String,       // value may vary based on the broker
         @SerializedName("log:mqtt")
         val logMqtt: LogMqtt  // MQTT connection details to optionally send device logging
     ) {

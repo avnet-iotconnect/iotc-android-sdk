@@ -4,7 +4,7 @@ package com.iotconnectsdk.beans
 import com.google.gson.annotations.SerializedName
 
 
-data class GetEdgeRuleBean(
+internal data class GetEdgeRuleBean(
     @SerializedName("g")
     val g: String,
     @SerializedName("es")

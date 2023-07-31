@@ -1,9 +1,11 @@
 package com.iotconnectsdk.beans
 
 
+import com.google.gson.JsonDeserializer
 import com.google.gson.annotations.SerializedName
 
-data class CommonResponseBean(
+
+internal data class CommonResponseBean(
     @SerializedName("d")
     val d: D? = D()
 ) {
@@ -26,3 +28,4 @@ data class CommonResponseBean(
         val dt: String? = null // 2023-02-03T08:36:00.4237005Z
     )
 }
+

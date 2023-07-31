@@ -1,17 +1,19 @@
-
 package com.iotconnectsdk
 
 import android.app.Activity
 import android.content.Context
 import android.content.IntentFilter
 import android.net.ConnectivityManager
-import android.util.Log
+import android.text.TextUtils
 import android.webkit.URLUtil
+import com.google.common.collect.ArrayListMultimap
+import com.google.common.collect.ListMultimap
 import com.google.gson.Gson
 import com.iotconnectsdk.beans.CommonResponseBean
 import com.iotconnectsdk.beans.GetChildDeviceBean
 import com.iotconnectsdk.beans.GetEdgeRuleBean
 import com.iotconnectsdk.beans.TumblingWindowBean
+import com.iotconnectsdk.enums.BrokerType
 import com.iotconnectsdk.enums.C2DMessageEnums
 import com.iotconnectsdk.enums.DeviceIdentityMessages
 import com.iotconnectsdk.interfaces.DeviceCallback
@@ -37,6 +39,10 @@ import com.iotconnectsdk.webservices.CallWebServices
 import com.iotconnectsdk.webservices.interfaces.WsResponseInterface
 import com.iotconnectsdk.webservices.responsebean.DiscoveryApiResponse
 import com.iotconnectsdk.webservices.responsebean.IdentityServiceResponse
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -45,8 +51,8 @@ import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
+
 
 /**
  * class for SDKClient
@@ -57,7 +63,6 @@ internal class SDKClientManager(
     private val cpId: String?,
     private val uniqueId: String?,
     private val deviceCallback: DeviceCallback?,
-    private val twinUpdateCallback: TwinUpdateCallback?,
     private val sdkOptions: String?,
     private val environment: String?,
 
@@ -88,9 +93,13 @@ internal class SDKClientManager(
 
     private var discoveryUrl = ""
 
-    private val DEFAULT_DISCOVERY_URL = "https://discovery.iotconnect.io/"
+    private val DEFAULT_DISCOVERY_URL_AZ = "https://discovery.iotconnect.io/"
+
+    private val DEFAULT_DISCOVERY_URL_AWS = "http://54.160.162.148:219/"
 
     private val URL_PATH = "api/$appVersion/dsdk/"
+
+    private val END_POINT_AWS = "?pf=aws"
 
     private val CPID = "cpid/"
 
@@ -112,6 +121,8 @@ internal class SDKClientManager(
 
     private val ATTRIBUTES = "attributes"
 
+    private val TAGS = "tags"
+
     private val CMD_TYPE = "ct"
 
     private val DISCOVERY_URL = "discoveryUrl"
@@ -126,6 +137,8 @@ internal class SDKClientManager(
 
     private val DF = "df"
 
+    private val FREQUENCY_HEART_BEAT = "f"
+
     private val TG = "tg"
 
     private val DIRECTORY_PATH = "logs/offline/"
@@ -135,9 +148,9 @@ internal class SDKClientManager(
     //for Edge Device
     private var edgeDeviceTimersList: ArrayList<Timer>? = null
 
-    private var edgeDeviceAttributeMap: MutableMap<String, TumblingWindowBean>? = null
+    private var edgeDeviceAttributeMap: ListMultimap<String, TumblingWindowBean>? = null
 
-    private var edgeDeviceAttributeGyroMap: MutableMap<String, List<TumblingWindowBean>>? = null
+    private var edgeDeviceAttributeGyroMap: ListMultimap<String, List<TumblingWindowBean>>? = null
 
     private var publishObjForRuleMatchEdgeDevice: JSONObject? = null
 
@@ -155,6 +168,13 @@ internal class SDKClientManager(
 
     private var isRefreshAttribute = false
 
+    val scope = MainScope()
+    var job: Job? = null
+
+    var isSkipValidation = false
+
+    var brokerType = ""
+
 
     /*return singleton object for this class.
      * */
@@ -169,7 +189,6 @@ internal class SDKClientManager(
             cpId: String?,
             uniqueId: String?,
             deviceCallback: DeviceCallback?,
-            twinUpdateCallback: TwinUpdateCallback?,
             sdkOptions: String?,
             environment: String?
         ): SDKClientManager {
@@ -180,7 +199,6 @@ internal class SDKClientManager(
                         cpId,
                         uniqueId,
                         deviceCallback,
-                        twinUpdateCallback,
                         sdkOptions,
                         environment
                     )
@@ -216,6 +234,8 @@ internal class SDKClientManager(
         idEdgeDevice = false
         isSaveToOffline = false
         isDebug = false
+        isSkipValidation = false
+        brokerType = ""
         fileCount = 0
 
         //get is debug option.
@@ -226,12 +246,21 @@ internal class SDKClientManager(
                 if (sdkObj.has(IS_DEBUG)) {
                     isDebug = sdkObj.getBoolean(IS_DEBUG)
                 }
+
+                if (sdkObj.has("skipValidation")) {
+                    isSkipValidation = sdkObj.getBoolean("skipValidation")
+                }
+
+                if (sdkObj.has("brokerType")) {
+                    brokerType = sdkObj.getString("brokerType")
+                }
+
                 if (sdkObj.has("offlineStorage")) {
                     val offlineStorage = sdkObj.getJSONObject("offlineStorage")
                     if (offlineStorage.has("disabled")) {
                         isSaveToOffline = offlineStorage.getBoolean("disabled")
                         if (!isSaveToOffline) { // false = offline data storing, true = not storing offline data
-
+                            isSaveToOffline = isSaveToOffline
                             //Add below configuration in respective sdk configuration. We want this setting to be done form firmware. default fileCount 1 and availeSpaceInMb is unlimited.
                             fileCount =
                                 if (offlineStorage.has("fileCount") && offlineStorage.getInt("fileCount") > 0) {
@@ -275,8 +304,17 @@ internal class SDKClientManager(
                         e.printStackTrace()
                     }
                 }
-                discoveryUrl =
-                    DEFAULT_DISCOVERY_URL //set default discovery url when it is empty from client end.
+                if (brokerType == BrokerType.AZ.value) {
+                    discoveryUrl =
+                        DEFAULT_DISCOVERY_URL_AZ //set default discovery url when it is empty from client end.
+                } else if (brokerType == BrokerType.AWS.value) {
+                    discoveryUrl =
+                        DEFAULT_DISCOVERY_URL_AWS //set default discovery url when it is empty from client end.
+                } else {
+                    discoveryUrl =
+                        DEFAULT_DISCOVERY_URL_AZ //set default discovery url when it is empty from client end.
+                }
+
             } else {
                 discoveryUrl = try {
                     sdkObj.getString(DISCOVERY_URL)
@@ -287,7 +325,17 @@ internal class SDKClientManager(
                 }
             }
         } else {
-            discoveryUrl = DEFAULT_DISCOVERY_URL //set default discovery url when sdkOption is null.
+
+            if (brokerType == BrokerType.AZ.value) {
+                discoveryUrl =
+                    DEFAULT_DISCOVERY_URL_AZ //set default discovery url when sdkOption is null.
+            } else if (brokerType == BrokerType.AWS.value) {
+                discoveryUrl =
+                    DEFAULT_DISCOVERY_URL_AWS //set default discovery url when sdkOption is null.
+            } else {
+                discoveryUrl =
+                    DEFAULT_DISCOVERY_URL_AZ //set default discovery url when sdkOption is null.
+            }
         }
         if (!validationUtils!!.isEmptyValidation(
                 cpId, "ERR_IN04", context.getString(R.string.ERR_IN04)
@@ -306,10 +354,19 @@ internal class SDKClientManager(
     private fun callDiscoveryService() {
         if (!validationUtils!!.networkConnectionCheck()) return
 
-//        appVersion = VERSION_NAME;
+        val discoveryApi: String
+
         if (appVersion != null) {
-            val discoveryApi =
-                discoveryUrl + URL_PATH + CPID + cpId /*+ LANG_ANDROID_VER + appVersion*/ + ENV + environment
+
+            if (brokerType == BrokerType.AZ.value) {
+                discoveryApi = discoveryUrl + URL_PATH + CPID + cpId + ENV + environment
+            } else if (brokerType == BrokerType.AWS.value) {
+                discoveryApi =
+                    discoveryUrl + URL_PATH + CPID + cpId + ENV + environment + END_POINT_AWS
+            } else {
+                discoveryApi = discoveryUrl + URL_PATH + CPID + cpId + ENV + environment
+            }
+
             CallWebServices().getDiscoveryApi(discoveryApi, this)
         }
     }
@@ -444,7 +501,17 @@ internal class SDKClientManager(
             return
         }
         mqttService = IotSDKMQTTService.getInstance(
-            context!!, response.d.p, this, this, this, iotSDKLogUtils!!, isDebug, uniqueId!!
+            context!!,
+            sdkOptions,
+            response.d.p,
+            response.d.meta.at,
+            this,
+            this,
+            this,
+            iotSDKLogUtils!!,
+            isDebug,
+            uniqueId!!,
+            cpId!!
         )
         mqttService!!.connectMQTT()
 
@@ -481,7 +548,7 @@ internal class SDKClientManager(
 
     /*get the saved GatewayChild response from shared preference.
   * */
-    private fun getGatewayChildResponse(): CommonResponseBean? {
+    private fun getGatewayChildResponse(): CommonResponseBean {
         return IotSDKPreferences.getInstance(context!!)
             ?.getDeviceInformation(IotSDKPreferences.CHILD_DEVICE_RESPONSE) ?: CommonResponseBean()
     }
@@ -564,148 +631,24 @@ internal class SDKClientManager(
 
         if (message != null) {
             try {
-                val mainObjectLog = JSONObject(message)
-                Log.d("mainObject", "::$mainObjectLog")
-
-                val gson = Gson()
-                val commonModel = gson.fromJson(message, CommonResponseBean::class.java)
-
-                if (commonModel?.d?.ct != null) {
-                    when (commonModel.d.ct) {
-                        /*{"d":{"att":[{"p":"","dt":0,"tg":"","d":[{"ln":"Temp","dt":1,"dv":"5 to 10","sq":1,"tg":"p","tw":"60s"},{"ln":"Humidity","dt":1,"dv":"5 to 10","sq":2,"tg":"ch","tw":"60s"},{"ln":"Lumosity","dt":1,"dv":"","sq":4,"tg":"ch","tw":"60s"}]},{"p":"Gyroscope","dt":11,"tg":"p","d":[{"ln":"x","dt":1,"dv":"","sq":1,"tg":"p","tw":"60s"},{"ln":"y","dt":1,"dv":"","sq":2,"tg":"p","tw":"60s"}]}],"ct":201,"ec":0,"dt":"2023-02-22T10:41:18.6947577Z"}}*/
-                        DeviceIdentityMessages.GET_DEVICE_TEMPLATE_ATTRIBUTES.value -> {
-                            val response = getSyncResponse()
-                            if (response?.d?.meta?.edge == 1) {
-                                idEdgeDevice = true
-
-                                try {
-                                    processEdgeDeviceTWTimer(response, commonModel)
-                                } catch (e: Exception) {
-                                    iotSDKLogUtils!!.log(true, isDebug, "ERR_EE01", e.message!!)
-                                }
-                            }
-
-                            IotSDKPreferences.getInstance(context!!)!!.putStringData(
-                                IotSDKPreferences.ATTRIBUTE_RESPONSE, Gson().toJson(commonModel)
-                            )
-
-                            onDeviceConnectionStatus(isConnected())
+                val mainObject = JSONObject(message)
+                var cmdType: Int? = -1
+                var responseCode: Int? = -1
+                if (mainObject.has("d")) {
+                    val innerObject = mainObject.getJSONObject("d")
+                    cmdType = innerObject.getInt(CMD_TYPE)
+                    responseCode = innerObject.getInt("ec")
+                }
 
 
-                        }
+                if (cmdType == DeviceIdentityMessages.CREATE_CHILD_DEVICE.value) {
+                    /*{"d":{"ec":0,"ct":221,"d":{"tg":"werw","id":"dfsfd","s":0}}}*/
 
-                        /*
-                        * {"d":{"set":[{"ln":"Motor","dt":1,"dv":""}],"ct":202,"ec":0,"dt":"2023-02-22T10:41:18.6948342Z"}}
-                        * */
-                        DeviceIdentityMessages.GET_DEVICE_TEMPLATE_SETTINGS_TWIN.value -> {
-                            IotSDKPreferences.getInstance(context!!)!!.putStringData(
-                                IotSDKPreferences.SETTING_TWIN_RESPONSE, Gson().toJson(commonModel)
-                            )
-                        }
+                    val responseCodeMessage =
+                        validationUtils?.rcMessageChildDevice(responseCode!!)
 
-                        DeviceIdentityMessages.GET_EDGE_RULE.value -> {
-                            IotSDKPreferences.getInstance(context!!)!!.putStringData(
-                                IotSDKPreferences.EDGE_RULE_RESPONSE, Gson().toJson(commonModel)
-                            )
-                        }
-
-                        /*
-                        * {"d":{"d":[{"tg":"ch","id":"ch1"}],"ct":204,"ec":0,"dt":"2023-02-22T10:41:18.2683604Z"}}
-                        * */
-                        DeviceIdentityMessages.GET_CHILD_DEVICES.value -> {
-                            IotSDKPreferences.getInstance(context!!)!!.putStringData(
-                                IotSDKPreferences.CHILD_DEVICE_RESPONSE, Gson().toJson(commonModel)
-                            )
-                            onDeviceConnectionStatus(isConnected())
-                        }
-
-                        DeviceIdentityMessages.GET_PENDING_OTA.value -> {
-                            iotSDKLogUtils!!.log(
-                                false, isDebug, "INFO_CM02", context!!.getString(R.string.INFO_CM02)
-                            )
-                            deviceCallback!!.onReceiveMsg(message)
-                        }
-                    }
-                } else {
-
-                    /*
-                    *For receiving Cloud to Device (C2D) messages
-                    * https://docs.iotconnect.io/iotconnect/resources/device-message-2-1-2/cloud-to-device-c2d-messages/
-                    * */
-                    val mainObject = JSONObject(message)
-
-                    when (mainObject.getInt(CMD_TYPE)) {
-
-                        /*Device command received by the device from the cloud
-                        *
-                        * {"v":"2.1","ct":0,"cmd":"ON ON","ack":"6198c520-1ebc-4556-b12c-dde9d790decc"}
-                        * */
-
-                        C2DMessageEnums.DEVICE_COMMAND.value -> {
-                            iotSDKLogUtils!!.log(
-                                false, isDebug, "INFO_CM01", context!!.getString(R.string.INFO_CM01)
-                            )
-
-                            try {
-                                deviceCallback?.onReceiveMsg(message)
-                            } catch (e: Exception) {
-                                e.printStackTrace()
-                            }
-
-                        }
-
-                        /*OTA Command received by the device from the cloud*/
-                        C2DMessageEnums.OTA_COMMAND.value -> {
-
-                            iotSDKLogUtils!!.log(
-                                false, isDebug, "INFO_CM02", context!!.getString(R.string.INFO_CM02)
-                            )
-                            deviceCallback!!.onReceiveMsg(message)
-                        }
-
-                        /*Module Command received by the device from the cloud*/
-                        C2DMessageEnums.MODULE_COMMAND.value -> {
-
-                        }
-
-                        /*The device must send a message of type 201 to get updated attributes*/
-                        C2DMessageEnums.REFRESH_ATTRIBUTE.value -> {
-                            isRefreshAttribute = true
-                            val response = getSyncResponse()
-
-                            if (idEdgeDevice) edgeDeviceTimerStop()
-
-                            publishMessage(
-                                response?.d?.p?.topics!!.di, JSONObject().put(
-                                    MESSAGE_TYPE,
-                                    DeviceIdentityMessages.GET_DEVICE_TEMPLATE_ATTRIBUTES.value
-                                ).toString(), false
-                            )
-                        }
-
-                        /*The device must send a message of type 202 to get updated settings or twin*/
-                        C2DMessageEnums.REFRESH_SETTING_TWIN.value -> {
-                            val response = getSyncResponse()
-                            publishMessage(
-                                response?.d?.p?.topics!!.di, JSONObject().put(
-                                    MESSAGE_TYPE,
-                                    DeviceIdentityMessages.GET_DEVICE_TEMPLATE_SETTINGS_TWIN.value
-                                ).toString(), false
-                            )
-                        }
-
-                        /*The device must send a message of type 203 to get updated Edge rules*/
-                        C2DMessageEnums.REFRESH_EDGE_RULE.value -> {
-                            val response = getSyncResponse()
-                            publishMessage(
-                                response?.d?.p?.topics!!.di, JSONObject().put(
-                                    MESSAGE_TYPE, DeviceIdentityMessages.GET_EDGE_RULE.value
-                                ).toString(), false
-                            )
-                        }
-
-                        /*The device must send a message of type 204 to get updated child devices*/
-                        C2DMessageEnums.REFRESH_CHILD_DEVICE.value -> {
+                    try {
+                        if (responseCode == 0) {
                             val response = getSyncResponse()
                             publishMessage(
                                 response?.d?.p?.topics!!.di, JSONObject().put(
@@ -714,51 +657,285 @@ internal class SDKClientManager(
                             )
                         }
 
-                        /*The device needs to update the frequency received in this message*/
 
-                        C2DMessageEnums.DATA_FREQUENCY_CHANGE.value -> {
-                            if (context != null) {
+                        deviceCallback?.onReceiveMsg(responseCodeMessage)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+
+                } else if (cmdType == DeviceIdentityMessages.DELETE_CHILD_DEVICE.value) {
+                    /*{"d":{"ec":0,"ct":222,"d":{"tg":"werw","id":"dfsfd","s":0}}}*/
+
+                    val responseCodeMessage =
+                        validationUtils?.rcMessageDelChildDevice(responseCode!!)
+
+                    try {
+
+                        if (responseCode == 0) {
+                            val response = getSyncResponse()
+                            publishMessage(
+                                response?.d?.p?.topics!!.di, JSONObject().put(
+                                    MESSAGE_TYPE, DeviceIdentityMessages.GET_CHILD_DEVICES.value
+                                ).toString(), false
+                            )
+                        }
+                        deviceCallback?.onReceiveMsg(responseCodeMessage)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+
+                } else {
+                    val gson = Gson()
+                    val commonModel = gson.fromJson(message, CommonResponseBean::class.java)
+
+                    if (commonModel?.d?.ct != null) {
+                        when (commonModel.d.ct) {
+                            /*{"d":{"att":[{"p":"","dt":0,"tg":"","d":[{"ln":"Temp","dt":1,"dv":"5 to 10","sq":1,"tg":"p","tw":"60s"},{"ln":"Humidity","dt":1,"dv":"5 to 10","sq":2,"tg":"ch","tw":"60s"},{"ln":"Lumosity","dt":1,"dv":"","sq":4,"tg":"ch","tw":"60s"}]},{"p":"Gyroscope","dt":11,"tg":"p","d":[{"ln":"x","dt":1,"dv":"","sq":1,"tg":"p","tw":"60s"},{"ln":"y","dt":1,"dv":"","sq":2,"tg":"p","tw":"60s"}]}],"ct":201,"ec":0,"dt":"2023-02-22T10:41:18.6947577Z"}}*/
+                            DeviceIdentityMessages.GET_DEVICE_TEMPLATE_ATTRIBUTES.value -> {
                                 val response = getSyncResponse()
-                                response?.d?.meta?.df = mainObject.getInt(DF)
-                                IotSDKPreferences.getInstance(context)?.putStringData(
-                                    IotSDKPreferences.SYNC_RESPONSE, Gson().toJson(response)
+
+                                IotSDKPreferences.getInstance(context!!)!!.putStringData(
+                                    IotSDKPreferences.ATTRIBUTE_RESPONSE, Gson().toJson(commonModel)
+                                )
+                                if (response?.d?.meta?.edge == 1) {
+                                    idEdgeDevice = true
+
+                                    try {
+                                        processEdgeDeviceTWTimer(response, commonModel)
+                                    } catch (e: Exception) {
+                                        iotSDKLogUtils!!.log(true, isDebug, "ERR_EE01", e.message!!)
+                                    }
+                                }
+                                onDeviceConnectionStatus(isConnected())
+
+                            }
+
+                            /*
+                            * {"d":{"set":[{"ln":"Motor","dt":1,"dv":""}],"ct":202,"ec":0,"dt":"2023-02-22T10:41:18.6948342Z"}}
+                            * */
+                            DeviceIdentityMessages.GET_DEVICE_TEMPLATE_SETTINGS_TWIN.value -> {
+                                IotSDKPreferences.getInstance(context!!)!!.putStringData(
+                                    IotSDKPreferences.SETTING_TWIN_RESPONSE,
+                                    Gson().toJson(commonModel)
                                 )
                             }
+
+                            DeviceIdentityMessages.GET_EDGE_RULE.value -> {
+                                IotSDKPreferences.getInstance(context!!)!!.putStringData(
+                                    IotSDKPreferences.EDGE_RULE_RESPONSE, Gson().toJson(commonModel)
+                                )
+                            }
+
+                            /*
+                            * {"d":{"d":[{"tg":"ch","id":"ch1"}],"ct":204,"ec":0,"dt":"2023-02-22T10:41:18.2683604Z"}}
+                            * */
+                            DeviceIdentityMessages.GET_CHILD_DEVICES.value -> {
+                                IotSDKPreferences.getInstance(context!!)!!.putStringData(
+                                    IotSDKPreferences.CHILD_DEVICE_RESPONSE,
+                                    Gson().toJson(commonModel)
+                                )
+                                val response = getSyncResponse()
+                                if (idEdgeDevice) edgeDeviceTimerStop()
+                                if (response?.d?.meta?.edge == 1) {
+                                    idEdgeDevice = true
+
+                                    try {
+                                        processEdgeDeviceTWTimer(response, getAttributeResponse()!!)
+                                    } catch (e: Exception) {
+                                        iotSDKLogUtils!!.log(true, isDebug, "ERR_EE01", e.message!!)
+                                    }
+                                }
+
+                                onDeviceConnectionStatus(isConnected())
+
+                            }
+
+                            DeviceIdentityMessages.GET_PENDING_OTA.value -> {
+                                iotSDKLogUtils!!.log(
+                                    false,
+                                    isDebug,
+                                    "INFO_CM02",
+                                    context!!.getString(R.string.INFO_CM02)
+                                )
+                                deviceCallback!!.onReceiveMsg(message)
+                            }
+
+                            else -> {
+                                deviceCallback!!.onReceiveMsg(message)
+                            }
                         }
+                    } else {
 
-                        /*The device must stop all communication and release the MQTT connection*/
-                        C2DMessageEnums.DEVICE_DELETED.value, C2DMessageEnums.DEVICE_DISABLED.value, C2DMessageEnums.DEVICE_RELEASED.value, C2DMessageEnums.STOP_OPERATION.value, C2DMessageEnums.DEVICE_CONNECTION_STATUS.value -> {
-                            iotSDKLogUtils?.log(
-                                false, isDebug, "INFO_CM16", context!!.getString(R.string.INFO_CM16)
-                            )
-                            dispose()
-                        }
+                        /*
+                        *For receiving Cloud to Device (C2D) messages
+                        * https://docs.iotconnect.io/iotconnect/resources/device-message-2-1-2/cloud-to-device-c2d-messages/
+                        * */
+                        val mainObject = JSONObject(message)
 
-                        /*The device must start sending a heartbeat*/
-                        C2DMessageEnums.START_HEARTBEAT.value -> {
+                        when (mainObject.getInt(CMD_TYPE)) {
 
-                        }
+                            /*Device command received by the device from the cloud
+                            *
+                            * {"v":"2.1","ct":0,"cmd":"ON ON","ack":"6198c520-1ebc-4556-b12c-dde9d790decc"}
+                            * */
 
-                        /*The device must stop sending a heartbeat*/
-                        C2DMessageEnums.STOP_HEARTBEAT.value -> {
+                            C2DMessageEnums.DEVICE_COMMAND.value -> {
+                                iotSDKLogUtils!!.log(
+                                    false,
+                                    isDebug,
+                                    "INFO_CM01",
+                                    context!!.getString(R.string.INFO_CM01)
+                                )
 
+                                try {
+                                    deviceCallback?.onDeviceCommand(message)
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+
+                            }
+
+                            /*OTA Command received by the device from the cloud*/
+                            C2DMessageEnums.OTA_COMMAND.value -> {
+
+                                iotSDKLogUtils!!.log(
+                                    false,
+                                    isDebug,
+                                    "INFO_CM02",
+                                    context!!.getString(R.string.INFO_CM02)
+                                )
+                                deviceCallback!!.onOTACommand(message)
+                            }
+
+                            /*Module Command received by the device from the cloud*/
+                            C2DMessageEnums.MODULE_COMMAND.value -> {
+                                iotSDKLogUtils!!.log(
+                                    false,
+                                    isDebug,
+                                    "INFO_CM02",
+                                    context!!.getString(R.string.INFO_CM02Module)
+                                )
+                                deviceCallback!!.onModuleCommand(message)
+                            }
+
+                            /*The device must send a message of type 201 to get updated attributes*/
+                            C2DMessageEnums.REFRESH_ATTRIBUTE.value -> {
+                                isRefreshAttribute = true
+                                val response = getSyncResponse()
+
+                                if (idEdgeDevice) edgeDeviceTimerStop()
+
+                                publishMessage(
+                                    response?.d?.p?.topics!!.di, JSONObject().put(
+                                        MESSAGE_TYPE,
+                                        DeviceIdentityMessages.GET_DEVICE_TEMPLATE_ATTRIBUTES.value
+                                    ).toString(), false
+                                )
+
+                                deviceCallback!!.onAttrChangeCommand(message)
+                            }
+
+                            /*The device must send a message of type 202 to get updated settings or twin*/
+                            C2DMessageEnums.REFRESH_SETTING_TWIN.value -> {
+                                val response = getSyncResponse()
+                                publishMessage(
+                                    response?.d?.p?.topics!!.di, JSONObject().put(
+                                        MESSAGE_TYPE,
+                                        DeviceIdentityMessages.GET_DEVICE_TEMPLATE_SETTINGS_TWIN.value
+                                    ).toString(), false
+                                )
+
+                                deviceCallback!!.onTwinChangeCommand(message)
+                            }
+
+                            /*The device must send a message of type 203 to get updated Edge rules*/
+                            C2DMessageEnums.REFRESH_EDGE_RULE.value -> {
+                                val response = getSyncResponse()
+                                publishMessage(
+                                    response?.d?.p?.topics!!.di, JSONObject().put(
+                                        MESSAGE_TYPE, DeviceIdentityMessages.GET_EDGE_RULE.value
+                                    ).toString(), false
+                                )
+
+                                deviceCallback!!.onRuleChangeCommand(message)
+                            }
+
+                            /*The device must send a message of type 204 to get updated child devices*/
+                            C2DMessageEnums.REFRESH_CHILD_DEVICE.value -> {
+                                val response = getSyncResponse()
+                                publishMessage(
+                                    response?.d?.p?.topics!!.di, JSONObject().put(
+                                        MESSAGE_TYPE, DeviceIdentityMessages.GET_CHILD_DEVICES.value
+                                    ).toString(), false
+                                )
+                                deviceCallback!!.onDeviceChangeCommand(message)
+                            }
+
+                            /*The device needs to update the frequency received in this message*/
+
+                            C2DMessageEnums.DATA_FREQUENCY_CHANGE.value -> {
+                                if (context != null) {
+                                    onFrequencyChangeCommand(mainObject.getInt(DF))
+                                }
+                            }
+
+                            /*The device must stop all communication and release the MQTT connection*/
+                            C2DMessageEnums.DEVICE_DELETED.value, C2DMessageEnums.DEVICE_DISABLED.value, C2DMessageEnums.DEVICE_RELEASED.value, C2DMessageEnums.STOP_OPERATION.value, C2DMessageEnums.DEVICE_CONNECTION_STATUS.value -> {
+                                iotSDKLogUtils?.log(
+                                    false,
+                                    isDebug,
+                                    "INFO_CM16",
+                                    context!!.getString(R.string.INFO_CM16)
+                                )
+                                dispose()
+                            }
+
+                            /*The device must start sending a heartbeat*/
+                            C2DMessageEnums.START_HEARTBEAT.value -> {
+                                val frequencyHeartBeat = mainObject.getInt(FREQUENCY_HEART_BEAT)
+                                onHeartbeatCommand(frequencyHeartBeat)
+                            }
+
+                            /*The device must stop sending a heartbeat*/
+                            C2DMessageEnums.STOP_HEARTBEAT.value -> {
+                                onHeartbeatCommand()
+                            }
+
+                            C2DMessageEnums.VALIDATION_SKIP.value -> {
+                                onValidationSkipCommand()
+                            }
+
+                            else -> {
+                                deviceCallback!!.onReceiveMsg(message)
+                            }
                         }
                     }
                 }
+
             } catch (e: JSONException) {
                 e.printStackTrace()
             }
         }
+    }
 
+    private fun onValidationSkipCommand() {
 
     }
 
-    /*Call publish method of IotSDKMQTTService class to publish to web.
-   * 1.When device is not connected to network and offline storage is true from client, than save all published message to device memory.
-   * */
-    private fun publishMessage(topics: String, publishMessage: String, isUpdate: Boolean) {
+    private fun onFrequencyChangeCommand(frequency: Int) {
+        if (context != null) {
+            val response = getSyncResponse()
+            response?.d?.meta?.df = frequency
+            IotSDKPreferences.getInstance(context)?.putStringData(
+                IotSDKPreferences.SYNC_RESPONSE, Gson().toJson(response)
+            )
+        }
+    }
 
-        Log.d("publishMessage", "::$publishMessage")
+    /*Call publish method of IotSDKMQTTService class to publish to web.
+    * 1.When device is not connected to network and offline storage is true from client, than save all published message to device memory.
+    * */
+    private fun publishMessage(topics: String, publishMessage: String, isUpdate: Boolean) {
 
         try {
             if (validationUtils!!.networkConnectionCheck()) {
@@ -789,10 +966,7 @@ internal class SDKClientManager(
                                 val file = File(
                                     File(context.filesDir, directoryPath), "$textFile.txt"
                                 )
-                                if (fileSizeToCreateInMb != 0 && SDKClientUtils.getFileSizeInKB(
-                                        file
-                                    ) >= fileSizeToCreateInMb
-                                ) {
+                                if (fileSizeToCreateInMb != 0 && SDKClientUtils.getFileSizeInKB(file) >= fileSizeToCreateInMb) {
                                     //create new text file.
                                     fileToWrite = createTextFile(
                                         context, directoryPath, fileCount, iotSDKLogUtils, isDebug
@@ -843,6 +1017,18 @@ internal class SDKClientManager(
             getChildDeviceBean.id = uniqueId
             gatewayChildResponse?.d?.childDevice?.add(getChildDeviceBean)
 
+            val tagsList = ArrayList<String>()
+
+            attributeResponse?.d?.att?.forEach { attBean ->
+                attBean.d.forEach {
+                    if (syncResponse.d.meta.gtw.tg != it.tg) {
+                        if (!tagsList.contains(it.tg)) {
+                            tagsList.add(it.tg)
+                        }
+                    }
+                }
+            }
+
             gatewayChildResponse?.d?.childDevice?.forEach { childDeviceBean ->
                 if (attributeResponse != null) {
 
@@ -860,6 +1046,8 @@ internal class SDKClientManager(
                         ATTRIBUTES,
                         getAttributesList(attributeResponse.d?.att!!, childDeviceBean.tg)
                     )
+
+                    mainObj.put(TAGS, JSONArray(tagsList))
 
                     //ADD MAIN BOJ TO ARRAY.
                     mainArray.put(mainObj)
@@ -882,7 +1070,6 @@ internal class SDKClientManager(
         } else {
             if (attributeResponse != null) {
 
-                //CREATE DEVICE OBJECT, "device":{"id":"dee02","tg":"gateway"}
                 val deviceObj = JSONObject()
                 deviceObj.put(DEVICE_ID, uniqueId)
                 deviceObj.put(DEVICE_TAG, "")
@@ -917,7 +1104,7 @@ internal class SDKClientManager(
 
 
     @JvmSynthetic
-    fun getAllTwins() {
+    fun getTwins() {
         if (mqttService != null) {
             iotSDKLogUtils!!.log(
                 false, isDebug, "INFO_TP02", context!!.getString(R.string.INFO_TP02)
@@ -951,7 +1138,7 @@ internal class SDKClientManager(
      * https://docs.iotconnect.io/iotconnect/resources/device-message-2-1-2/device-to-cloud-d2c-messages/#Device_Acknowledgement
      */
     @JvmSynthetic
-    fun sendAck(obj: String?, messageType: String?) {
+    fun sendAck(obj: String?) {
         var request: JSONObject? = null
 
         try {
@@ -961,7 +1148,7 @@ internal class SDKClientManager(
             e.printStackTrace()
         }
 
-        if (!validationUtils!!.validateAckParameters(request, messageType!!)) return
+        if (!validationUtils!!.validateAckParameters(request)) return
 
         if (obj != null) {
             val response = getSyncResponse()
@@ -991,6 +1178,7 @@ internal class SDKClientManager(
             mqttService?.clearInstance() //destroy singleton object.
         }
         unregisterReceiver()
+        onHeartbeatCommand()
         sdkClientManger = null
     }
 
@@ -1065,7 +1253,7 @@ internal class SDKClientManager(
     override fun twinUpdateCallback(data: JSONObject?) {
         try {
             data?.put(UNIQUE_ID_View, uniqueId)
-            twinUpdateCallback?.twinUpdateCallback(data)
+            deviceCallback?.twinUpdateCallback(data)
         } catch (e: JSONException) {
             e.printStackTrace()
         }
@@ -1089,9 +1277,10 @@ internal class SDKClientManager(
                 val directory = File(context.filesDir, directoryPath)
                 if (directory.exists()) {
                     val contents = directory.listFiles()
-                    if (contents.size > 0) {
-
-                        checkIsDeviceOnline()
+                    if (contents != null) {
+                        if (contents.isNotEmpty()) {
+                            checkIsDeviceOnline()
+                        }
                     }
                 }
             }
@@ -1117,10 +1306,12 @@ internal class SDKClientManager(
     private fun publishOfflineData() {
         try {
             syncOfflineData = true
+            val response = getSyncResponse()
             val finalOfflineData = CopyOnWriteArrayList<String>()
             finalOfflineData.addAll(readTextFile())
             if (finalOfflineData.isEmpty()) return
 
+            Thread.sleep(5000)
             //start timer to sync offline data.
             timerOfflineSync = Timer()
             val timerTaskObj: TimerTask = object : TimerTask() {
@@ -1135,13 +1326,21 @@ internal class SDKClientManager(
                                 val data = finalOfflineData[i]
                                 try {
                                     val dataObj = JSONObject(data)
+//                                    dataObj.put(OFFLINE_DATA, 1);
 
+                                    //publish offline data.
+
+                                    mqttService!!.publishMessage(
+                                        response?.d?.p?.topics?.od!!,
+                                        dataObj.toString()
+                                    )
                                 } catch (e: JSONException) {
                                     iotSDKLogUtils!!.log(true, isDebug, "ERR_OS01", e.message!!)
                                     e.printStackTrace()
                                 }
-                                finalOfflineData.removeAt(i)
+                                //finalOfflineData.removeAt(i)
                             }
+                            finalOfflineData.removeAll(readTextFile())
                         }
                         false
                     } else {
@@ -1150,7 +1349,7 @@ internal class SDKClientManager(
                 }
             }
             timerOfflineSync!!.schedule(timerTaskObj, 0, 10000)
-        } catch (e: java.lang.Exception) {
+        } catch (e: Exception) {
             iotSDKLogUtils!!.log(true, isDebug, "ERR_OS01", e.message!!)
             e.printStackTrace()
         }
@@ -1171,18 +1370,19 @@ internal class SDKClientManager(
             val bufferedReader = BufferedReader(
                 FileReader(
                     File(
-                        File(
-                            context.filesDir, directoryPath
-                        ), fileNamesList[0] + ".txt"
+                        File(context.filesDir, directoryPath),
+                        fileNamesList[0] + ".txt"
                     )
                 )
             )
-            var read: String
 
-            while (bufferedReader.readLine().also { read = it } != null) {
-
-                offlineData.add(read)
+            bufferedReader.useLines { lines ->
+                lines.forEach {
+                    offlineData.add(it)
+                }
             }
+
+
             bufferedReader.close()
 
             //delete text file after reading all records.
@@ -1198,7 +1398,7 @@ internal class SDKClientManager(
                     false, isDebug, "INFO_OS04", context.getString(R.string.INFO_OS04)
                 )
             }
-        } catch (e: java.lang.Exception) {
+        } catch (e: Exception) {
             iotSDKLogUtils!!.log(
                 true, isDebug, "ERR_OS03", context!!.getString(R.string.ERR_OS03) + e.message
             )
@@ -1249,6 +1449,59 @@ internal class SDKClientManager(
             }
 
         }
+    }
+
+    /*
+    *https://docs.iotconnect.io/iotconnect/resources/device-message-2-1-2/device-identity-messages/#devices
+    *
+    * If device is of gateway type then below function will get child device from IOT connect portal
+    * {"d": {"d": [{"tg": "","id": ""}],"ct": 204,"ec": 0 }}
+    *
+    */
+
+    @JvmSynthetic
+    fun getChildDevices() {
+        val response = getSyncResponse()
+        publishMessage(
+            response?.d?.p?.topics!!.di,
+            JSONObject().put(MESSAGE_TYPE, DeviceIdentityMessages.GET_CHILD_DEVICES.value)
+                .toString(),
+            false
+        )
+    }
+
+    /*Create child Device
+    *
+    *{"mt":221,"d":{"dn":"adasdad","id":"asdasd","tg":"qwe","g":"xvxcvx"}}
+    * */
+    @JvmSynthetic
+    fun createChildDevice(innerObject: JSONObject) {
+        val response = getSyncResponse()
+        val mainObject = JSONObject()
+        innerObject.put("g", response?.d?.meta?.gtw?.g)
+        mainObject.put("mt", DeviceIdentityMessages.CREATE_CHILD_DEVICE.value)
+        mainObject.put("d", innerObject)
+        publishMessage(
+            response?.d?.p?.topics?.di!!, mainObject.toString(), false
+        )
+
+    }
+
+    /*Delete child device
+    *
+    *{"mt":222,"d":{"id":"asdasd"}}
+    *
+    * */
+    @JvmSynthetic
+    fun deleteChildDevice(innerObject: JSONObject) {
+        val response = getSyncResponse()
+        val mainObject = JSONObject()
+        mainObject.put("mt", DeviceIdentityMessages.DELETE_CHILD_DEVICE.value)
+        mainObject.put("d", innerObject)
+        publishMessage(
+            response?.d?.p?.topics?.di!!, mainObject.toString(), false
+        )
+
     }
 
     /*process input data to publish.
@@ -1351,7 +1604,13 @@ internal class SDKClientManager(
                             val InnerKey = innerJsonKey.next()
                             val InnerKValue = innerObj.getString(InnerKey)
                             val gyroValidationValue =
-                                compareForInputValidationNew(InnerKey, InnerKValue, tag, dObj)
+                                compareForInputValidationNew(
+                                    InnerKey,
+                                    InnerKValue,
+                                    tag,
+                                    dObj,
+                                    isSkipValidation
+                                )
                             if (gyroValidationValue == 0) {
                                 gyroObj_reporting.put(InnerKey, InnerKValue)
                             } else {
@@ -1366,7 +1625,8 @@ internal class SDKClientManager(
                         )
                         if (gyroObj_faulty.length() != 0) innerD_Obj_faulty.put(key, gyroObj_faulty)
                     } else {
-                        val othersValidation = compareForInputValidationNew(key, value, tag, dObj)
+                        val othersValidation =
+                            compareForInputValidationNew(key, value, tag, dObj, isSkipValidation)
                         if (othersValidation == 0) {
                             innerD_Obj_reporting.put(key, value)
                         } else {
@@ -1445,7 +1705,7 @@ internal class SDKClientManager(
                 val gatewayChildResponse = getGatewayChildResponse()
                 val getChildDeviceBean = GetChildDeviceBean()
 
-                getChildDeviceBean.tg = syncResponse.d.meta?.gtw?.tg
+                getChildDeviceBean.tg = syncResponse.d.meta.gtw?.tg
                 getChildDeviceBean.id = uniqueId
                 gatewayChildResponse?.d?.childDevice?.add(getChildDeviceBean)
 
@@ -1472,7 +1732,7 @@ internal class SDKClientManager(
 
                                 //check for input validation dv=data validation dv="data validation". {"ln":"x","dt":0,"dv":"10to20","tg":"","sq":1,"agt":63,"tw":"40s"}
                                 val validation: Int = compareForInputValidationNew(
-                                    innerKey, innerKValue, tag, attributeResponse
+                                    innerKey, innerKValue, tag, attributeResponse, isSkipValidation
                                 )
 
                                 //ignore string value for edge device.
@@ -1481,6 +1741,7 @@ internal class SDKClientManager(
                                         key,
                                         innerKey,
                                         innerKValue,
+                                        uniqueId,
                                         edgeDeviceAttributeGyroMap,
                                         context
                                     )
@@ -1504,13 +1765,13 @@ internal class SDKClientManager(
 
                             //check for input validation dv="data validation". {"ln":"abc","dt":0,"dv":"10","tg":"","sq":8,"agt":63,"tw":"60s"}
                             val validation: Int = compareForInputValidationNew(
-                                key, value, tag, attributeResponse
+                                key, value, tag, attributeResponse, isSkipValidation
                             )
 
                             //ignore string value for edge device.
                             if (SDKClientUtils.isDigit(value) && validation != 1) {
                                 updateEdgeDeviceObj(
-                                    key, value, edgeDeviceAttributeMap, context
+                                    key, value, uniqueId, edgeDeviceAttributeMap, context
                                 )
                                 if (edgeResponse != null) {
                                     if (jsonData != null) {
@@ -1544,8 +1805,8 @@ internal class SDKClientManager(
         syncResponse: IdentityServiceResponse, response: CommonResponseBean
     ) {
         val attributeList = response.d?.att
-        edgeDeviceAttributeMap = ConcurrentHashMap()
-        edgeDeviceAttributeGyroMap = ConcurrentHashMap()
+        edgeDeviceAttributeMap = ArrayListMultimap.create()
+        edgeDeviceAttributeGyroMap = ArrayListMultimap.create()
         edgeDeviceTimersList = ArrayList()
         if (attributeList != null) {
             for (bean in attributeList) {
@@ -1558,17 +1819,57 @@ internal class SDKClientManager(
 
                         val twb = TumblingWindowBean()
                         twb.attributeName = attributeLn
-                        gyroAttributeList.add(twb)
+                        twb.uniqueId = uniqueId
+                        twb.tag = ""
 
                         var tg: String
+                        var id: String
                         if (bean.tg != null) {
                             tg = bean.tg
+
+                            val gatewayChildResponse = getGatewayChildResponse()
+                            val getChildDeviceBean = GetChildDeviceBean()
+
+                            getChildDeviceBean.tg = syncResponse.d.meta.gtw.tg
+                            getChildDeviceBean.id = uniqueId
+                            gatewayChildResponse?.d?.childDevice?.add(getChildDeviceBean)
+
+                            gatewayChildResponse?.d?.childDevice?.forEach {
+
+                                if (it.tg == bean.tg) {
+                                    val twb = TumblingWindowBean()
+                                    twb.attributeName = attributeLn
+                                    twb.uniqueId = it.id
+                                    twb.tag = it.tg
+                                    gyroAttributeList.add(twb)
+                                    edgeDeviceTWTimerStart(
+                                        syncResponse,
+                                        beanX.tw,
+                                        bean.p + "," + bean.tg,
+                                        it.tg!!,
+                                        it.id!!,
+                                        gyroAttributeList,
+                                        "isGyro"
+                                    )
+                                }
+
+                            }
+
                         } else {
                             tg = ""
+                            id = ""
+                            gyroAttributeList.add(twb)
+                            edgeDeviceTWTimerStart(
+                                syncResponse,
+                                beanX.tw,
+                                bean.p + "," + bean.tg,
+                                tg,
+                                id,
+                                gyroAttributeList,
+                                "isGyro"
+                            )
                         }
-                        edgeDeviceTWTimerStart(
-                            syncResponse, beanX.tw, bean.p, tg, gyroAttributeList
-                        )
+
 
                     }
 
@@ -1578,14 +1879,47 @@ internal class SDKClientManager(
                     for (beanX in listD) {
                         val ln = beanX.ln
                         val tag: String
+                        var id: String
 
                         if (beanX.tg != null) {
                             tag = beanX.tg
+                            val gatewayChildResponse = getGatewayChildResponse()
+                            val getChildDeviceBean = GetChildDeviceBean()
+
+                            getChildDeviceBean.tg = syncResponse.d.meta.gtw.tg
+                            getChildDeviceBean.id = uniqueId
+                            gatewayChildResponse?.d?.childDevice?.add(getChildDeviceBean)
+
+                            gatewayChildResponse?.d?.childDevice?.forEach {
+
+                                if (it.tg == tag) {
+                                    id = it.id!!
+                                    edgeDeviceTWTimerStart(
+                                        syncResponse,
+                                        beanX.tw,
+                                        ln,
+                                        it.tg!!,
+                                        id,
+                                        null,
+                                        "isSimple"
+                                    )
+                                }
+
+                            }
+
                         } else {
                             tag = ""
+                            id = ""
+                            edgeDeviceTWTimerStart(
+                                syncResponse,
+                                beanX.tw,
+                                ln,
+                                tag,
+                                id,
+                                null,
+                                "isSimple"
+                            )
                         }
-
-                        edgeDeviceTWTimerStart(syncResponse, beanX.tw, ln, tag, null)
                     }
                 }
             }
@@ -1604,31 +1938,15 @@ internal class SDKClientManager(
         twTime: String?,
         ln: String?,
         tag: String,
-        gyroAttributeList: MutableList<TumblingWindowBean>?
+        uniqueId1: String,
+        gyroAttributeList: MutableList<TumblingWindowBean>?,
+        checkAttType: String
     ) {
-        var id = ""
+        var id = uniqueId1
         val tw = twTime?.replace("[^\\d.]".toRegex(), "")?.toDouble()
-        if (ln != null) {
-            edgeDeviceAttributeMap?.put(ln, TumblingWindowBean())
-        }
 
-        if (ln != null) {
-            if (gyroAttributeList != null) {
-                (edgeDeviceAttributeGyroMap as ConcurrentHashMap<String, List<TumblingWindowBean>>).put(
-                    ln, gyroAttributeList
-                )
-            }
-        }
+        if (syncResponse.d.meta.gtw != null) {
 
-        if (syncResponse.d.meta?.gtw != null) {
-            val gatewayChildResponse = getGatewayChildResponse()
-            val getChildDeviceBean = GetChildDeviceBean()
-
-            getChildDeviceBean.tg = syncResponse.d.meta.gtw.tg
-            getChildDeviceBean.id = uniqueId
-            gatewayChildResponse?.d?.childDevice?.add(getChildDeviceBean)
-
-            id = gatewayChildResponse?.d?.childDevice?.find { it.tg == tag }?.id!!
         } else {
             if (uniqueId != null) {
                 id = uniqueId
@@ -1636,7 +1954,30 @@ internal class SDKClientManager(
         }
 
 
-        Log.d("gatewayid", "::$id")
+        if (ln != null) {
+            if (!TextUtils.isEmpty(id)) {
+                if (checkAttType == "isSimple") {
+                    val tumblingWindowBean = TumblingWindowBean()
+                    tumblingWindowBean.uniqueId = id
+                    edgeDeviceAttributeMap?.put(ln, tumblingWindowBean)
+                }
+            }
+
+        }
+
+        if (ln != null) {
+            if (gyroAttributeList != null) {
+
+                if (checkAttType == "isGyro") {
+                    if (!edgeDeviceAttributeGyroMap!!.containsEntry(ln, gyroAttributeList)) {
+                        (edgeDeviceAttributeGyroMap as ListMultimap<String, List<TumblingWindowBean>>).put(
+                            ln,
+                            gyroAttributeList
+                        )
+                    }
+                }
+            }
+        }
 
         val timerTumblingWindow = Timer()
         edgeDeviceTimersList?.add(timerTumblingWindow)
@@ -1667,7 +2008,6 @@ internal class SDKClientManager(
                                 isPublish = false
                             }
                         }
-                        Log.d("publishMessage1", "::$publishObj")
                     }
 
 
@@ -1734,9 +2074,9 @@ internal class SDKClientManager(
     }
 
     /* On edge device rule match, send below json format to firmware.
-   *{"cmdType":"0x01","data":{"cpid":"deviceData.cpId","guid":"deviceData.company","uniqueId":"device uniqueId","command":"json.cmd","ack":true,"ackId":null,"cmdType":"config.commandType.CORE_COMMAND, 0x01"}}
-   *
-   * */
+    *{"cmdType":"0x01","data":{"cpid":"deviceData.cpId","guid":"deviceData.company","uniqueId":"device uniqueId","command":"json.cmd","ack":true,"ackId":null,"cmdType":"config.commandType.CORE_COMMAND, 0x01"}}
+    *
+    * */
     private fun onEdgeDeviceRuleMatched(bean: GetEdgeRuleBean) {
         val strJson = SDKClientUtils.createCommandFormat(
             C2DMessageEnums.DEVICE_COMMAND.value, cpId, bean.g, uniqueId, bean.cmd, true, ""
@@ -1934,6 +2274,27 @@ internal class SDKClientManager(
         if (publishObjForRuleMatchEdgeDevice != null) publishMessage(
             syncResponse?.d?.p?.topics?.erm!!, publishObjForRuleMatchEdgeDevice.toString(), false
         )
+    }
+
+    private fun onHeartbeatCommand(frequencyHeartBeat: Int) {
+        onHeartbeatCommand()
+        val response = getSyncResponse()
+        job = scope.launch {
+            while (true) {
+                // the function that should be ran every second
+                publishMessage(
+                    response?.d?.p?.topics?.hb!!,
+                    JSONObject().toString(),
+                    false
+                )
+                delay(frequencyHeartBeat.toLong() * 1000)
+            }
+        }
+    }
+
+    private fun onHeartbeatCommand() {
+        job?.cancel()
+        job = null
     }
 
 }

@@ -101,7 +101,7 @@
 
 
                     <RadioButton
-                        android:id="@+id/rbtnStage"
+                        android:id="@+id/rbtnProd"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
@@ -208,6 +208,19 @@
                     app:layout_constraintRight_toRightOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/btnSendData" />
 
+                <Button
+                    android:id="@+id/btnChildDevices"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="20dp"
+                    android:layout_marginRight="20dp"
+                    android:enabled="false"
+                    android:text="Child Devices Operation"
+                    android:textSize="15dp"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/btnGetAllTwins" />
+
                 <LinearLayout
                     android:id="@+id/llSubscribe"
                     android:layout_width="match_parent"
@@ -217,7 +230,7 @@
                     android:orientation="horizontal"
                     app:layout_constraintLeft_toLeftOf="parent"
                     app:layout_constraintRight_toRightOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/btnGetAllTwins">
+                    app:layout_constraintTop_toBottomOf="@id/btnChildDevices">
 
                     <TextView
                         android:layout_width="wrap_content"

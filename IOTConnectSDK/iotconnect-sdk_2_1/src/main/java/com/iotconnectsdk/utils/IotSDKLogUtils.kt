@@ -7,7 +7,7 @@ import java.io.FileWriter
 import java.io.IOException
 import java.util.*
 
-class IotSDKLogUtils private constructor(
+internal class IotSDKLogUtils private constructor(
     private val activity: Context,
     private val cpId: String,
     private val uniqueId: String
@@ -20,7 +20,7 @@ class IotSDKLogUtils private constructor(
         }
     }
 
-    fun writeLogFile(isError: Boolean, log: String) {
+    private fun writeLogFile(isError: Boolean, log: String) {
         try {
             val directoryPath = "logs/debug"
             val directory = getChildrenFolder(directoryPath)
@@ -74,7 +74,6 @@ class IotSDKLogUtils private constructor(
             writer.newLine()
             writer.close()
         } catch (e: Exception) {
-            //Log.d("writeToFile", e.getMessage());
             e.printStackTrace()
         }
     }

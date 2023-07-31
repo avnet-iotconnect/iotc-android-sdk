@@ -1,6 +1,8 @@
 package com.iotconnectsdk.utils
 
 import android.content.Context
+import android.util.Log
+import com.google.common.collect.ListMultimap
 import com.iotconnectsdk.beans.GetEdgeRuleBean
 import com.iotconnectsdk.beans.TumblingWindowBean
 import org.json.JSONArray
@@ -19,17 +21,24 @@ internal object EdgeDeviceUtils {
 
     /*Update edge device object with object as datatype*/
     fun updateEdgeDeviceGyroObj(
-        key: String, innerKey: String, value: String,
-        edgeDeviceAttributeGyroMap: MutableMap<String, List<TumblingWindowBean>>?, context: Context?
+        key: String,
+        innerKey: String,
+        value: String,
+        uniqueId: String,
+        edgeDeviceAttributeGyroMap: ListMultimap<String, List<TumblingWindowBean>>?,
+        context: Context?
     ) {
         if (edgeDeviceAttributeGyroMap != null) {
-            for ((key1, tlbList) in edgeDeviceAttributeGyroMap) {
-                if (key1 == key) {
+            for ((key1, tlbList) in edgeDeviceAttributeGyroMap.entries()) {
+                val keyLatest = key1.split(",").toTypedArray()
+                if (keyLatest[0] == key) {
                     val inputValue = value.toDouble()
                     if (tlbList != null) {
                         for (bean in tlbList) {
-                            if (innerKey == bean.attributeName) {
-                                setObjectValue(bean, inputValue)
+                            if (uniqueId == bean.uniqueId) {
+                                if (innerKey == bean.attributeName) {
+                                    setObjectValue(bean, inputValue)
+                                }
                             }
                         }
                     }
@@ -44,15 +53,18 @@ internal object EdgeDeviceUtils {
     fun updateEdgeDeviceObj(
         key: String,
         value: String,
-        edgeDeviceAttributeMap: MutableMap<String, TumblingWindowBean>?,
+        uniqueId: String,
+        edgeDeviceAttributeMap: ListMultimap<String, TumblingWindowBean>?,
         context: Context?
     ) {
         if (edgeDeviceAttributeMap != null) {
-            for ((key1, tlb) in edgeDeviceAttributeMap) {
+            for ((key1, tlb) in edgeDeviceAttributeMap.entries()) {
                 if (key1 == key) {
-                    val inputValue = value.toDouble()
-                    if (tlb != null) {
-                        setObjectValue(tlb, inputValue)
+                    if (uniqueId == tlb.uniqueId) {
+                        val inputValue = value.toDouble()
+                        if (tlb != null) {
+                            setObjectValue(tlb, inputValue)
+                        }
                     }
                 }
             }
@@ -67,8 +79,8 @@ internal object EdgeDeviceUtils {
     fun publishEdgeDeviceInputData(
         attributeName: String?,
         tag: String,
-        edgeDeviceAttributeGyroMap: MutableMap<String, List<TumblingWindowBean>>?,
-        edgeDeviceAttributeMap: MutableMap<String, TumblingWindowBean>?,
+        edgeDeviceAttributeGyroMap: ListMultimap<String, List<TumblingWindowBean>>?,
+        edgeDeviceAttributeMap: ListMultimap<String, TumblingWindowBean>?,
         uniqueId: String?,
         cpId: String?,
         environment: String?,
@@ -86,28 +98,36 @@ internal object EdgeDeviceUtils {
         val dInnerArrayObject = JSONObject()
         //for gyro object
         if (edgeDeviceAttributeGyroMap != null) {
-            for ((key, twbList) in edgeDeviceAttributeGyroMap) {
-                if (attributeName == key) {
-                    try {
-                        var attributeArray: JSONArray? = null
-                        if (twbList != null) {
-                            for (twb in twbList) {
-                                attributeArray = getEdgeDevicePublishAttributes(twb)
-                                if (attributeArray.length() > 0) {
-                                    dInnerArrayObject.put(twb.attributeName, attributeArray)
+            for ((key, twbList) in edgeDeviceAttributeGyroMap.entries()) {
+
+                val keyLatest = key.split(",").toTypedArray()
+                val attributeNameLatest = attributeName?.split(",")?.toTypedArray()
+
+                if (attributeNameLatest!![0] == keyLatest[0]) {
+                    if (attributeNameLatest[1] == keyLatest[1]) {
+                        try {
+                            var attributeArray: JSONArray? = null
+                            if (twbList != null) {
+                                for (twb in twbList) {
+                                    if (uniqueId == twb.uniqueId) {
+                                        attributeArray = getEdgeDevicePublishAttributes(twb)
+                                        if (attributeArray.length() > 0) {
+                                            dInnerArrayObject.put(twb.attributeName, attributeArray)
+                                        }
+                                        clearObject(twb)
+                                    }
                                 }
-                                clearObject(twb)
                             }
+                            if (dInnerArrayObject.length() > 0) {
+                                gyroObj.put(attributeNameLatest[0], dInnerArrayObject)
+                            }
+                            dArrayObject.put(D_OBJ, gyroObj)
+                            dArray.put(dArrayObject)
+                            mainObj.put(D_OBJ, dArray)
+                            return mainObj
+                        } catch (e: JSONException) {
+                            e.printStackTrace()
                         }
-                        if (dInnerArrayObject.length() > 0) {
-                            gyroObj.put(attributeName, dInnerArrayObject)
-                        }
-                        dArrayObject.put(D_OBJ, gyroObj)
-                        dArray.put(dArrayObject)
-                        mainObj.put(D_OBJ, dArray)
-                        return mainObj
-                    } catch (e: JSONException) {
-                        e.printStackTrace()
                     }
                 }
             }
@@ -115,24 +135,26 @@ internal object EdgeDeviceUtils {
 
         //for simple object
         if (edgeDeviceAttributeMap != null) {
-            for ((key, twb) in edgeDeviceAttributeMap) {
+            for ((key, twb) in edgeDeviceAttributeMap.entries()) {
                 if (key == attributeName) {
-                    try {
-                        val attributeArray = getEdgeDevicePublishAttributes(twb)
-                        if (attributeArray.length() > 0) {
-                            dInnerArrayObject.put(attributeName, attributeArray)
-                            // dInnerArray.put(dInnerArrayObject)
+                    if (uniqueId == twb.uniqueId) {
+                        try {
+                            val attributeArray = getEdgeDevicePublishAttributes(twb)
+                            if (attributeArray.length() > 0) {
+                                dInnerArrayObject.put(attributeName, attributeArray)
+                                // dInnerArray.put(dInnerArrayObject)
+                            }
+                            dArrayObject.put(D_OBJ, dInnerArrayObject)
+                            dArray.put(dArrayObject)
+                            mainObj.put(D_OBJ, dArray)
+                        } catch (e: JSONException) {
+                            e.printStackTrace()
                         }
-                        dArrayObject.put(D_OBJ, dInnerArrayObject)
-                        dArray.put(dArrayObject)
-                        mainObj.put(D_OBJ, dArray)
-                    } catch (e: JSONException) {
-                        e.printStackTrace()
+                        if (twb != null) {
+                            clearObject(twb)
+                        }
+                        return mainObj
                     }
-                    if (twb != null) {
-                        clearObject(twb)
-                    }
-                    return mainObj
                 }
             }
         }
@@ -184,72 +206,72 @@ internal object EdgeDeviceUtils {
 
     fun setObjectValue(bean: TumblingWindowBean, inputValue: Double) {
 
-        val oldMin = bean.getMin()
+        val oldMin = bean.min
 
         if (inputValue < 0.0) {
             if (oldMin == 0.0 || inputValue < oldMin) {
-                bean.setMinSet(true)
-                bean.setMin(inputValue)
+                bean.isMinSet=true
+                bean.min = inputValue
 
             }
 
         } else {
             if (inputValue == 0.0) {
-                if (!bean.isMinSet()) {
-                    bean.setMin(0.0)
-                    bean.setMinSet(true)
+                if (!bean.isMinSet) {
+                    bean.min = 0.0
+                    bean.isMinSet=true
                 }
 
             } else if (oldMin == 0.0 || inputValue < oldMin) {
-                if (!bean.isMinSet()) {
-                    bean.setMin(inputValue)
+                if (!bean.isMinSet) {
+                    bean.min = inputValue
                 }
 
             }
         }
 
-        val oldMax = bean.getMax()
+        val oldMax = bean.max
 
         if (inputValue < 0.0) {
             if (oldMax == 0.0 || inputValue > oldMax) {
-                if (!bean.isMaxSet()) {
-                    bean.setMax(inputValue)
+                if (!bean.isMaxSet) {
+                    bean.max = inputValue
                 }
             }
         } else {
             if (inputValue == 0.0) {
-                if (!bean.isMaxSet()) {
-                    bean.setMax(0.0)
-                    bean.setMaxSet(true)
+                if (!bean.isMaxSet) {
+                    bean.max = 0.0
+                    bean.isMaxSet=true
                 }
             } else if (oldMax == 0.0 || inputValue > oldMax) {
-                bean.setMaxSet(true)
-                bean.setMax(inputValue)
+                bean.isMaxSet=true
+                bean.max = inputValue
 
             }
         }
 
-        val sum: Double = inputValue + bean.getSum()
+        val sum: Double = inputValue + bean.sum
         val df_obj = DecimalFormat("#.####")
 
-        bean.setSum(df_obj.format(sum).toDouble())
-        var count: Int = bean.getCount()
+        bean.sum = df_obj.format(sum).toDouble()
+        var count: Int = bean.count
         count++
-        bean.setAvg(df_obj.format(sum / count).toDouble())
-        bean.setCount(count)
-        bean.setLv(inputValue)
+        bean.avg = df_obj.format(sum / count).toDouble()
+        bean.count = count
+        bean.lv = inputValue
     }
 
     private fun clearObject(twb: TumblingWindowBean) {
         //clear object on publish success.
-        twb.setMin(0.0)
-        twb.setMax(0.0)
-        twb.setSum(0.0)
-        twb.setAvg(0.0)
-        twb.setCount(0)
-        twb.setLv(0.0)
-        twb.setMinSet(false)
-        twb.setMaxSet(false)
+        twb.min = 0.0
+        twb.max = 0.0
+        twb.sum = 0.0
+        twb.avg = 0.0
+        twb.count = 0
+        twb.lv = 0.0
+        twb.isMaxSet=false
+        twb.isMinSet=false
     }
 
     fun getAttributeName(con: String): String? {

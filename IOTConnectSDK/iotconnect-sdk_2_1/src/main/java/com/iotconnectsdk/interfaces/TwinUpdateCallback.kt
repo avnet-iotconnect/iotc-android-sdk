@@ -2,6 +2,6 @@ package com.iotconnectsdk.interfaces
 
 import org.json.JSONObject
 
-interface TwinUpdateCallback {
+internal interface TwinUpdateCallback {
     fun twinUpdateCallback(data: JSONObject?)
 }

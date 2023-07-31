@@ -1,6 +1,6 @@
 package com.iotconnectsdk.enums
 
-enum class C2DMessageEnums(val value: Int) {
+internal enum class C2DMessageEnums(val value: Int) {
 
     //Device Commands
     DEVICE_COMMAND(0),
@@ -17,9 +17,14 @@ enum class C2DMessageEnums(val value: Int) {
     DEVICE_DISABLED(107),
     DEVICE_RELEASED(108),
     STOP_OPERATION(109),
-    DEVICE_CONNECTION_STATUS(116),
 
     //Heartbeat commands
     START_HEARTBEAT(110),
     STOP_HEARTBEAT(111),
+
+    //Validation Skip command
+    VALIDATION_SKIP(113),
+
+    //Device Connection Status
+    DEVICE_CONNECTION_STATUS(116),
 }

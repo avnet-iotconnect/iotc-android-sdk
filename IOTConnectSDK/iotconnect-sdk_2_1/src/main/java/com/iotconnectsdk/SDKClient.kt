@@ -1,51 +1,13 @@
 package com.iotconnectsdk
 
-import android.app.Activity
 import android.content.Context
-import android.content.IntentFilter
-import android.net.ConnectivityManager
-import android.util.Log
-import android.webkit.URLUtil
 import com.google.gson.Gson
-import com.iotconnectsdk.beans.CommonResponseBean
-import com.iotconnectsdk.beans.GetChildDeviceBean
-import com.iotconnectsdk.beans.GetEdgeRuleBean
-import com.iotconnectsdk.beans.TumblingWindowBean
-import com.iotconnectsdk.enums.C2DMessageEnums
-import com.iotconnectsdk.enums.DeviceIdentityMessages
+import com.iotconnectsdk.beans.D2CSendAckBean
 import com.iotconnectsdk.interfaces.DeviceCallback
-import com.iotconnectsdk.interfaces.HubToSdkCallback
-import com.iotconnectsdk.interfaces.PublishMessageCallback
-import com.iotconnectsdk.interfaces.TwinUpdateCallback
-import com.iotconnectsdk.mqtt.IotSDKMQTTService
 import com.iotconnectsdk.utils.*
-import com.iotconnectsdk.utils.DateTimeUtils.getCurrentTime
-import com.iotconnectsdk.utils.EdgeDeviceUtils.evaluateEdgeDeviceRuleValue
-import com.iotconnectsdk.utils.EdgeDeviceUtils.getAttName
-import com.iotconnectsdk.utils.EdgeDeviceUtils.getAttributeName
-import com.iotconnectsdk.utils.EdgeDeviceUtils.getEdgeDevicePublishMainObj
-import com.iotconnectsdk.utils.EdgeDeviceUtils.getPublishStringEdgeDevice
-import com.iotconnectsdk.utils.EdgeDeviceUtils.publishEdgeDeviceInputData
-import com.iotconnectsdk.utils.EdgeDeviceUtils.updateEdgeDeviceGyroObj
-import com.iotconnectsdk.utils.EdgeDeviceUtils.updateEdgeDeviceObj
-import com.iotconnectsdk.utils.SDKClientUtils.createTextFile
-import com.iotconnectsdk.utils.SDKClientUtils.deleteTextFile
-import com.iotconnectsdk.utils.SDKClientUtils.getAttributesList
-import com.iotconnectsdk.utils.ValidationTelemetryUtils.compareForInputValidationNew
-import com.iotconnectsdk.webservices.CallWebServices
-import com.iotconnectsdk.webservices.interfaces.WsResponseInterface
-import com.iotconnectsdk.webservices.responsebean.DiscoveryApiResponse
-import com.iotconnectsdk.webservices.responsebean.IdentityServiceResponse
-import org.json.JSONArray
-import org.json.JSONException
+import com.iotconnectsdk.utils.DateTimeUtils.currentDate
 import org.json.JSONObject
-import org.json.JSONTokener
-import java.io.BufferedReader
-import java.io.File
-import java.io.FileReader
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * class for SDKClient
@@ -76,7 +38,6 @@ class SDKClient(
             cpId: String?,
             uniqueId: String?,
             deviceCallback: DeviceCallback?,
-            twinUpdateCallback: TwinUpdateCallback?,
             sdkOptions: String?,
             environment: String?
         ): SDKClient {
@@ -92,7 +53,6 @@ class SDKClient(
                     cpId,
                     uniqueId,
                     deviceCallback,
-                    twinUpdateCallback,
                     sdkOptions,
                     environment
                 )
@@ -109,7 +69,6 @@ class SDKClient(
         cpId: String?,
         uniqueId: String?,
         deviceCallback: DeviceCallback?,
-        twinUpdateCallback: TwinUpdateCallback?,
         sdkOptions: String?,
         environment: String?
     ) {
@@ -118,7 +77,6 @@ class SDKClient(
             cpId,
             uniqueId,
             deviceCallback,
-            twinUpdateCallback,
             sdkOptions,
             environment
         )
@@ -133,12 +91,15 @@ class SDKClient(
     }
 
 
-    fun getAllTwins() {
+    /*
+    * Get all twins from IOT connect portal
+    * */
+    fun getTwins() {
         if (isDispose) {
             iotSDKLogUtils!!.log(true, isDebug, "ERR_TP04", context!!.getString(R.string.ERR_TP04))
             return
         }
-        sdkClientManager?.getAllTwins()
+        sdkClientManager?.getTwins()
     }
 
 
@@ -159,18 +120,83 @@ class SDKClient(
 
     /**
      * send acknowledgment to IOT connect portal
-     *
-     * @param obj         String value for "obj"
-     * @param messageType Message Type
-     *
      * https://docs.iotconnect.io/iotconnect/resources/device-message-2-1-2/device-to-cloud-d2c-messages/#Device_Acknowledgement
+     *
+     * @param ackGuid     ackGuid
+     * @param status      status
+     * @param msg         message
+     * @param childId    childDevice(If device is of Gateway type)
+     *
+     *
      */
-    fun sendAck(obj: String?, messageType: String?) {
+
+    @JvmOverloads
+    fun sendAckCmd(ackGuid: String, status: Int, msg: String, childId: String="") {
         if (isDispose) {
             iotSDKLogUtils!!.log(true, isDebug, "ERR_CM04", context!!.getString(R.string.ERR_CM04))
             return
         }
-        sdkClientManager?.sendAck(obj, messageType)
+
+        val d2CSendAckBean = D2CSendAckBean(
+            currentDate, D2CSendAckBean.Data(ackGuid, 0, status, msg, childId))
+        val gson = Gson()
+        val jsonString = gson.toJson(d2CSendAckBean)
+
+        sdkClientManager?.sendAck(jsonString)
+    }
+
+
+    /**
+     * send OTA Command to IOT connect portal
+     * https://docs.iotconnect.io/iotconnect/resources/device-message-2-1-2/device-to-cloud-d2c-messages/#OTA
+     *
+     * @param ackGuid     ackGuid
+     * @param status      status
+     * @param msg         message
+     * @param childId    childDevice(If device is of Gateway type)
+     *
+     *
+     */
+    @JvmOverloads
+    fun sendOTAAckCmd(ackGuid: String, status: Int, msg: String, childId: String="") {
+        if (isDispose) {
+            iotSDKLogUtils!!.log(true, isDebug, "ERR_CM04", context!!.getString(R.string.ERR_CM04))
+            return
+        }
+        val d2CSendAckBean = D2CSendAckBean(
+            currentDate, D2CSendAckBean.Data(ackGuid, 1, status, msg, childId))
+        val gson = Gson()
+        val jsonString = gson.toJson(d2CSendAckBean)
+
+        sdkClientManager?.sendAck(jsonString)
+    }
+
+
+    /**
+     * send Module Command to IOT connect portal
+     *  https://docs.iotconnect.io/iotconnect/resources/device-message-2-1-2/device-to-cloud-d2c-messages/#Module
+     *
+     * @param ackGuid     ackGuid
+     * @param status      status
+     * @param msg         message
+     * @param childId    childDevice(If device is of Gateway type)
+     *
+     *
+     */
+    @JvmOverloads
+    fun sendAckModule(ackGuid: String, status: Int, msg: String, childId: String="") {
+        if (isDispose) {
+            iotSDKLogUtils!!.log(true, isDebug, "ERR_CM04", context!!.getString(R.string.ERR_CM04))
+            return
+        }
+
+        val d2CSendAckBean = D2CSendAckBean(
+            currentDate, D2CSendAckBean.Data(ackGuid, 2, status, msg, childId))
+        val gson = Gson()
+        val jsonString = gson.toJson(d2CSendAckBean)
+
+        sdkClientManager?.sendAck(jsonString)
+
     }
 
 
@@ -200,6 +226,51 @@ class SDKClient(
             return
         }
         sdkClientManager?.sendData(jsonData)
+    }
+
+
+    /*
+     *https://docs.iotconnect.io/iotconnect/resources/device-message-2-1-2/device-identity-messages/#devices
+     *
+     * If device is of gateway type then below function will get child device from IOT connect portal
+     * {"d": {"d": [{"tg": "","id": ""}],"ct": 204,"ec": 0 }}
+     *
+     */
+    fun getChildDevices() {
+        sdkClientManager?.getChildDevices()
+    }
+
+    /**
+     * create child device to IOT connect portal
+     * https://docs.iotconnect.io/iotconnect/resources/device-message-2-1-2/device-identity-messages/#Create_Child
+     *
+     * @param deviceId     deviceId
+     * @param deviceTag    deviceTag
+     * @param displayName  displayName
+     *
+     *
+     */
+    fun createChildDevice(deviceId: String, deviceTag: String, displayName: String) {
+        val innerObject = JSONObject()
+        innerObject.put("id",deviceId)
+        innerObject.put("tg", deviceTag)
+        innerObject.put("dn", displayName)
+        sdkClientManager?.createChildDevice(innerObject)
+    }
+
+    /**
+     * delete child device from IOT connect portal
+     * https://docs.iotconnect.io/iotconnect/resources/device-message-2-1-2/device-identity-messages/#Delete_Child
+     *
+     *
+     * @param deviceId     deviceId
+     *
+     */
+
+    fun deleteChildDevice(deviceId: String) {
+        val innerObject = JSONObject()
+        innerObject.put("id",deviceId )
+        sdkClientManager?.deleteChildDevice(innerObject)
     }
 
 }

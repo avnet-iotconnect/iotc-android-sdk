@@ -35,6 +35,7 @@
     <string name="INFO_CM01">Command : 0 : STANDARD_COMMAND</string>
 
     <string name="INFO_CM02">Command : 1 : FIRMWARE_UPDATE</string>
+    <string name="INFO_CM02Module">Command : 2 : MODULE_UPDATE</string>
     <string name="INFO_CM08">Command : 0x99 : STOP_SDK_CONNECTION</string>
     <string name="INFO_CM16">Command : 116 : DEVICE_CONNECTION_STATUS</string>
 
@@ -71,5 +72,21 @@
     <string name="tv_conn_not_allow">Connection Not Allowed</string>
     <string name="tv_invalid_boot_certificate">Invalid Bootstrap Certificate</string>
     <string name="tv_invalid_opp_certificate">Invalid Operational Certificate</string>
+
+
+    <string name="tv_device_created">Child Device created successfully</string>
+    <string name="tv_missing_child_tag">Missing child tag</string>
+    <string name="tv_missing_uniqueid">Missing child device uniqueid</string>
+    <string name="tv_missing_name">Missing child device display name</string>
+    <string name="tv_missing_gatewaydevice">Gateway device not found</string>
+    <string name="tv_something_wrong">Could not create device, something went wrong</string>
+    <string name="tv_tag_not_valid">Child device tag is not valid</string>
+    <string name="tv_tag_issue">Child device tag name cannot be same as Gateway device</string>
+    <string name="tv_id_exist">Child uniqueid is already exists.</string>
+    <string name="tv_id_limit">Child uniqueid should not exceed 128 characters</string>
+
+
+    <string name="tv_device_deleted">Child Device deleted successfully</string>
+    <string name="tv_child_device_not_found">Child device not found</string>
 
 </resources>

@@ -3,8 +3,11 @@ package com.softweb.iotconnectsdk.activity
 import android.Manifest
 import android.app.Activity
 import android.app.ProgressDialog
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.text.TextUtils
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -16,30 +19,35 @@ import com.google.android.material.textfield.TextInputLayout
 import com.google.gson.Gson
 import com.iotconnectsdk.SDKClient
 import com.iotconnectsdk.interfaces.DeviceCallback
-import com.iotconnectsdk.interfaces.TwinUpdateCallback
+import com.iotconnectsdk.iotconnectconfigs.Certificate
+import com.iotconnectsdk.iotconnectconfigs.EnvironmentType
+import com.iotconnectsdk.iotconnectconfigs.OfflineStorage
+import com.iotconnectsdk.iotconnectconfigs.SdkOptions
 import com.softweb.iotconnectsdk.R
 import com.softweb.iotconnectsdk.model.*
 import kotlinx.android.synthetic.main.activity_firmware.*
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
 
 /*
- *****************************************************************************
- * @file : FirmwareActivity.kotlin
- * @author : Softweb Solutions An Avnet Company
- * @brief : Firmware part for Android SDK 3.1.2
- * *****************************************************************************
- */
-
+*****************************************************************************
+* @file : FirmwareActivityKotlin
+* @author : Softweb Solutions An Avnet Company
+* @modify : 28-June-2022
+* @brief : Firmware part for Android SDK 3.1.2
+* *****************************************************************************
+*/
 /*
  * Hope you have imported SDK v3.1.2 in build.gradle as guided in README.md file or from documentation portal.
  */
-
 class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
-    DeviceCallback, TwinUpdateCallback {
+    DeviceCallback {
     private val TAG = FirmwareActivityKotlin::class.java.simpleName
 
     private var inputMap: MutableMap<String, List<TextInputLayout>>? = null
@@ -65,15 +73,25 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
 
     private var sdkClient: SDKClient? = null
 
+    private var tagsList: ArrayList<String>? = null
+
     private val DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+
+    var ackId = ""
+    var childId = ""
+    var cmdType = -1
+    var mainObject: JSONObject? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_firmware)
+
 
         btnConnect.setOnClickListener(this)
         btnSendData.setOnClickListener(this)
         btnGetAllTwins.setOnClickListener(this)
         btnClear.setOnClickListener(this)
+        btnChildDevices.setOnClickListener(this)
 
         checkPermissions()
     }
@@ -108,15 +126,14 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
                         cpId,
                         uniqueId,
                         this@FirmwareActivityKotlin,
-                        this@FirmwareActivityKotlin,
-                        getSdkOptions(),
+                        sdkOptions,
                         environment
                     )
                     showDialog(this@FirmwareActivityKotlin)
                 }
             }
         } else if (v.id == R.id.btnSendData) {
-            // showDialog(FirmwareActivity.this);
+            // showDialog(FirmwareActivityKotlin.this);
             try {
                 sendInputData()
             } catch (e: Exception) {
@@ -131,7 +148,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
                      * Input   :
                      * Output  :
                      */
-                    sdkClient!!.getAllTwins()
+                    sdkClient!!.getTwins()
                 } else {
                     Toast.makeText(
                         this@FirmwareActivityKotlin,
@@ -140,6 +157,10 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
                     ).show()
                 }
             }
+        } else if (v.id == R.id.btnChildDevices) {
+            val intent = Intent(this, GatewayChildDevicesActivity::class.java)
+            intent.putExtra("tagsList", tagsList)
+            startActivity(intent)
         } else if (v.id == R.id.btnClear) {
             etSubscribe!!.setText("")
         }
@@ -167,6 +188,9 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
         return true
     }
 
+    /*
+     * Check here that permission is granted or not and do accordingly
+     * */
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<String>,
@@ -181,42 +205,6 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
             }
         }
     }//        String sdkOptions = {
-
-    //                "certificate": {
-//                    "SSLKeyPath"	: "<< Certificate file path >>",
-//                    "SSLCertPath"   : "<< Certificate file path >>",
-//                    "SSLCaPath"     : "<< Certificate file path >>"
-//                },
-//                "offlineStorage": {
-//                    "disabled": false, //default value = false, false = store data, true = not store data
-//                    "availSpaceInMb": 1, //in MB Default value = unlimited
-//                    "fileCount": 5 // Default value = 1
-//                },
-//            }
-    //default value false
-    //This will be in MB. mean total available space is 1 MB.
-    //5 files can be created.
-    /*
-     * It helps to define the path of self signed and CA signed certificate as well as define the offline storage params.
-     * <p>
-     * Type    : Function "checkPermissions()"
-     * Usage   : To check user permissions.
-     * Input   :
-     * Output  : returns json of sdk options as below mentioned
-     * <p>
-     * sdkOptions is optional. Mandatory for "certificate" X.509 device authentication type
-     * "certificate" : It indicated to define the path of the certificate file. Mandatory for X.509/SSL device CA signed or self-signed authentication type only.
-     * - SSLKeyPath: your device key
-     * - SSLCertPath: your device certificate
-     * - SSLCaPath : Root CA certificate
-     * "offlineStorage" : Define the configuration related to the offline data storage
-     * - disabled : false = offline data storing, true = not storing offline data
-     * - availSpaceInMb : Define the file size of offline data which should be in (MB)
-     * - fileCount : Number of files need to create for offline data
-     * Note: sdkOptions is optional but mandatory for SSL/x509 device authentication type only. Define proper setting or leave it NULL. If you not provide the off-line storage it will set the default settings as per defined above. It may harm your device by storing the large data. Once memory get full may chance to stop the execution.
-     */
-    private fun getSdkOptions(): String? {
-//        String sdkOptions = {
 //                "certificate": {
 //                    "SSLKeyPath"	: "<< Certificate file path >>",
 //                    "SSLCertPath"   : "<< Certificate file path >>",
@@ -228,28 +216,84 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
 //                    "fileCount": 5 // Default value = 1
 //                },
 //            }
-        val sdkOptions = SdkOptions()
-        val certificate = Certificate()
-        certificate.setsSLKeyPath("")
-        certificate.setsSLCertPath("")
-        certificate.setsSLCaPath("")
-        val offlineStorage = OfflineStorage()
-        offlineStorage.isDisabled = false //default value false
-        offlineStorage.availSpaceInMb = 1 //This will be in MB. mean total available space is 1 MB.
-        offlineStorage.fileCount = 5 //5 files can be created.
-        sdkOptions.certificate = certificate
-        sdkOptions.offlineStorage = offlineStorage
-        val sdkOptionsJsonStr = Gson().toJson(sdkOptions)
-        Log.d(TAG, "getSdkOptions = $sdkOptionsJsonStr")
-        return sdkOptionsJsonStr
-    }
+
+    //put certificate file in asset folder
+
+
+    //For using symmetric key authentication type
+    //default value false
+    //This will be in MB. mean total available space is 1 MB.
+    //5 files can be created.
+    /*
+    * It helps to define the path of self signed and CA signed certificate as well as define the offline storage params.
+    * <p>
+    * Type    : Function "checkPermissions()"
+    * Usage   : To check user permissions.
+    * Input   :
+    * Output  : returns json of sdk options as below mentioned
+    * <p>
+    * sdkOptions is optional. Mandatory for "certificate" X.509 device authentication type
+    * "certificate" : It indicated to define the path of the certificate file. Mandatory for X.509/SSL device CA signed or self-signed authentication type only.
+    * - SSLKeyPath: your device key
+    * - SSLCertPath: your device certificate
+    * - SSLCaPath : Root CA certificate
+    * "offlineStorage" : Define the configuration related to the offline data storage
+    * - disabled : false = offline data storing, true = not storing offline data
+    * - availSpaceInMb : Define the file size of offline data which should be in (MB)
+    * - fileCount : Number of files need to create for offline data
+    * Note: sdkOptions is optional but mandatory for SSL/x509 device authentication type only. Define proper setting or leave it NULL. If you not provide the off-line storage it will set the default settings as per defined above. It may harm your device by storing the large data. Once memory get full may chance to stop the execution.
+    */
+    private val sdkOptions: String
+        private get() {
+            //        String sdkOptions = {
+            //                "certificate": {
+            //                    "SSLKeyPath"	: "<< Certificate file path >>",
+            //                    "SSLCertPath"   : "<< Certificate file path >>",
+            //                    "SSLCaPath"     : "<< Certificate file path >>"
+            //                },
+            //                "offlineStorage": {
+            //                    "disabled": false, //default value = false, false = store data, true = not store data
+            //                    "availSpaceInMb": 1, //in MB Default value = unlimited
+            //                    "fileCount": 5 // Default value = 1
+            //                },
+            //            }
+            val sdkOptions = SdkOptions()
+            val certificate = Certificate()
+
+            //put certificate file in asset folder
+            certificate.setsSLKeyPath(getRobotCacheFile(this, "")?.absolutePath)
+            certificate.setsSLCertPath(getRobotCacheFile(this, "")?.absolutePath)
+            certificate.setsSLCaPath(getRobotCacheFile(this, "")?.absolutePath)
+
+
+            //For using symmetric key authentication type
+            sdkOptions.devicePK = ""
+
+            val offlineStorage =
+                OfflineStorage()
+            offlineStorage.isDisabled = false //default value false
+            offlineStorage.availSpaceInMb =
+                1 //This will be in MB. mean total available space is 1 MB.
+            offlineStorage.fileCount = 5 //5 files can be created.
+            sdkOptions.certificate = certificate
+            sdkOptions.offlineStorage = offlineStorage
+            sdkOptions.isSkipValidation = false
+            sdkOptions.brokerType = "" //pass broker type either "az" or "aws"
+
+            val sdkOptionsJsonStr = Gson().toJson(sdkOptions)
+            Log.d(
+                TAG,
+                "getSdkOptions => $sdkOptionsJsonStr"
+            )
+            return sdkOptionsJsonStr
+        }
 
     /*
-     * Type    : Private function sendInputData()"
-     * Usage   : Collect user input and send to cloud.
-     * Input   :
-     * Output  :
-     */
+    * Type    : Private function sendInputData()"
+    * Usage   : Collect user input and send to cloud.
+    * Input   :
+    * Output  :
+    */
     private fun sendInputData() {
         val inputArray = JSONArray()
         for ((keyValue, inputValue) in inputMap!!) {
@@ -303,7 +347,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
     }
 
     @Throws(JSONException::class)
-    fun keyExists(`object`: JSONObject, searchedKey: String?): Boolean {
+    private fun keyExists(`object`: JSONObject, searchedKey: String): Boolean {
         var exists = `object`.has(searchedKey)
         if (!exists) {
             val keys: Iterator<*> = `object`.keys()
@@ -324,125 +368,143 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
      * Output  : Receive device command, firmware command and other device initialize error response
      */
     override fun onReceiveMsg(message: String?) {
-        btnClear!!.isEnabled = true
         try {
-            Log.d(TAG, "onReceiveMsg => $message")
-            runOnUiThread { etSubscribe!!.setText(message) }
-            var messageType = ""
-            var ackId = ""
-            var childId = ""
-            var cmdType = -1
-            var mainObject: JSONObject? = null
-            val jsonValid = isJSONValid(message)
-            if (jsonValid) {
-                mainObject = JSONObject(message)
-                //Publish message call back received.
-                if (!mainObject.has("ct")) {
-                    return
+            getJsonMessage(message)
+            if (cmdType == 0 || cmdType == 1 || cmdType == 2) {
+            } else if (cmdType == 116) {
+                /*command type "116" for Device "Connection Status"
+                      true = connected, false = disconnected*/
+                Log.d(FirmwareActivityKotlin.TAG, "--- Device connection status ---")
+                // JSONObject dataObj = mainObject.getJSONObject("data");
+                //  Log.d(TAG, "DeviceId ::: [" + mainObject.getString("uniqueId") + "] :: Device status :: " + mainObject.getString("command") + "," + new Date());
+                if (mainObject!!.has("command")) {
+                    isConnected = mainObject!!.getBoolean("command")
+                    onConnectionStateChange(isConnected)
                 }
-                cmdType = mainObject.getInt("ct")
-                if (mainObject.has("ack")) {
-                    ackId = mainObject.getString("ack")
-                }
-                if (mainObject.has("id")) {
-                    childId = mainObject.getString("id")
-                }
+            } else if (cmdType == -1) {
+                hideDialog(this@FirmwareActivityKotlin)
+                setStatusText(R.string.device_disconnected)
+                Toast.makeText(this@FirmwareActivityKotlin, message, Toast.LENGTH_LONG).show()
+            } else {
+                hideDialog(this@FirmwareActivityKotlin)
+                //Toast.makeText(this@FirmwareActivityKotlin, message, Toast.LENGTH_LONG).show()
             }
-            when (cmdType) {
-                0 -> {
-                    Log.d(TAG, "--- Device Command Received ---")
-                    if (ackId != null && !ackId.isEmpty()) {
-                        messageType = "5"
-
-                        /*
-                         * Type    : Public Method "sendAck()"
-                         * Usage   : Send device command received acknowledgment to cloud
-                         *
-                         * - status Type
-                         *     st = 6; // Device command Ack status
-                         *     st = 4; // Failed Ack
-                         * - Message Type
-                         *     msgType = 5; // for "0x01" device command
-                         */
-                        val d2CSendAckBean = D2CSendAckBean(
-                            currentTime,
-                            D2CSendAckBean.Data(ackId, 0, 6, "", childId)
-                        )
-                        val gson = Gson()
-                        val jsonString = gson.toJson(d2CSendAckBean)
-                        if (isConnected) sdkClient!!.sendAck(
-                            jsonString,
-                            messageType
-                        ) else Toast.makeText(
-                            this@FirmwareActivityKotlin,
-                            getString(R.string.string_connection_not_found),
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-                }
-
-                1 -> {
-                    Log.d(TAG, "--- Firmware OTA Command Received ---")
-                    if (ackId != null && !ackId.isEmpty()) {
-                        messageType = "11"
-                        //   JSONObject obj = getAckObject(mainObject);
-                        //  obj.put("st", 7);
-
-                        /*
-                         * Type    : Public Method "sendAck()"
-                         * Usage   : Send firmware command received acknowledgement to cloud
-                         * - status Type
-                         *     st = 0; // firmware OTA command Ack status
-                         *     st = 4; // Failed Ack
-                         * - Message Type
-                         *     msgType = 11; // for "0x02" Firmware command
-                         */
-                        val d2CSendAckBean = D2CSendAckBean(
-                            currentTime,
-                            D2CSendAckBean.Data(ackId, 1, 0, "", childId)
-                        )
-                        val gson = Gson()
-                        val jsonString = gson.toJson(d2CSendAckBean)
-                        if (isConnected) sdkClient!!.sendAck(
-                            jsonString,
-                            messageType
-                        ) else Toast.makeText(
-                            this@FirmwareActivityKotlin,
-                            getString(R.string.string_connection_not_found),
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-                }
-
-                116 -> {
-                    /*command type "116" for Device "Connection Status"
-                      true = connected, false = disconnected*/Log.d(
-                        TAG,
-                        "--- Device connection status ---"
-                    )
-                    // JSONObject dataObj = mainObject.getJSONObject("data");
-                    Log.d(
-                        TAG,
-                        "DeviceId ::: [" + mainObject!!.getString("uniqueId") + "] :: Device status :: " + mainObject.getString(
-                            "command"
-                        ) + "," + Date()
-                    )
-                    if (mainObject.has("command")) {
-                        isConnected = mainObject.getBoolean("command")
-                        onConnectionStateChange(isConnected)
-                    }
-                }
-
-                else -> {
-                    hideDialog(this@FirmwareActivityKotlin)
-                    setStatusText(R.string.device_disconnected)
-                    Toast.makeText(this@FirmwareActivityKotlin, message, Toast.LENGTH_LONG).show()
-                }
-            }
-        } catch (e: Exception) {
+        } catch (e: java.lang.Exception) {
             e.printStackTrace()
         }
-        // }
+    }
+
+    override fun onDeviceCommand(message: String?) {
+        getJsonMessage(message)
+
+        /*
+         * Type    : Public Method "sendAck()"
+         * Usage   : Send device command received acknowledgment to cloud
+         *
+         * - status Type
+         *     st = 6; // Device command Ack status
+         *     st = 4; // Failed Ack
+         *
+         */if (isConnected) {
+            if (TextUtils.isEmpty(childId)) {
+                FirmwareActivity.sdkClient.sendAckCmd(ackId, 6, "")
+            } else {
+                FirmwareActivity.sdkClient.sendAckCmd(ackId, 6, "", childId)
+            }
+        } else {
+            Toast.makeText(
+                this@FirmwareActivityKotlin,
+                getString(R.string.string_connection_not_found),
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
+    override fun onOTACommand(message: String?) {
+        getJsonMessage(message)
+
+        /*
+         * Type    : Public Method "sendAck()"
+         * Usage   : Send firmware command received acknowledgement to cloud
+         * - status Type
+         *     st = 0; // firmware OTA command Ack status
+         *     st = 4; // Failed Ack
+         *
+         */if (isConnected) {
+            if (TextUtils.isEmpty(childId)) {
+                FirmwareActivity.sdkClient.sendOTAAckCmd(ackId, 0, "")
+            } else {
+                FirmwareActivity.sdkClient.sendOTAAckCmd(ackId, 0, "", childId)
+            }
+        } else {
+            Toast.makeText(
+                this@FirmwareActivityKotlin,
+                getString(R.string.string_connection_not_found),
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
+    override fun onModuleCommand(message: String?) {
+        getJsonMessage(message)
+        if (isConnected) {
+            if (TextUtils.isEmpty(childId)) {
+                FirmwareActivity.sdkClient.sendAckModule(ackId, 0, "")
+            } else {
+                FirmwareActivity.sdkClient.sendAckModule(ackId, 0, "", childId)
+            }
+        } else {
+            Toast.makeText(
+                this@FirmwareActivityKotlin,
+                getString(R.string.string_connection_not_found),
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
+    override fun onAttrChangeCommand(message: String?) {
+        getJsonMessage(message)
+    }
+
+    override fun onTwinChangeCommand(message: String?) {
+        getJsonMessage(message)
+    }
+
+    override fun onRuleChangeCommand(message: String?) {
+        getJsonMessage(message)
+    }
+
+    override fun onDeviceChangeCommand(message: String?) {
+        getJsonMessage(message)
+    }
+
+
+    private fun getJsonMessage(message: String?) {
+        btnClear.isEnabled = true
+        Log.d(FirmwareActivityKotlin.TAG, "onReceiveMsg => $message")
+        runOnUiThread { etSubscribe.setText(message) }
+        val jsonValid = isJSONValid(message)
+        if (jsonValid) {
+            try {
+                mainObject = JSONObject(message)
+                //Publish message call back received.
+                if (!mainObject!!.has("ct")) {
+                    cmdType = -2
+                    return
+                }
+                cmdType = mainObject!!.getInt("ct")
+                if (mainObject!!.has("ack")) {
+                    ackId = mainObject!!.getString("ack")
+                }
+                if (mainObject!!.has("id")) {
+                    childId = mainObject!!.getString("id")
+                }
+            } catch (e: java.lang.Exception) {
+                e.printStackTrace()
+            }
+        } else {
+            cmdType = -1
+        }
     }
 
     /*
@@ -476,42 +538,9 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
             btnConnect!!.text = "Connect"
             btnSendData!!.isEnabled = false
             btnGetAllTwins!!.isEnabled = false
+            btnChildDevices!!.isEnabled = false
         }
         hideDialog(this@FirmwareActivityKotlin)
-    }
-
-    private fun getAckObject(mainObject: JSONObject): JSONObject? {
-        var objD: JSONObject? = null
-        var childId = ""
-        try {
-            val dataObj = mainObject.getJSONObject("data")
-            val ackId = dataObj.getString("ackId")
-
-//                var obj = {
-//                        "ackId": command.ackId,
-//                        "st": st, // 6 (Device '0x01'), 7 (Firmware '0x02' )
-//                        "msg": "", //Leave it blank
-//                        "childId": "" //Leave it blank
-//                 }
-            try {
-                if (dataObj.has("urls")) {
-                    val urlsObj = dataObj.getJSONArray("urls")
-                    val arObject = urlsObj[0] as JSONObject
-                    if (arObject.has("uniqueId")) childId = arObject.getString("uniqueId")
-                }
-            } catch (e: JSONException) {
-                e.printStackTrace()
-            }
-
-            //create json object.
-            objD = JSONObject()
-            objD.put("ackId", ackId)
-            objD.put("msg", "OTA updated successfully..!!")
-            objD.put("childId", childId)
-        } catch (e: JSONException) {
-            e.printStackTrace()
-        }
-        return objD
     }
 
     /*
@@ -531,6 +560,13 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
             )
             for (model in attributesModelList) {
                 val device = model.device
+                if (model.tags != null && model.tags.size > 0) {
+                    tagsList = ArrayList()
+                    tagsList!!.addAll(model.tags)
+                    btnChildDevices!!.isEnabled = true
+                } else {
+                    btnChildDevices!!.isEnabled = false
+                }
                 val textViewTitle = TextView(this)
                 textViewTitle.text = "TAG : : " + device.tg + " : " + device.id
                 llTemp!!.addView(textViewTitle)
@@ -612,10 +648,10 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
         // Is the button now checked?
         val checked = (view as RadioButton).isChecked
         when (view.getId()) {
-            R.id.rbtnDev -> if (checked) environment = rbtnDev!!.text.toString()
-            R.id.rbtnStage -> if (checked) environment = rbtnStage!!.text.toString()
-            R.id.rbtnAvnet -> if (checked) environment = rbtnAvnet!!.text.toString()
-            R.id.rbtnQa -> if (checked) environment = rbtnQa!!.text.toString()
+            R.id.rbtnDev -> if (checked) environment = EnvironmentType.DEV.value;
+            R.id.rbtnProd -> if (checked) environment = EnvironmentType.PROD.value;
+            R.id.rbtnAvnet -> if (checked) environment = EnvironmentType.AVNET.value;
+            R.id.rbtnQa -> if (checked) environment = EnvironmentType.QA.value;
         }
     }
 
@@ -636,11 +672,14 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
      * Output  : Receive twin Desired and twin Reported properties
      */
     override fun twinUpdateCallback(data: JSONObject?) {
-        Log.d(TAG, "twinUpdateCallback => $data")
+        Log.d(
+            TAG,
+            "twinUpdateCallback => $data"
+        )
         etSubscribe!!.append("\n\n---------twinUpdateCallback----------\n\n")
         etSubscribe!!.append(data.toString() + "")
         try {
-            if (data?.has("desired")!!) {
+            if (data!!.has("desired")) {
                 val jsonObject = data.getJSONObject("desired")
                 val iter = jsonObject.keys()
                 while (iter.hasNext()) {
@@ -699,8 +738,30 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
         return true
     }
 
+    private fun getRobotCacheFile(context: Context, fileName: String): File? {
+        if (!TextUtils.isEmpty(fileName)) {
+            val cacheFile = File(context.cacheDir, fileName)
+            try {
+                context.assets.open(fileName).use { inputStream ->
+                    FileOutputStream(cacheFile).use { outputStream ->
+                        val buf = ByteArray(1024)
+                        var len: Int
+                        while (inputStream.read(buf).also { len = it } > 0) {
+                            outputStream.write(buf, 0, len)
+                        }
+                    }
+                }
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+            return cacheFile
+        }
+        return File("")
+    }
+
     companion object {
         private val TAG = FirmwareActivity::class.java.simpleName
+        var sdkClient: SDKClient? = null
         private const val DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
 
         /*
@@ -717,4 +778,3 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
             }
     }
 }
-
