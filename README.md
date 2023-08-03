@@ -273,3 +273,14 @@ Note : (*) indicates the mandatory element of the object.
 - Java 8 ( or above )
 - Android software development kit
 - Android Studio
+
+# Third Party Frameworks Used
+
+- [Retrofit] (https://github.com/square/retrofit) for HTTP networking
+- [Retrofit Json Converter] (https://github.com/square/retrofit) for json converter
+- [OkHttp] (https://github.com/square/okhttp)
+- [OkHttp Interceptor] (https://github.com/square/okhttp) for logging request and response
+- [MQTTClient] (https://github.com/eclipse/paho.mqtt.java) for MQTT
+- [Bouncy Casle] (https://github.com/bcgit/bc-java) for use of cryptographic algorithms
+
+
