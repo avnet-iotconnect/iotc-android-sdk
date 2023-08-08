@@ -34,7 +34,10 @@ This library only abstract JSON responses from both end D2C and C2D
 
 - SdkOptions is for the SDK configuration and needs to parse in SDK object initialize call. You need to manage the below configuration as per your device authentication type.
 ```json
-	String sdkOptions = {
+	 String sdkOptions = {
+		"brokerType": "",
+		"devicePK": "",
+		"skipValidation": false,
 		"certificate" : {
 			"SSLKeyPath"	: "<< SystemPath >>/device.key",
 			"SSLCertPath"   : "<< SystemPath >>/device.pem",
@@ -47,15 +50,19 @@ This library only abstract JSON responses from both end D2C and C2D
 		}
 	}
 ```
+* "brokerType": Pass broker type either "az" or "aws"
+* "devicePK":  If authentication type is symmetric key then use it.
+* "skipValidation": false = do not want to skip data validation for attributes, true= want to skip data validation for attributes
 * "certificate": It is indicated to define the path of the certificate file. Mandatory for X.509/SSL device CA signed or self-signed authentication type only.
 	- SSLKeyPath: your device key
 	- SSLCertPath: your device certificate
 	- SSLCaPath : Root CA certificate
-* "offlineStorage" : Define the configuration related to the off-line data storage 
-	- disabled : false = off-line data storing, true = not storing off-line data 
+* "offlineStorage" : Define the configuration related to the offline data storage 
+	- disabled : false = offline data storing, true = not storing offline data 
 	- availSpaceInMb : Define the file size of off-line data which should be in (MB)
 	- fileCount : Number of files need to create for off-line data
-Note: sdkOptions is optional but mandatory for SSL/x509 device authentication type only. Define proper setting or leave it NULL. 
+
+         ****Note**:-**  sdkOptions is optional but mandatory for SSL/x509 device authentication type only. Define proper setting or leave it NULL. 
 If you do not provide off-line storage, it will set the default settings as per defined above. It may harm your device by storing the large data. Once memory gets full may chance to stop the execution.
 
 	
