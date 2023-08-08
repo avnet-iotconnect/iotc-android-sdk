@@ -288,6 +288,6 @@ Note : (*) indicates the mandatory element of the object.
 - [OkHttp] (https://github.com/square/okhttp)
 - [OkHttp Interceptor] (https://github.com/square/okhttp) for logging request and response
 - [MQTTClient] (https://github.com/eclipse/paho.mqtt.java) for MQTT
-- [Bouncy Casle] (https://github.com/bcgit/bc-java) for use of cryptographic algorithms
+- [Bouncy Castle] (https://github.com/bcgit/bc-java) for use of cryptographic algorithms
 
 
