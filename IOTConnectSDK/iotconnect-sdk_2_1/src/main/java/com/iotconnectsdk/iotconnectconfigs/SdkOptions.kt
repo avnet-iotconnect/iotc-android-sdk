@@ -1,6 +1,7 @@
 package com.iotconnectsdk.iotconnectconfigs
 
 import com.google.gson.annotations.SerializedName
+import com.iotconnectsdk.enums.BrokerType
 
 class SdkOptions {
     @JvmField
@@ -26,5 +27,5 @@ class SdkOptions {
 
     @JvmField
     @SerializedName("brokerType")
-    var brokerType: String? = null
+    var brokerType: BrokerType? = null
 }

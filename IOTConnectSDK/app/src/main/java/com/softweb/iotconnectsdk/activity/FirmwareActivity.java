@@ -26,6 +26,7 @@ import androidx.core.content.ContextCompat;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.gson.Gson;
 import com.iotconnectsdk.SDKClient;
+import com.iotconnectsdk.enums.BrokerType;
 import com.iotconnectsdk.interfaces.DeviceCallback;
 
 import org.json.JSONArray;
@@ -115,7 +116,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
      **/
     private String cpId = "";
     private String uniqueId = "";
-    private String environment = "";
+    private EnvironmentType environment;
 
     static SDKClient sdkClient;
 
@@ -166,7 +167,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
             if (sdkClient != null && isConnected) {
                 sdkClient.dispose();
             } else {
-                if (environment.isEmpty()) {
+                if (environment == null) {
                     Toast.makeText(FirmwareActivity.this, getString(R.string.string_select_environment), Toast.LENGTH_LONG).show();
                     return;
                 }
@@ -312,7 +313,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         sdkOptions.certificate = certificate;
         sdkOptions.offlineStorage = offlineStorage;
         sdkOptions.setSkipValidation(false);
-        sdkOptions.brokerType = "";    //pass broker type either "az" or "aws"
+        sdkOptions.brokerType = BrokerType.AZ;    //pass broker type either AZ or AWS from mentioned enums
 
         String sdkOptionsJsonStr = new Gson().toJson(sdkOptions);
 
@@ -451,7 +452,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                 Toast.makeText(FirmwareActivity.this, message, Toast.LENGTH_LONG).show();
             } else {
                 hideDialog(FirmwareActivity.this);
-               // Toast.makeText(FirmwareActivity.this, message, Toast.LENGTH_LONG).show();
+                // Toast.makeText(FirmwareActivity.this, message, Toast.LENGTH_LONG).show();
             }
 
         } catch (Exception e) {
@@ -738,19 +739,19 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         switch (view.getId()) {
             case R.id.rbtnDev:
                 if (checked)
-                    environment = EnvironmentType.DEV.getValue();
+                    environment = EnvironmentType.DEV;
                 break;
             case R.id.rbtnProd:
                 if (checked)
-                    environment = EnvironmentType.PROD.getValue();
+                    environment = EnvironmentType.PROD;
                 break;
             case R.id.rbtnAvnet:
                 if (checked)
-                    environment = EnvironmentType.AVNET.getValue();
+                    environment = EnvironmentType.AVNET;
                 break;
             case R.id.rbtnQa:
                 if (checked)
-                    environment = EnvironmentType.QA.getValue();
+                    environment = EnvironmentType.QA;
                 break;
         }
     }
