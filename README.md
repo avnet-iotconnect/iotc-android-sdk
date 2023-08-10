@@ -25,17 +25,17 @@ This library only abstract JSON responses from both end D2C and C2D
 ```java	
   	String uniqueId = <<uniqueId>>;
 	String cpId = <<CPID>>; 
-	String environment = <<environment>>; 
+	String environment = <<EnvironmentType>>; 
 ```
 
 * "uniqueId" 	: Your device uniqueId
 * "cpId" 		: It is the company code. It gets from the IoTConnect UI portal "Settings->Key Vault"
-* "env" 		: It is the UI platform environment. It gets from the IoTConnect UI portal "Settings->Key Vault"
+* "environment" 		: pass environment type from mentioned enum(EnvironmentType) i.e. AVNET, DEV, QA, PROD
 
 - SdkOptions is for the SDK configuration and needs to parse in SDK object initialize call. You need to manage the below configuration as per your device authentication type.
 ```json
 	 String sdkOptions = {
-		"brokerType": "",
+		"brokerType": <<BrokerType>> ,
 		"devicePK": "",
 		"skipValidation": false,
 		"certificate" : {
@@ -50,7 +50,7 @@ This library only abstract JSON responses from both end D2C and C2D
 		}
 	}
 ```
-* "brokerType": Pass broker type either "az" or "aws"
+* "brokerType": pass broker type either AZ or AWS from mentioned enum(BrokerType)
 * "devicePK":  If authentication type is symmetric key then use it.
 * "skipValidation": false = do not want to skip data validation for attributes, true= want to skip data validation for attributes
 * "certificate": It is indicated to define the path of the certificate file. Mandatory for X.509/SSL device CA signed or self-signed authentication type only.
