@@ -62,7 +62,7 @@ This library only abstract JSON responses from both end D2C and C2D
 	- availSpaceInMb : Define the file size of off-line data which should be in (MB)
 	- fileCount : Number of files need to create for off-line data
 
-         > ****Note**:-**  sdkOptions is optional but mandatory for SSL/x509 device authentication type only. Define proper setting or leave it NULL. 
+         > ****Note**:-**  In sdkOptions it is mandatory to pass broker type, and define other setting acording to needs. 
 If you do not provide off-line storage, it will set the default settings as per defined above. It may harm your device by storing the large data. Once memory gets full may chance to stop the execution.
 
 	
