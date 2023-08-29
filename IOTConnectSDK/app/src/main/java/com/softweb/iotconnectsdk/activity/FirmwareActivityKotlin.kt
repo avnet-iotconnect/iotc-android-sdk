@@ -18,6 +18,7 @@ import androidx.core.content.ContextCompat
 import com.google.android.material.textfield.TextInputLayout
 import com.google.gson.Gson
 import com.iotconnectsdk.SDKClient
+import com.iotconnectsdk.enums.BrokerType
 import com.iotconnectsdk.interfaces.DeviceCallback
 import com.iotconnectsdk.iotconnectconfigs.Certificate
 import com.iotconnectsdk.iotconnectconfigs.EnvironmentType
@@ -69,7 +70,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
      **/
     private var cpId = ""
     private var uniqueId = ""
-    private var environment = ""
+    private lateinit var environment:EnvironmentType
 
     private var sdkClient: SDKClient? = null
 
@@ -101,14 +102,14 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
             if (sdkClient != null && isConnected) {
                 sdkClient!!.dispose()
             } else {
-                if (environment.isEmpty()) {
-                    Toast.makeText(
-                        this@FirmwareActivityKotlin,
-                        getString(R.string.string_select_environment),
-                        Toast.LENGTH_LONG
-                    ).show()
-                    return
-                }
+                 if (!::environment.isInitialized) {
+                     Toast.makeText(
+                         this@FirmwareActivityKotlin,
+                         getString(R.string.string_select_environment),
+                         Toast.LENGTH_LONG
+                     ).show()
+                     return
+                 }
                 if (checkValidation()) {
                     setStatusText(R.string.initializing_sdk)
                     btnSendData!!.isEnabled = false
@@ -278,7 +279,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
             sdkOptions.certificate = certificate
             sdkOptions.offlineStorage = offlineStorage
             sdkOptions.isSkipValidation = false
-            sdkOptions.brokerType = "" //pass broker type either "az" or "aws"
+            sdkOptions.brokerType = BrokerType.AZ//pass broker type either "az" or "aws"
 
             val sdkOptionsJsonStr = Gson().toJson(sdkOptions)
             Log.d(
@@ -648,10 +649,10 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
         // Is the button now checked?
         val checked = (view as RadioButton).isChecked
         when (view.getId()) {
-            R.id.rbtnDev -> if (checked) environment = EnvironmentType.DEV.value;
-            R.id.rbtnProd -> if (checked) environment = EnvironmentType.PROD.value;
-            R.id.rbtnAvnet -> if (checked) environment = EnvironmentType.AVNET.value;
-            R.id.rbtnQa -> if (checked) environment = EnvironmentType.QA.value;
+            R.id.rbtnDev -> if (checked) environment = EnvironmentType.DEV
+            R.id.rbtnProd -> if (checked) environment = EnvironmentType.PROD
+            R.id.rbtnAvnet -> if (checked) environment = EnvironmentType.AVNET
+            R.id.rbtnQa -> if (checked) environment = EnvironmentType.QA
         }
     }
 

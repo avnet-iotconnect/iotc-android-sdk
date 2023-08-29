@@ -20,6 +20,7 @@ import com.iotconnectsdk.interfaces.DeviceCallback
 import com.iotconnectsdk.interfaces.HubToSdkCallback
 import com.iotconnectsdk.interfaces.PublishMessageCallback
 import com.iotconnectsdk.interfaces.TwinUpdateCallback
+import com.iotconnectsdk.iotconnectconfigs.EnvironmentType
 import com.iotconnectsdk.mqtt.IotSDKMQTTService
 import com.iotconnectsdk.utils.*
 import com.iotconnectsdk.utils.DateTimeUtils.getCurrentTime
@@ -64,7 +65,7 @@ internal class SDKClientManager(
     private val uniqueId: String?,
     private val deviceCallback: DeviceCallback?,
     private val sdkOptions: String?,
-    private val environment: String?,
+    private val environment: EnvironmentType,
 
     ) : WsResponseInterface, HubToSdkCallback, PublishMessageCallback, TwinUpdateCallback,
     NetworkStateReceiver.NetworkStateReceiverListener {
@@ -190,7 +191,7 @@ internal class SDKClientManager(
             uniqueId: String?,
             deviceCallback: DeviceCallback?,
             sdkOptions: String?,
-            environment: String?
+            environment: EnvironmentType
         ): SDKClientManager {
             synchronized(this) {
                 if (sdkClientManger == null) {
@@ -359,12 +360,12 @@ internal class SDKClientManager(
         if (appVersion != null) {
 
             if (brokerType == BrokerType.AZ.value) {
-                discoveryApi = discoveryUrl + URL_PATH + CPID + cpId + ENV + environment
+                discoveryApi = discoveryUrl + URL_PATH + CPID + cpId + ENV + environment.value
             } else if (brokerType == BrokerType.AWS.value) {
                 discoveryApi =
-                    discoveryUrl + URL_PATH + CPID + cpId + ENV + environment + END_POINT_AWS
+                    discoveryUrl + URL_PATH + CPID + cpId + ENV + environment.value + END_POINT_AWS
             } else {
-                discoveryApi = discoveryUrl + URL_PATH + CPID + cpId + ENV + environment
+                discoveryApi = discoveryUrl + URL_PATH + CPID + cpId + ENV + environment.value
             }
 
             CallWebServices().getDiscoveryApi(discoveryApi, this)

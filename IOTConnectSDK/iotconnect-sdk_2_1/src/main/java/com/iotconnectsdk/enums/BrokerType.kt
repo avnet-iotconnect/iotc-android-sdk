@@ -1,7 +1,13 @@
 package com.iotconnectsdk.enums
 
-internal enum class BrokerType(val value:String) {
-    AZ("az"),
-    AWS("aws")
+import com.google.gson.annotations.SerializedName
+
+enum class BrokerType(val value:String) {
+
+    @SerializedName("az")
+    AZ ("az"),
+
+    @SerializedName("aws")
+    AWS ("aws")
 
 }
