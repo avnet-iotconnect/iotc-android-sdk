@@ -1,6 +1,6 @@
 package com.iotconnectsdk
 
-import EnvironmentType
+
 import android.content.Context
 import com.google.gson.Gson
 import com.iotconnectsdk.beans.D2CSendAckBean

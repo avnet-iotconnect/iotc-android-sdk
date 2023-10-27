@@ -1,9 +1,10 @@
 package com.iotconnectsdk.utils
 
-import EnvironmentType
+
 import android.content.Context
 import android.util.Log
 import com.google.common.collect.ListMultimap
+import com.iotconnectsdk.EnvironmentType
 import com.iotconnectsdk.beans.GetEdgeRuleBean
 import com.iotconnectsdk.beans.TumblingWindowBean
 

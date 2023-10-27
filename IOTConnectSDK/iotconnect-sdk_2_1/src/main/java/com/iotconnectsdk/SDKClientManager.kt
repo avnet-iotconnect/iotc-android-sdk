@@ -1,6 +1,5 @@
 package com.iotconnectsdk
 
-import EnvironmentType
 import android.app.Activity
 import android.content.Context
 import android.content.IntentFilter
