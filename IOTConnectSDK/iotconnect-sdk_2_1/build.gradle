@@ -5,15 +5,38 @@ plugins {
 
 android {
     namespace 'com.iotconnectsdk'
-    compileSdkVersion 33
-
+    compileSdk  33
     defaultConfig {
         minSdkVersion 21
         targetSdkVersion 33
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
     }
+
+
+    flavorDimensions "version"
+    productFlavors {
+        brokeraz {
+            dimension "version"
+            buildConfigField "String", "BrokerType", "\"az\""
+        }
+
+        brokeraws {
+            dimension "version"
+            buildConfigField "String", "BrokerType", "\"aws\""
+
+        }
+    }
+
+    sourceSets {
+        brokeraz {
+            java.srcDirs = ['src/brokeraz/java']
+        }
+        brokeraws {
+            java.srcDirs = ['src/brokeraws/java']
+        }
+    }
+
 
     buildTypes {
         release {
@@ -35,7 +58,6 @@ android {
 }
 
 dependencies {
-
     implementation 'androidx.core:core-ktx:1.9.0'
     implementation 'androidx.appcompat:appcompat:1.6.0'
     implementation 'com.google.android.material:material:1.7.0'
@@ -72,3 +94,20 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }
+
+/*afterEvaluate {
+    publishing {
+        publications {
+            // Creates a Maven publication called "release".
+            release(MavenPublication) {
+                // Applies the component for the release build variant.
+                from components.release
+
+                // You can then customize attributes of the publication as shown below.
+                groupId = 'com.github.sw-ms-imranbhadelia'
+                artifactId = 'iotconnect-sdk'
+                version = '3.2.1'
+            }
+        }
+    }
+}*/

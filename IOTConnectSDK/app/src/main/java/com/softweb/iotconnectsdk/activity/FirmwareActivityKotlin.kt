@@ -1,5 +1,6 @@
 package com.softweb.iotconnectsdk.activity
 
+
 import android.Manifest
 import android.app.Activity
 import android.app.ProgressDialog
@@ -17,15 +18,17 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.android.material.textfield.TextInputLayout
 import com.google.gson.Gson
+import com.iotconnectsdk.EnvironmentType
 import com.iotconnectsdk.SDKClient
 import com.iotconnectsdk.enums.BrokerType
 import com.iotconnectsdk.interfaces.DeviceCallback
 import com.iotconnectsdk.iotconnectconfigs.Certificate
-import com.iotconnectsdk.iotconnectconfigs.EnvironmentType
+
 import com.iotconnectsdk.iotconnectconfigs.OfflineStorage
 import com.iotconnectsdk.iotconnectconfigs.SdkOptions
 import com.softweb.iotconnectsdk.R
 import com.softweb.iotconnectsdk.model.*
+
 import kotlinx.android.synthetic.main.activity_firmware.*
 import org.json.JSONArray
 import org.json.JSONException
@@ -70,7 +73,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
      **/
     private var cpId = ""
     private var uniqueId = ""
-    private lateinit var environment:EnvironmentType
+    private lateinit var environment: EnvironmentType
 
     private var sdkClient: SDKClient? = null
 
@@ -649,10 +652,10 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
         // Is the button now checked?
         val checked = (view as RadioButton).isChecked
         when (view.getId()) {
-            R.id.rbtnDev -> if (checked) environment = EnvironmentType.DEV
+            R.id.rbtnDev -> if (checked) environment = EnvironmentType.PREQA
             R.id.rbtnProd -> if (checked) environment = EnvironmentType.PROD
-            R.id.rbtnAvnet -> if (checked) environment = EnvironmentType.AVNET
-            R.id.rbtnQa -> if (checked) environment = EnvironmentType.QA
+            R.id.rbtnAvnet -> if (checked) environment = EnvironmentType.POC
+          //  R.id.rbtnQa -> if (checked) environment = EnvironmentType.QA
         }
     }
 
@@ -665,7 +668,6 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
     private fun setStatusText(stringId: Int) {
         tvStatus!!.text = getString(stringId)
     }
-
     /*
      * Type    : Callback Function "twinUpdateCallback()"
      * Usage   : Manage twin properties as per business logic to update the twin reported property

@@ -1,10 +1,11 @@
 package com.iotconnectsdk
 
+import EnvironmentType
 import android.content.Context
 import com.google.gson.Gson
 import com.iotconnectsdk.beans.D2CSendAckBean
 import com.iotconnectsdk.interfaces.DeviceCallback
-import com.iotconnectsdk.iotconnectconfigs.EnvironmentType
+
 import com.iotconnectsdk.utils.*
 import com.iotconnectsdk.utils.DateTimeUtils.currentDate
 import org.json.JSONObject

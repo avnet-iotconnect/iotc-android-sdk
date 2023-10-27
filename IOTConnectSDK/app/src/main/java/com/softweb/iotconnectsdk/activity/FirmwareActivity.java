@@ -25,6 +25,7 @@ import androidx.core.content.ContextCompat;
 
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.gson.Gson;
+import com.iotconnectsdk.EnvironmentType;
 import com.iotconnectsdk.SDKClient;
 import com.iotconnectsdk.enums.BrokerType;
 import com.iotconnectsdk.interfaces.DeviceCallback;
@@ -46,7 +47,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
-import com.iotconnectsdk.iotconnectconfigs.EnvironmentType;
+
 import com.softweb.iotconnectsdk.model.Attribute;
 import com.softweb.iotconnectsdk.model.AttributesModel;
 import com.iotconnectsdk.iotconnectconfigs.Certificate;
@@ -739,7 +740,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         switch (view.getId()) {
             case R.id.rbtnDev:
                 if (checked)
-                    environment = EnvironmentType.DEV;
+                    environment = EnvironmentType.POC;
                 break;
             case R.id.rbtnProd:
                 if (checked)
@@ -747,12 +748,12 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                 break;
             case R.id.rbtnAvnet:
                 if (checked)
-                    environment = EnvironmentType.AVNET;
+                    environment = EnvironmentType.PREQA;
                 break;
             case R.id.rbtnQa:
                 if (checked)
-                    environment = EnvironmentType.QA;
-                break;
+                    //    environment = EnvironmentType.QA;
+                    break;
         }
     }
 

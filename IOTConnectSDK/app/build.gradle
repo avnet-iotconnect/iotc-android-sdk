@@ -13,9 +13,15 @@ android {
         targetSdk 33
         versionCode 1
         versionName "1.0"
-
+        missingDimensionStrategy 'version', 'brokeraws', 'brokeraz'
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
+
+    /*flavorDimensions "version"
+    productFlavors {
+      register("brokeraws")
+       register("brokeraz")
+    }*/
 
     buildTypes {
         release {
@@ -35,6 +41,7 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.0'
     implementation 'com.google.android.material:material:1.7.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+   // implementation project(path: ':iotconnect-sdk_2_1')
 
     testImplementation 'junit:junit:'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
@@ -47,7 +54,10 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 
-    implementation project(path: ':iotconnect-sdk_2_1')
+
+   // implementation project(path: ':iotconnect-sdk_2_1', configuration:'brokerazDebug')
+
+   implementation project(':iotconnect-sdk_2_1')
 //    implementation 'com.github.avnet-iotconnect:iotc-android-sdk:3.1.2'
 }
 

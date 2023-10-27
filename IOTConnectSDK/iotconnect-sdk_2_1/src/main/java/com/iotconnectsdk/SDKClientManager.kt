@@ -1,5 +1,6 @@
 package com.iotconnectsdk
 
+import EnvironmentType
 import android.app.Activity
 import android.content.Context
 import android.content.IntentFilter
@@ -20,7 +21,6 @@ import com.iotconnectsdk.interfaces.DeviceCallback
 import com.iotconnectsdk.interfaces.HubToSdkCallback
 import com.iotconnectsdk.interfaces.PublishMessageCallback
 import com.iotconnectsdk.interfaces.TwinUpdateCallback
-import com.iotconnectsdk.iotconnectconfigs.EnvironmentType
 import com.iotconnectsdk.mqtt.IotSDKMQTTService
 import com.iotconnectsdk.utils.*
 import com.iotconnectsdk.utils.DateTimeUtils.getCurrentTime
@@ -229,6 +229,7 @@ internal class SDKClientManager(
     }
 
     private fun connect() {
+
         directoryPath = ""
         reCheckingCountTime = 0
         commandType = null

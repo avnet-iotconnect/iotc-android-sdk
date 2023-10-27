@@ -1,11 +1,12 @@
 package com.iotconnectsdk.utils
 
+import EnvironmentType
 import android.content.Context
 import android.util.Log
 import com.google.common.collect.ListMultimap
 import com.iotconnectsdk.beans.GetEdgeRuleBean
 import com.iotconnectsdk.beans.TumblingWindowBean
-import com.iotconnectsdk.iotconnectconfigs.EnvironmentType
+
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
