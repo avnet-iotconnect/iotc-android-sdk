@@ -2,7 +2,6 @@ plugins {
     id 'com.android.library'
     id 'org.jetbrains.kotlin.android'
     id 'maven-publish'
-    //  id 'com.github.dcendents.android-maven'
 }
 
 android {
@@ -58,14 +57,6 @@ android {
         jvmTarget = '1.8'
     }
 }
-task sourcesJar(type: Jar) {
-    classifier = 'sources'
-    from android.sourceSets.main.javaDirectories
-}
-
-artifacts {
-    archives sourcesJar
-}
 
 dependencies {
     implementation 'androidx.core:core-ktx:1.9.0'
@@ -105,29 +96,7 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }
 
-group = 'com.github.avnet-iotconnect.iotc-android-sdk'
-version = '15.0.0'
-
-if (android.productFlavors.size() > 0) {
-    android.libraryVariants.all { variant ->
-        if (variant.name.toLowerCase().contains("debug")) {
-            return
-        }
-
-        def bundleTask = tasks["bundle${variant.name.capitalize()}Aar"]
-
-        artifacts {
-            archives(bundleTask.archivePath) {
-                classifier variant.flavorName
-                builtBy bundleTask
-                name = project.name
-            }
-        }
-
-    }
-}
-
-/*project.afterEvaluate {
+project.afterEvaluate {
     publishing {
         publications {
             // Creates a Maven publication called "release".
@@ -135,8 +104,8 @@ if (android.productFlavors.size() > 0) {
                 // You can then customize attributes of the publication as shown below.
                 groupId = 'com.github.sw-ms-imranbhadelia'
                 artifactId = 'iotconnect-sdk_2_1'
-                version = '12.0.0'
+                version = '16.0.0'
             }
         }
     }
-}*/
+}
