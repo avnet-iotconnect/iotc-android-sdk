@@ -1,8 +1,8 @@
 plugins {
     id 'com.android.library'
     id 'org.jetbrains.kotlin.android'
-   // id 'maven-publish'
-  //  id 'com.github.dcendents.android-maven'
+    id 'maven-publish'
+    //  id 'com.github.dcendents.android-maven'
 }
 
 android {
@@ -58,6 +58,14 @@ android {
         jvmTarget = '1.8'
     }
 }
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from android.sourceSets.main.javaDirectories
+}
+
+artifacts {
+    archives sourcesJar
+}
 
 dependencies {
     implementation 'androidx.core:core-ktx:1.9.0'
@@ -103,7 +111,6 @@ version = '12.0.0'
 
 if (android.productFlavors.size() > 0) {
     android.libraryVariants.all { variant ->
-
         if (variant.name.toLowerCase().contains("debug")) {
             return
         }
@@ -116,17 +123,6 @@ if (android.productFlavors.size() > 0) {
                 builtBy bundleTask
                 name = project.name
             }
-        }
-
-        def flavorName = variant.flavorName.toLowerCase()
-        def flavorSourcesTask = tasks.create(name: "${flavorName}SourcesJar", type: Jar) {
-            classifier = "${flavorName}-sources"
-            from android.sourceSets.main.javaDirectories
-            from android.sourceSets[flavorName].javaDirectories
-        }
-
-        artifacts {
-            archives flavorSourcesTask
         }
 
     }
