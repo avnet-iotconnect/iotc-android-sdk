@@ -743,7 +743,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                 break;
             case R.id.rbtnProd:
                 if (checked)
-                    environment = IoTCEnvironment.QA;
+                    environment = IoTCEnvironment.PROD;
                 break;
             case R.id.rbtnAvnet:
                 if (checked)
