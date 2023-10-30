@@ -121,7 +121,7 @@ afterEvaluate {
                 // You can then customize attributes of the publication as shown below.
                 groupId = 'com.github.sw-ms-imranbhadelia'
                 artifactId = 'iotconnect-sdk'
-                version = '22.0.0'
+                version = 'feature_product_flavour'
             }
         }
     }
