@@ -105,9 +105,8 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }
 
-
-group = 'com.github.sw-ms-imranbhadelia'
-version = '12.0.0'
+group = 'com.github.avnet-iotconnect.iotc-android-sdk'
+version = '15.0.0'
 
 if (android.productFlavors.size() > 0) {
     android.libraryVariants.all { variant ->
