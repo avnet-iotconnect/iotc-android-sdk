@@ -103,9 +103,24 @@ project.afterEvaluate {
             release(MavenPublication) {
                 // You can then customize attributes of the publication as shown below.
                 groupId = 'com.github.sw-ms-imranbhadelia'
-                artifactId = 'iotconnect-sdk'
-                version = '17.0.0'
+                artifactId = 'iotconnect-sdk_2_1'
+                version = '10.0.0'
             }
         }
     }
 }
+
+/*publishing {
+    publications {
+        release(MavenPublication) {
+            groupId = 'com.github.sw-ms-imranbhadelia'
+            artifactId = 'iotconnect-sdk'
+            version = '10.0.0'
+
+            afterEvaluate {
+                from components.release
+            }
+        }
+    }
+}*/
+
