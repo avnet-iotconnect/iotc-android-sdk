@@ -1,9 +1,3 @@
-jekyll-plugins:
- - name: iotconnect-sdk
-   group: com.github.sw-ms-imranbhadelia
-   version: 1.0.0
-   flavors:
-    - name: brokeraz
-      tag: v1.0.0-brokeraz
-    - name: brokeraws
-      tag: v1.0.0-brokeraws
+jdk:
+
+  - openjdk11

@@ -25,7 +25,7 @@ class SdkOptions {
     @SerializedName("devicePK")
     var devicePK: String? = null
 
-    @JvmField
+   /* @JvmField
     @SerializedName("brokerType")
-    var brokerType: BrokerType? = null
+    var brokerType: BrokerType? = null*/
 }

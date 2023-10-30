@@ -3,6 +3,7 @@ package com.iotconnectsdk.mqtt
 import android.content.Context
 import android.os.Build
 import android.text.TextUtils
+import com.iotconnectsdk.BuildConfig
 import com.iotconnectsdk.R
 import com.iotconnectsdk.enums.BrokerType
 import com.iotconnectsdk.interfaces.HubToSdkCallback
@@ -55,7 +56,7 @@ internal class IotSDKMQTTService private constructor(
 
     private var subscriptionTopic: String? = null
 
-    private var brokerType = ""
+ //   private var brokerType = ""
 
     private val CPID_DEVICEID = "$cpId-$uniqueId"
 
@@ -168,17 +169,17 @@ internal class IotSDKMQTTService private constructor(
             if (sdkOptions != null) {
                 sdkObj = JSONObject(sdkOptions)
 
-                if (sdkObj.has("brokerType")) {
+                /*if (sdkObj.has("brokerType")) {
                     brokerType = sdkObj.getString("brokerType")
-                }
+                }*/
 
-                if (brokerType == BrokerType.AZ.value) {
+                if (BuildConfig.BrokerType == BrokerType.AZ.value) {
                     TWIN_SHADOW_PUB_TOPIC = "\$iothub/twin/PATCH/properties/reported/?\$rid=1"
                     TWIN_SHADOW_SUB_TOPIC = "\$iothub/twin/PATCH/properties/desired/#"
 
                     TWIN_SHADOW_PUB_TOPIC_BLANK_MSG = "\$iothub/twin/GET/?\$rid=0"
                     TWIN_SHADOW_SUB_TOPIC_BLANK_MSG = "\$iothub/twin/res/#"
-                } else if (brokerType == BrokerType.AWS.value) {
+                } else if (BuildConfig.BrokerType == BrokerType.AWS.value) {
                     TWIN_SHADOW_PUB_TOPIC =
                         "\$rid=1\$aws/things/$CPID_DEVICEID/shadow/name/${CPID_DEVICEID}_twin_shadow/report"
                     TWIN_SHADOW_SUB_TOPIC =

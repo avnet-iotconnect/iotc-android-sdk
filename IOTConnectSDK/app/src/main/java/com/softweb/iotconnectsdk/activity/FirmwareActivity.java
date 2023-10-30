@@ -25,9 +25,8 @@ import androidx.core.content.ContextCompat;
 
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.gson.Gson;
-import com.iotconnectsdk.EnvironmentType;
+import com.iotconnectsdk.IoTCEnvironment;
 import com.iotconnectsdk.SDKClient;
-import com.iotconnectsdk.enums.BrokerType;
 import com.iotconnectsdk.interfaces.DeviceCallback;
 
 import org.json.JSONArray;
@@ -117,7 +116,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
      **/
     private String cpId = "";
     private String uniqueId = "";
-    private EnvironmentType environment;
+    private IoTCEnvironment environment;
 
     static SDKClient sdkClient;
 
@@ -314,7 +313,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         sdkOptions.certificate = certificate;
         sdkOptions.offlineStorage = offlineStorage;
         sdkOptions.setSkipValidation(false);
-        sdkOptions.brokerType = BrokerType.AZ;    //pass broker type either AZ or AWS from mentioned enums
+      /*  sdkOptions.brokerType = BrokerType.AZ; */   //pass broker type either AZ or AWS from mentioned enums
 
         String sdkOptionsJsonStr = new Gson().toJson(sdkOptions);
 
@@ -740,15 +739,15 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         switch (view.getId()) {
             case R.id.rbtnDev:
                 if (checked)
-                    environment = EnvironmentType.POC;
+                //    environment = IoTEnvironment.POC;
                 break;
             case R.id.rbtnProd:
                 if (checked)
-                    environment = EnvironmentType.PROD;
+                    environment = IoTCEnvironment.PROD;
                 break;
             case R.id.rbtnAvnet:
                 if (checked)
-                    environment = EnvironmentType.PREQA;
+               //     environment = IoTEnvironment.PREQA;
                 break;
             case R.id.rbtnQa:
                 if (checked)

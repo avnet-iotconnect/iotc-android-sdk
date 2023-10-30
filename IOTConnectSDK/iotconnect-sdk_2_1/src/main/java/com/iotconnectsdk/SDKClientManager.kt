@@ -64,7 +64,7 @@ internal class SDKClientManager(
     private val uniqueId: String?,
     private val deviceCallback: DeviceCallback?,
     private val sdkOptions: String?,
-    private val environment: EnvironmentType,
+    private val environment: IoTCEnvironment,
 
     ) : WsResponseInterface, HubToSdkCallback, PublishMessageCallback, TwinUpdateCallback,
     NetworkStateReceiver.NetworkStateReceiverListener {
@@ -173,7 +173,7 @@ internal class SDKClientManager(
 
     var isSkipValidation = false
 
-    var brokerType = ""
+   // var brokerType = ""
 
 
     /*return singleton object for this class.
@@ -190,7 +190,7 @@ internal class SDKClientManager(
             uniqueId: String?,
             deviceCallback: DeviceCallback?,
             sdkOptions: String?,
-            environment: EnvironmentType
+            environment: IoTCEnvironment
         ): SDKClientManager {
             synchronized(this) {
                 if (sdkClientManger == null) {
@@ -236,7 +236,7 @@ internal class SDKClientManager(
         isSaveToOffline = false
         isDebug = false
         isSkipValidation = false
-        brokerType = ""
+     //   brokerType = ""
         fileCount = 0
 
         //get is debug option.
@@ -252,9 +252,9 @@ internal class SDKClientManager(
                     isSkipValidation = sdkObj.getBoolean("skipValidation")
                 }
 
-                if (sdkObj.has("brokerType")) {
+                /*if (sdkObj.has("brokerType")) {
                     brokerType = sdkObj.getString("brokerType")
-                }
+                }*/
 
                 if (sdkObj.has("offlineStorage")) {
                     val offlineStorage = sdkObj.getJSONObject("offlineStorage")
@@ -305,10 +305,10 @@ internal class SDKClientManager(
                         e.printStackTrace()
                     }
                 }
-                if (brokerType == BrokerType.AZ.value) {
+                if (BuildConfig.BrokerType == BrokerType.AZ.value) {
                     discoveryUrl =
                         DEFAULT_DISCOVERY_URL_AZ //set default discovery url when it is empty from client end.
-                } else if (brokerType == BrokerType.AWS.value) {
+                } else if (BuildConfig.BrokerType == BrokerType.AWS.value) {
                     discoveryUrl =
                         DEFAULT_DISCOVERY_URL_AWS //set default discovery url when it is empty from client end.
                 } else {
@@ -327,10 +327,10 @@ internal class SDKClientManager(
             }
         } else {
 
-            if (brokerType == BrokerType.AZ.value) {
+            if (BuildConfig.BrokerType == BrokerType.AZ.value) {
                 discoveryUrl =
                     DEFAULT_DISCOVERY_URL_AZ //set default discovery url when sdkOption is null.
-            } else if (brokerType == BrokerType.AWS.value) {
+            } else if (BuildConfig.BrokerType == BrokerType.AWS.value) {
                 discoveryUrl =
                     DEFAULT_DISCOVERY_URL_AWS //set default discovery url when sdkOption is null.
             } else {
@@ -359,9 +359,9 @@ internal class SDKClientManager(
 
         if (appVersion != null) {
 
-            if (brokerType == BrokerType.AZ.value) {
+            if (BuildConfig.BrokerType == BrokerType.AZ.value) {
                 discoveryApi = discoveryUrl + URL_PATH + CPID + cpId + ENV + environment.value
-            } else if (brokerType == BrokerType.AWS.value) {
+            } else if (BuildConfig.BrokerType == BrokerType.AWS.value) {
                 discoveryApi =
                     discoveryUrl + URL_PATH + CPID + cpId + ENV + environment.value + END_POINT_AWS
             } else {
