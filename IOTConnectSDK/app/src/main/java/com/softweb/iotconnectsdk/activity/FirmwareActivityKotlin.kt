@@ -651,10 +651,10 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
         // Is the button now checked?
         val checked = (view as RadioButton).isChecked
         when (view.getId()) {
-           // R.id.rbtnDev -> if (checked) environment = IoTEnvironment.PREQA
+           // R.id.rbtnDev -> if (checked) environment = IoTCEnvironment.PREQA
             R.id.rbtnProd -> if (checked) environment = IoTCEnvironment.PROD
-          //  R.id.rbtnAvnet -> if (checked) environment = IoTEnvironment.POC
-          //  R.id.rbtnQa -> if (checked) environment = EnvironmentType.QA
+          //  R.id.rbtnAvnet -> if (checked) environment = IoTCEnvironment.POC
+          //  R.id.rbtnQa -> if (checked) environment = IoTCEnvironment.QA
         }
     }
 

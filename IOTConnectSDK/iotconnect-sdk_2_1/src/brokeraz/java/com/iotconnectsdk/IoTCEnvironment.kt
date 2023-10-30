@@ -6,5 +6,4 @@ enum class IoTCEnvironment(val value: String) {
     DEV("dev"),
     QA("qa"),
     PROD("prod")
-
 }

@@ -739,19 +739,19 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         switch (view.getId()) {
             case R.id.rbtnDev:
                 if (checked)
-                //    environment = IoTEnvironment.POC;
+                //    environment = IoTCEnvironment.POC;
                 break;
             case R.id.rbtnProd:
                 if (checked)
-                    environment = IoTCEnvironment.PROD;
+                    environment = IoTCEnvironment.QA;
                 break;
             case R.id.rbtnAvnet:
                 if (checked)
-               //     environment = IoTEnvironment.PREQA;
+               //     environment = IoTCEnvironment.PREQA;
                 break;
             case R.id.rbtnQa:
                 if (checked)
-                    //    environment = EnvironmentType.QA;
+                    //    environment = IoTCEnvironment.QA;
                     break;
         }
     }
