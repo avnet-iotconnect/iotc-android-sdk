@@ -96,7 +96,7 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }
 
-project.afterEvaluate {
+/*project.afterEvaluate {
     publishing {
         publications {
             // Creates a Maven publication called "release".
@@ -104,21 +104,37 @@ project.afterEvaluate {
                 // You can then customize attributes of the publication as shown below.
                 groupId = 'com.github.sw-ms-imranbhadelia'
                 artifactId = 'iotconnect-sdk'
-                version = '21.0.0'
+                version = '10.0.0'
+            }
+        }
+    }
+}*/
+
+afterEvaluate {
+    publishing {
+        publications {
+            // Creates a Maven publication called "release".
+            release(MavenPublication) {
+                // Applies the component for the release build variant.
+                from components.findByName('release')
+
+                // You can then customize attributes of the publication as shown below.
+                groupId = 'com.github.sw-ms-imranbhadelia'
+                artifactId = 'iotconnect-sdk'
+                version = '22.0.0'
             }
         }
     }
 }
 
-/*publishing {
-    publications {
-        release(MavenPublication) {
-            groupId = 'com.github.sw-ms-imranbhadelia'
-            artifactId = 'iotconnect-sdk'
-            version = '10.0.0'
-
-            afterEvaluate {
-                from components.release
+/*afterEvaluate {
+    publishing {
+        publications {
+            productionRelease(MavenPublication) {
+                from components.productionRelease
+                groupId = 'com.github.sw-ms-imranbhadelia'
+                artifactId = 'iotconnect-sdk'
+                version = '22.0.0'
             }
         }
     }
