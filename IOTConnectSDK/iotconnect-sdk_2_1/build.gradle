@@ -1,12 +1,13 @@
 plugins {
     id 'com.android.library'
     id 'org.jetbrains.kotlin.android'
-    id 'maven-publish'
+   // id 'maven-publish'
+  //  id 'com.github.dcendents.android-maven'
 }
 
 android {
     namespace 'com.iotconnectsdk'
-    compileSdk  33
+    compileSdk 33
     defaultConfig {
         minSdkVersion 21
         targetSdkVersion 33
@@ -95,7 +96,43 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }
-project.afterEvaluate {
+
+
+group = 'com.github.sw-ms-imranbhadelia'
+version = '12.0.0'
+
+if (android.productFlavors.size() > 0) {
+    android.libraryVariants.all { variant ->
+
+        if (variant.name.toLowerCase().contains("debug")) {
+            return
+        }
+
+        def bundleTask = tasks["bundle${variant.name.capitalize()}Aar"]
+
+        artifacts {
+            archives(bundleTask.archivePath) {
+                classifier variant.flavorName
+                builtBy bundleTask
+                name = project.name
+            }
+        }
+
+        def flavorName = variant.flavorName.toLowerCase()
+        def flavorSourcesTask = tasks.create(name: "${flavorName}SourcesJar", type: Jar) {
+            classifier = "${flavorName}-sources"
+            from android.sourceSets.main.javaDirectories
+            from android.sourceSets[flavorName].javaDirectories
+        }
+
+        artifacts {
+            archives flavorSourcesTask
+        }
+
+    }
+}
+
+/*project.afterEvaluate {
     publishing {
         publications {
             // Creates a Maven publication called "release".
@@ -107,4 +144,4 @@ project.afterEvaluate {
             }
         }
     }
-}
+}*/
