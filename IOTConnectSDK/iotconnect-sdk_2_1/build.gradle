@@ -138,7 +138,7 @@ publishing {
                 groupId = 'com.github.sw-ms-imranbhadelia'
                 artifactId = 'iotconnect-sdk'
                 version "33.0.0-${variant.name}"
-                artifact "$buildDir/outputs/aar/examplesdk-${flavorBuild}-release.aar"
+               /* artifact "$buildDir/outputs/aar/examplesdk-${flavorBuild}-release.aar"*/
 
                 pom.withXml {
                     def dependenciesNode = asNode().appendNode('dependencies')
