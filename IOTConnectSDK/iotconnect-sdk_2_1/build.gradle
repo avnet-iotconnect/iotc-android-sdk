@@ -127,34 +127,23 @@ dependencies {
         }
     }
 }*/
-
-publishing {
-    publications {
-        def flavorBuild ='production'
-        android.libraryVariants.all { variant ->
-
-            "maven${variant.name.capitalize()}Aar"(MavenPublication) {
-                from components.findByName("android${variant.name.capitalize()}")
-                groupId = 'com.github.sw-ms-imranbhadelia'
-                artifactId = 'iotconnect-sdk'
-                version "43.0.0-${variant.name}"
-                artifact "$buildDir/outputs/aar/iotconnect-sdk-${flavorBuild}-release.aar"
-
-                pom.withXml {
-                    def dependenciesNode = asNode().appendNode('dependencies')
-                    configurations.api.allDependencies.each { dependency ->
-                        def dependencyNode = dependenciesNode.appendNode('dependency')
-                        dependencyNode.appendNode('groupId', dependency.group)
-                        dependencyNode.appendNode('artifactId', dependency.name)
-                        dependencyNode.appendNode('version', dependency.version)
-                    }
-                }
-            }
+group = 'com.github.sw-ms-imranbhadelia'
+version = '45.0.0'
+if (android.productFlavors.size() > 0) {
+    android.libraryVariants.all { variant ->
+        if (variant.name.toLowerCase().contains("debug")) {
+            return
         }
-    }
-    repositories{
-        maven {
-            url "$buildDir/repo"
+
+        //def bundleTask = tasks["bundle${variant.name.capitalize()}"]
+        def bundleTask = tasks["bundle${variant.name.capitalize()}Aar"]
+
+        artifacts {
+            archives(bundleTask.archivePath) {
+                classifier variant.flavorName
+                builtBy bundleTask
+                name = project.name
+            }
         }
     }
 }
