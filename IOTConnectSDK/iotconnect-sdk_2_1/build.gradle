@@ -97,6 +97,15 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }
 
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from android.sourceSets.main.javaDirectories
+}
+
+artifacts {
+    archives sourcesJar
+}
+
 /*project.afterEvaluate {
     publishing {
         publications {
@@ -131,11 +140,11 @@ group = 'com.github.sw-ms-imranbhadelia'
 version = '45.0.0'
 if (android.productFlavors.size() > 0) {
     android.libraryVariants.all { variant ->
+
         if (variant.name.toLowerCase().contains("debug")) {
             return
         }
 
-        //def bundleTask = tasks["bundle${variant.name.capitalize()}"]
         def bundleTask = tasks["bundle${variant.name.capitalize()}Aar"]
 
         artifacts {
@@ -145,6 +154,18 @@ if (android.productFlavors.size() > 0) {
                 name = project.name
             }
         }
+
+        def flavorName = variant.flavorName.toLowerCase()
+        def flavorSourcesTask = tasks.create(name : "${flavorName}SourcesJar", type: Jar) {
+            classifier = "${flavorName}-sources"
+            from android.sourceSets.main.javaDirectories
+            from android.sourceSets[flavorName].javaDirectories
+        }
+
+        artifacts {
+            archives flavorSourcesTask
+        }
+
     }
 }
 
