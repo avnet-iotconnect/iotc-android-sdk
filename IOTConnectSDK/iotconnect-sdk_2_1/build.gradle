@@ -97,15 +97,6 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }
 
-task sourcesJar(type: Jar) {
-    classifier = 'sources'
-    from android.sourceSets.main.javaDirectories
-}
-
-artifacts {
-    archives sourcesJar
-}
-
 /*project.afterEvaluate {
     publishing {
         publications {
@@ -137,35 +128,68 @@ artifacts {
     }
 }*/
 group = 'com.github.sw-ms-imranbhadelia'
-version = '45.0.0'
-if (android.productFlavors.size() > 0) {
-    android.libraryVariants.all { variant ->
+version = '42.0.0'
+task javadoc(type: Javadoc) {
+    configurations.implementation.canBeResolved(true)
+    configurations.api.canBeResolved(true)
 
-        if (variant.name.toLowerCase().contains("debug")) {
-            return
-        }
+    failOnError false
 
-        def bundleTask = tasks["bundle${variant.name.capitalize()}Aar"]
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+    //destinationDir = file("../javadoc/")
+    classpath += configurations.api
+}
 
-        artifacts {
-            archives(bundleTask.archivePath) {
-                classifier variant.flavorName
-                builtBy bundleTask
-                name = project.name
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    archiveClassifier = "sources"
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives sourcesJar
+    archives javadocJar
+}
+
+// Because the components are created only during the afterEvaluate phase, you must
+// configure your publications using the afterEvaluate() lifecycle method.
+afterEvaluate {
+    publishing {
+        publications {
+            // Creates a Maven publication called "release".
+            release(MavenPublication) {
+                // Applies the component for the release build variant.
+                from components.findByName('release')
+                artifact(sourcesJar)
+
+                // You can then customize attributes of the publication as shown below.
+                groupId = 'com.github.sw-ms-imranbhadelia'
+                artifactId = 'iotconnect-sdk'
+                version = '42.0.0'
+
+                pom.withXml {
+                    def dependenciesNode = (asNode().get("dependencies") as groovy.util.NodeList).get(0) as groovy.util.Node
+                    def configurationNames = ["implementation", "api"]
+
+                    configurationNames.forEach { configurationName ->
+                        configurations[configurationName].allDependencies.forEach {
+                            if (it.group != null && it.version != "unspecified") {
+                                def dependencyNode = dependenciesNode.appendNode("dependency")
+                                dependencyNode.appendNode("groupId", it.group)
+                                dependencyNode.appendNode("artifactId", it.name)
+                                dependencyNode.appendNode("version", it.version)
+                                // dependencyNode.appendNode("scope", configurationName)
+                            }
+                        }
+                    }
+                }
             }
         }
-
-        def flavorName = variant.flavorName.toLowerCase()
-        def flavorSourcesTask = tasks.create(name : "${flavorName}SourcesJar", type: Jar) {
-            classifier = "${flavorName}-sources"
-            from android.sourceSets.main.javaDirectories
-            from android.sourceSets[flavorName].javaDirectories
-        }
-
-        artifacts {
-            archives flavorSourcesTask
-        }
-
     }
 }
 
