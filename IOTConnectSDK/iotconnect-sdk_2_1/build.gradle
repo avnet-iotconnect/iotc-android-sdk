@@ -46,7 +46,7 @@ android {
         }
     }
 
-    defaultPublishConfig "brokerazRelease"
+    defaultPublishConfig "brokerazDebug"
     compileOptions {
 
         // Flag to enable support for the new language APIs
@@ -123,7 +123,7 @@ afterEvaluate {
                 // You can then customize attributes of the publication as shown below.
                 groupId = 'com.github.sw-ms-imranbhadelia'
                 artifactId = 'iotconnect-sdk'
-                version = '48.0.0'
+                version = '37.0.0'
             }
         }
     }
