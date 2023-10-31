@@ -139,7 +139,7 @@ afterEvaluate {
                     from components.findByName("android${variant.name.capitalize()}")
                     groupId = 'com.github.sw-ms-imranbhadelia'
                     artifactId = 'iotconnect-sdk'
-                    version "1.0.0-${variant.name}"
+                    version "43.1.1-${variant.name}"
                     artifact "$buildDir/outputs/aar/iotconnect-sdk-${variant.flavorName}-release.aar"
                 }
             }
