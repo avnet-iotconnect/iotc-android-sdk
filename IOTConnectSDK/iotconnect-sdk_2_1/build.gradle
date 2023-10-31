@@ -1,7 +1,7 @@
 plugins {
     id 'com.android.library'
     id 'org.jetbrains.kotlin.android'
-    id 'maven-publish'
+   // id 'maven-publish'
 }
 
 android {
@@ -110,7 +110,7 @@ dependencies {
     }
 }*/
 
-afterEvaluate {
+/*afterEvaluate {
     publishing {
         publications {
             // Creates a Maven publication called "release".
@@ -121,11 +121,11 @@ afterEvaluate {
                 // You can then customize attributes of the publication as shown below.
                 groupId = 'com.github.sw-ms-imranbhadelia'
                 artifactId = 'iotconnect-sdk'
-                version = 'feature_product_flavour'
+                version = '22.0.0'
             }
         }
     }
-}
+}*/
 
 /*afterEvaluate {
     publishing {
