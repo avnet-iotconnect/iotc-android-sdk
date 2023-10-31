@@ -46,7 +46,6 @@ android {
         }
     }
 
-    defaultPublishConfig "brokerazDebug"
     compileOptions {
 
         // Flag to enable support for the new language APIs
@@ -112,7 +111,7 @@ dependencies {
     }
 }*/
 
-afterEvaluate {
+/*afterEvaluate {
     publishing {
         publications {
             // Creates a Maven publication called "release".
@@ -127,7 +126,39 @@ afterEvaluate {
             }
         }
     }
+}*/
+
+publishing {
+    publications {
+        def flavorBuild ='production'
+        android.libraryVariants.all { variant ->
+
+            "maven${variant.name.capitalize()}Aar"(MavenPublication) {
+                from components.findByName("android${variant.name.capitalize()}")
+                groupId = 'com.github.sw-ms-imranbhadelia'
+                artifactId = 'iotconnect-sdk'
+                version "33.0.0-${variant.name}"
+                artifact "$buildDir/outputs/aar/examplesdk-${flavorBuild}-release.aar"
+
+                pom.withXml {
+                    def dependenciesNode = asNode().appendNode('dependencies')
+                    configurations.api.allDependencies.each { dependency ->
+                        def dependencyNode = dependenciesNode.appendNode('dependency')
+                        dependencyNode.appendNode('groupId', dependency.group)
+                        dependencyNode.appendNode('artifactId', dependency.name)
+                        dependencyNode.appendNode('version', dependency.version)
+                    }
+                }
+            }
+        }
+    }
+    repositories{
+        maven {
+            url "$buildDir/repo"
+        }
+    }
 }
+
 
 /*afterEvaluate {
     publishing {
