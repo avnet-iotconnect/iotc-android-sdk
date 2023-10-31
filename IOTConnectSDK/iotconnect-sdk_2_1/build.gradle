@@ -135,7 +135,7 @@ afterEvaluate {
         publications {
 
             android.libraryVariants.all { variant ->
-                "${variant.name.capitalize()}Aar"(MavenPublication) {
+                "maven${variant.name.capitalize()}Aar"(MavenPublication) {
                     from components.findByName("android${variant.name.capitalize()}")
                     groupId = 'com.github.sw-ms-imranbhadelia'
                     artifactId = 'iotconnect-sdk'
