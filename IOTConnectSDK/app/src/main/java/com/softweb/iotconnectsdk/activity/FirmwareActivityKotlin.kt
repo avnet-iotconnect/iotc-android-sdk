@@ -109,7 +109,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
                          this@FirmwareActivityKotlin,
                          getString(R.string.string_select_environment),
                          Toast.LENGTH_LONG
-                     ).show()
+                     ) .show()
                      return
                  }
                 if (checkValidation()) {
