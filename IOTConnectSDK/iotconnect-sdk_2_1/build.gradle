@@ -165,7 +165,7 @@ afterEvaluate {
 
             }
 
-            brokerawsRelease(MavenPublication){
+            /*brokerawsRelease(MavenPublication){
                 from components.brokerawsRelease
 
                 groupId = 'com.github.sw-ms-imranbhadelia'
@@ -173,7 +173,7 @@ afterEvaluate {
                 version = '43.6.1'
                 artifact "$buildDir/outputs/aar/iotconnect-sdk-brokeraws-release.aar"
 
-            }
+            }*/
         }
     }
 }
