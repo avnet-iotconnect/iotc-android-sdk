@@ -169,7 +169,7 @@ afterEvaluate {
 
                 groupId = 'com.github.sw-ms-imranbhadelia'
                 artifactId = 'iotconnect-sdk'
-                version = '44.2.2'
+                version = '44.2.3'
 
             }
         }
