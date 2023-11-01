@@ -160,7 +160,7 @@ afterEvaluate {
 
                 groupId = 'com.github.sw-ms-imranbhadelia'
                 artifactId = 'iotconnect-sdk'
-                version = '43.9.1'
+                version = '43.8.1'
                 artifact("$buildDir/outputs/aar/iotconnect-sdk-brokeraz-release.aar") {
                     classifier 'brokeraz'
                     extension 'aar'
@@ -172,7 +172,7 @@ afterEvaluate {
 
                 groupId = 'com.github.sw-ms-imranbhadelia'
                 artifactId = 'iotconnect-sdk'
-                version = '43.9.1'
+                version = '43.8.1'
                 artifact("$buildDir/outputs/aar/iotconnect-sdk-brokeraws-release.aar") {
                     classifier 'brokeraws'
                     extension 'aar'
