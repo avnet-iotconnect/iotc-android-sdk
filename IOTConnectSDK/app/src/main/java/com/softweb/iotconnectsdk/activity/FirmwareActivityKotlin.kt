@@ -128,7 +128,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
                         this@FirmwareActivityKotlin,
                         cpId,
                         uniqueId,
-                        this@FirmwareActivityKotlin,
+                         this@FirmwareActivityKotlin,
                         sdkOptions,
                         environment
                     )
