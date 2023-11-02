@@ -156,26 +156,23 @@ afterEvaluate {
     publishing {
         publications {
 
-            brokerawsRelease(MavenPublication) {
-                from components.findByName('release')
-             /*   from components.brokerawsRelease*/
+            /* brokerazRelease(MavenPublication) {
+              // from components.brokerazRelease
 
                 groupId = 'com.github.sw-ms-imranbhadelia'
                 artifactId = 'iotconnect-sdk'
-                version = '44.2.6'
+                version = '12.1.1-azTest'
+
+            }*/
+
+            brokerawsRelease(MavenPublication) {
+                from components.brokerawsRelease
+
+                groupId = 'com.github.sw-ms-imranbhadelia'
+                artifactId = 'iotconnect-sdk'
+                version = '12.2.1-awsTest'
 
             }
-
-            /* brokerazRelease(MavenPublication) {
-               // from components.brokerazRelease
-                 from components.findByName('release')
-
-                 groupId = 'com.github.sw-ms-imranbhadelia'
-                 artifactId = 'iotconnect-sdk'
-                 version = '12.1.1-azTest'
-
-             }*/
-
 
         }
     }
