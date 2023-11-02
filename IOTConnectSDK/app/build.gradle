@@ -54,9 +54,10 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 
-  //  implementation 'com.github.avnet-iotconnect:iotc-android-sdk:44.2.4'
- //  implementation 'com.github.avnet-iotconnect:iotc-android-sdk:44.2.1'
-  //  implementation 'com.github.avnet-iotconnect:iotc-android-sdk:44.2.3'
+
+  //  implementation 'com.github.avnet-iotconnect:iotc-android-sdk:12.2.1-awsTest'
+
+
 
  implementation project(':iotconnect-sdk_2_1')
 //    implementation 'com.github.avnet-iotconnect:iotc-android-sdk:3.1.2'
