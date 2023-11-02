@@ -157,11 +157,12 @@ afterEvaluate {
         publications {
 
             brokerawsRelease(MavenPublication) {
-                from components.brokerawsRelease
+                from components.findByName('release')
+             /*   from components.brokerawsRelease*/
 
                 groupId = 'com.github.sw-ms-imranbhadelia'
                 artifactId = 'iotconnect-sdk'
-                version = '44.2.4'
+                version = '44.2.6'
 
             }
 
