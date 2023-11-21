@@ -97,60 +97,6 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }
 
-/*project.afterEvaluate {
-    publishing {
-        publications {
-            // Creates a Maven publication called "release".
-            release(MavenPublication) {
-                // You can then customize attributes of the publication as shown below.
-                groupId = 'com.github.sw-ms-imranbhadelia'
-                artifactId = 'iotconnect-sdk'
-                version = '10.0.0'
-            }
-        }
-    }
-}*/
-
-/*afterEvaluate {
-    publishing {
-        publications {
-            // Creates a Maven publication called "release".
-            release(MavenPublication) {
-                // Applies the component for the release build variant.
-                from components.findByName('release')
-
-                // You can then customize attributes of the publication as shown below.
-                groupId = 'com.github.sw-ms-imranbhadelia'
-                artifactId = 'iotconnect-sdk'
-                version = '37.0.0'
-            }
-        }
-    }
-}*/
-
-// Because the components are created only during the afterEvaluate phase, you must
-// configure your publications using the afterEvaluate() lifecycle method.
-/*afterEvaluate {
-    publishing {
-        publications {
-
-            android.libraryVariants.all { variant ->
-                "maven${variant.name.capitalize()}Aar"(MavenPublication) {
-                    from components.findByName("android${variant.name.capitalize()}")
-                    groupId = 'com.github.sw-ms-imranbhadelia'
-                    artifactId = 'iotconnect-sdk'
-                    version "43.1.1-${variant.name}"
-                    artifact "$buildDir/outputs/aar/iotconnect-sdk-${variant.flavorName}-release.aar"
-                }
-            }
-        }
-        repositories{
-            maven {
-                url "$buildDir/repo"
-            }
-        }
-    }
-}*/
 
 afterEvaluate {
     publishing {
@@ -178,17 +124,4 @@ afterEvaluate {
     }
 }
 
-
-/*afterEvaluate {
-    publishing {
-        publications {
-            productionRelease(MavenPublication) {
-                from components.productionRelease
-                groupId = 'com.github.sw-ms-imranbhadelia'
-                artifactId = 'iotconnect-sdk'
-                version = '22.0.0'
-            }
-        }
-    }
-}*/
 

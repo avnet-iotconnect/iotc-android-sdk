@@ -13,15 +13,8 @@ android {
         targetSdk 33
         versionCode 1
         versionName "1.0"
-       /* missingDimensionStrategy 'version', 'brokeraws', 'brokeraz'*/
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
-
-    /*flavorDimensions "version"
-    productFlavors {
-      register("brokeraws")
-       register("brokeraz")
-    }*/
 
     buildTypes {
         release {
