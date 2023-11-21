@@ -104,20 +104,22 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
             if (sdkClient != null && isConnected) {
                 sdkClient!!.dispose()
             } else {
-                 if (!::environment.isInitialized) {
-                     Toast.makeText(
-                         this@FirmwareActivityKotlin,
-                         getString(R.string.string_select_environment),
-                         Toast.LENGTH_LONG
-                     ) .show()
-                     return
-                 }
+                if (!::environment.isInitialized) {
+                    Toast.makeText(
+                        this@FirmwareActivityKotlin,
+                        getString(R.string.string_select_environment),
+                        Toast.LENGTH_LONG
+                    ).show()
+                    return
+                }
                 if (checkValidation()) {
                     setStatusText(R.string.initializing_sdk)
                     btnSendData!!.isEnabled = false
                     btnGetAllTwins!!.isEnabled = false
                     cpId = etCpid!!.text.toString()
                     uniqueId = etUniqueId!!.text.toString()
+
+                    showDialog(this@FirmwareActivityKotlin)
 
                     /*
                      * Type    : Object Initialization "new SDKClient()"
@@ -128,11 +130,11 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
                         this@FirmwareActivityKotlin,
                         cpId,
                         uniqueId,
-                         this@FirmwareActivityKotlin,
+                        this@FirmwareActivityKotlin,
                         sdkOptions,
                         environment
                     )
-                    showDialog(this@FirmwareActivityKotlin)
+
                 }
             }
         } else if (v.id == R.id.btnSendData) {
@@ -281,7 +283,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
             sdkOptions.certificate = certificate
             sdkOptions.offlineStorage = offlineStorage
             sdkOptions.isSkipValidation = false
-           /* sdkOptions.brokerType = BrokerType.AZ*/ //pass broker type either "az" or "aws"
+            /* sdkOptions.brokerType = BrokerType.AZ*/ //pass broker type either "az" or "aws"
 
             val sdkOptionsJsonStr = Gson().toJson(sdkOptions)
             Log.d(
@@ -651,10 +653,10 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
         // Is the button now checked?
         val checked = (view as RadioButton).isChecked
         when (view.getId()) {
-           // R.id.rbtnDev -> if (checked) environment = IoTCEnvironment.PREQA
+            // R.id.rbtnDev -> if (checked) environment = IoTCEnvironment.PREQA
             R.id.rbtnProd -> if (checked) environment = IoTCEnvironment.PROD
-          //  R.id.rbtnAvnet -> if (checked) environment = IoTCEnvironment.POC
-          //  R.id.rbtnQa -> if (checked) environment = IoTCEnvironment.QA
+            //  R.id.rbtnAvnet -> if (checked) environment = IoTCEnvironment.POC
+            R.id.rbtnQa -> if (checked) environment = IoTCEnvironment.QA
         }
     }
 
@@ -667,6 +669,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
     private fun setStatusText(stringId: Int) {
         tvStatus!!.text = getString(stringId)
     }
+
     /*
      * Type    : Callback Function "twinUpdateCallback()"
      * Usage   : Manage twin properties as per business logic to update the twin reported property

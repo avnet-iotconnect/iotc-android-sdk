@@ -180,6 +180,8 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                     cpId = etCpid.getText().toString();
                     uniqueId = etUniqueId.getText().toString();
 
+                    showDialog(FirmwareActivity.this);
+
                     /*
                      * Type    : Object Initialization "new SDKClient()"
                      * Usage   : To Initialize SDK and Device connection
@@ -188,7 +190,6 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                      */
                     sdkClient = SDKClient.getInstance(FirmwareActivity.this, cpId, uniqueId, FirmwareActivity.this, getSdkOptions(), environment);
 
-                    showDialog(FirmwareActivity.this);
                 }
             }
         } else if (v.getId() == R.id.btnSendData) {
@@ -751,7 +752,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                 break;
             case R.id.rbtnQa:
                 if (checked)
-                    //    environment = IoTCEnvironment.QA;
+                     environment = IoTCEnvironment.QA;
                     break;
         }
     }

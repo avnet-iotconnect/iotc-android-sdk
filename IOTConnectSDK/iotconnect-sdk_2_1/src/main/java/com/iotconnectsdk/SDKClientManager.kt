@@ -173,7 +173,7 @@ internal class SDKClientManager(
 
     var isSkipValidation = false
 
-   // var brokerType = ""
+    // var brokerType = ""
 
 
     /*return singleton object for this class.
@@ -191,7 +191,7 @@ internal class SDKClientManager(
             deviceCallback: DeviceCallback?,
             sdkOptions: String?,
             environment: IoTCEnvironment
-        ): SDKClientManager {
+        ): SDKClientManager? {
             synchronized(this) {
                 if (sdkClientManger == null) {
                     sdkClientManger = SDKClientManager(
@@ -203,9 +203,14 @@ internal class SDKClientManager(
                         environment
                     )
                 }
-                sdkClientManger?.connect()
-                sdkClientManger?.registerNetworkState()
-                return sdkClientManger!!
+                try {
+                    sdkClientManger?.connect()
+                    sdkClientManger?.registerNetworkState()
+                    return sdkClientManger!!
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    return null
+                }
             }
 
         }
@@ -236,7 +241,7 @@ internal class SDKClientManager(
         isSaveToOffline = false
         isDebug = false
         isSkipValidation = false
-     //   brokerType = ""
+        //   brokerType = ""
         fileCount = 0
 
         //get is debug option.
@@ -339,13 +344,25 @@ internal class SDKClientManager(
             }
         }
         if (!validationUtils!!.isEmptyValidation(
-                cpId, "ERR_IN04", context.getString(R.string.ERR_IN04)
+                cpId,
+                "ERR_IN04",
+                context.getString(R.string.ERR_IN04)
             )
-        ) return
+        ) {
+            deviceCallback?.onReceiveMsg(context.getString(R.string.ERR_IN04))
+            sdkClientManger = null
+            return
+        }
         if (!validationUtils!!.isEmptyValidation(
-                uniqueId, "ERR_IN05", context.getString(R.string.ERR_IN05)
+                uniqueId,
+                "ERR_IN05",
+                context.getString(R.string.ERR_IN05)
             )
-        ) return
+        ) {
+            deviceCallback?.onReceiveMsg(context.getString(R.string.ERR_IN05))
+            sdkClientManger = null
+            return
+        }
         callDiscoveryService()
     }
 
