@@ -50,7 +50,7 @@ import java.util.*
  * Hope you have imported SDK v3.1.2 in build.gradle as guided in README.md file or from documentation portal.
  */
 class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
-    DeviceCallback {
+    AdapterView.OnItemSelectedListener, DeviceCallback {
     private val TAG = FirmwareActivityKotlin::class.java.simpleName
 
     private var inputMap: MutableMap<String, List<TextInputLayout>>? = null
@@ -85,6 +85,8 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
     var cmdType = -1
     var mainObject: JSONObject? = null
 
+    var enumValues: List<IoTCEnvironment>? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_firmware)
@@ -95,8 +97,15 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
         btnGetAllTwins.setOnClickListener(this)
         btnClear.setOnClickListener(this)
         btnChildDevices.setOnClickListener(this)
+        spEnvironment.onItemSelectedListener = this
 
         checkPermissions()
+
+        enumValues = IoTCEnvironment.values().asList()
+
+        val adapter = ArrayAdapter(this@FirmwareActivityKotlin, R.layout.spinner_list, enumValues!!)
+        adapter.setDropDownViewResource(R.layout.spinner_list)
+        spEnvironment.adapter = adapter
     }
 
     override fun onClick(v: View) {
@@ -643,22 +652,6 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
         }
     }
 
-    /*
-     * Type    : Public Method "onRadioButtonClicked()"
-     * Usage   : Radio button click event handled.
-     * Input   :
-     * Output  :
-     */
-    fun onRadioButtonClicked(view: View) {
-        // Is the button now checked?
-        val checked = (view as RadioButton).isChecked
-        when (view.getId()) {
-            // R.id.rbtnDev -> if (checked) environment = IoTCEnvironment.PREQA
-            R.id.rbtnProd -> if (checked) environment = IoTCEnvironment.PROD
-            //  R.id.rbtnAvnet -> if (checked) environment = IoTCEnvironment.POC
-            R.id.rbtnQa -> if (checked) environment = IoTCEnvironment.QA
-        }
-    }
 
     /*
      * Type    : private function "setStatusText()"
@@ -781,5 +774,13 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
                 df.timeZone = TimeZone.getTimeZone("gmt")
                 return df.format(Date())
             }
+    }
+
+    override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+        environment = enumValues!![position]
+    }
+
+    override fun onNothingSelected(parent: AdapterView<*>?) {
+
     }
 }

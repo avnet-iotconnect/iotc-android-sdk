@@ -11,10 +11,13 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -39,6 +42,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -70,7 +74,7 @@ import com.softweb.iotconnectsdk.R;
  * Hope you have imported SDK v3.1.2 in build.gradle as guided in README.md file or from documentation portal.
  */
 
-public class FirmwareActivity extends AppCompatActivity implements View.OnClickListener, DeviceCallback {
+public class FirmwareActivity extends AppCompatActivity implements View.OnClickListener, AdapterView.OnItemSelectedListener, DeviceCallback {
 
     private static final String TAG = FirmwareActivity.class.getSimpleName();
 
@@ -88,10 +92,8 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
     private EditText etUniqueId;
     private EditText etSubscribe;
 
-    private RadioButton rbtnDev;
-    private RadioButton rbtnAvnet;
-    private RadioButton rbtnProd;
-    private RadioButton rbtnQa;
+
+    private Spinner spEnvironment;
 
     private LinearLayout linearLayout;
 
@@ -127,6 +129,8 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
     int cmdType = -1;
     JSONObject mainObject = null;
 
+    List<IoTCEnvironment> enumValues;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -146,19 +150,25 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         btnGetAllTwins = findViewById(R.id.btnGetAllTwins);
         btnClear = findViewById(R.id.btnClear);
         btnChildDevices = findViewById(R.id.btnChildDevices);
+        spEnvironment = findViewById(R.id.spEnvironment);
 
         btnConnect.setOnClickListener(this);
         btnSendData.setOnClickListener(this);
         btnGetAllTwins.setOnClickListener(this);
         btnClear.setOnClickListener(this);
         btnChildDevices.setOnClickListener(this);
+        spEnvironment.setOnItemSelectedListener(this);
 
-        rbtnDev = findViewById(R.id.rbtnDev);
-        rbtnAvnet = findViewById(R.id.rbtnAvnet);
-        rbtnProd = findViewById(R.id.rbtnProd);
-        rbtnQa = findViewById(R.id.rbtnQa);
 
         checkPermissions();
+
+        enumValues = Arrays.asList(IoTCEnvironment.values());
+
+
+        ArrayAdapter<IoTCEnvironment> adapter = new ArrayAdapter<>(FirmwareActivity.this, R.layout.spinner_list, enumValues);
+        adapter.setDropDownViewResource(R.layout.spinner_list);
+        spEnvironment.setAdapter(adapter);
+
     }
 
     @Override
@@ -727,37 +737,6 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
     }
 
     /*
-     * Type    : Public Method "onRadioButtonClicked()"
-     * Usage   : Radio button click event handled.
-     * Input   :
-     * Output  :
-     */
-    public void onRadioButtonClicked(View view) {
-        // Is the button now checked?
-        boolean checked = ((RadioButton) view).isChecked();
-        // Check which radio button was clicked
-
-        switch (view.getId()) {
-            case R.id.rbtnDev:
-                if (checked)
-                //    environment = IoTCEnvironment.POC;
-                break;
-            case R.id.rbtnProd:
-                if (checked)
-                    environment = IoTCEnvironment.PROD;
-                break;
-            case R.id.rbtnAvnet:
-                if (checked)
-               //     environment = IoTCEnvironment.PREQA;
-                break;
-            case R.id.rbtnQa:
-                if (checked)
-                     environment = IoTCEnvironment.QA;
-                    break;
-        }
-    }
-
-    /*
      * Type    : private function "setStatusText()"
      * Usage   : To set the text to textView.
      * Input   : String.xml value for specific text.
@@ -867,5 +846,15 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         }
 
         return new File("");
+    }
+
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        environment = enumValues.get(position);
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+
     }
 }
