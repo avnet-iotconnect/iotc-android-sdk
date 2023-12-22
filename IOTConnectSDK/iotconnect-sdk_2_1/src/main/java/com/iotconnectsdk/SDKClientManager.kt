@@ -173,7 +173,6 @@ internal class SDKClientManager(
 
     var isSkipValidation = false
 
-    // var brokerType = ""
 
 
     /*return singleton object for this class.
@@ -241,7 +240,6 @@ internal class SDKClientManager(
         isSaveToOffline = false
         isDebug = false
         isSkipValidation = false
-        //   brokerType = ""
         fileCount = 0
 
         //get is debug option.
@@ -257,9 +255,6 @@ internal class SDKClientManager(
                     isSkipValidation = sdkObj.getBoolean("skipValidation")
                 }
 
-                /*if (sdkObj.has("brokerType")) {
-                    brokerType = sdkObj.getString("brokerType")
-                }*/
 
                 if (sdkObj.has("offlineStorage")) {
                     val offlineStorage = sdkObj.getJSONObject("offlineStorage")

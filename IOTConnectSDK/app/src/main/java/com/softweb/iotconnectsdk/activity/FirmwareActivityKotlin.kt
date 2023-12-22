@@ -292,7 +292,6 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
             sdkOptions.certificate = certificate
             sdkOptions.offlineStorage = offlineStorage
             sdkOptions.isSkipValidation = false
-            /* sdkOptions.brokerType = BrokerType.AZ*/ //pass broker type either "az" or "aws"
 
             val sdkOptionsJsonStr = Gson().toJson(sdkOptions)
             Log.d(

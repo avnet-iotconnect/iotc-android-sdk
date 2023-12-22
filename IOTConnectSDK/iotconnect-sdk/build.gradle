@@ -62,7 +62,7 @@ dependencies {
                 // You can then customize attributes of the publication as shown below.
                 groupId = 'com.github.sw-ms-imranbhadelia'
                 artifactId = 'iotconnect-sdk'
-                version = '30.0.0'
+                version = '3.1.3'
             }
         }
     }

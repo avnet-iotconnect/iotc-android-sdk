@@ -56,7 +56,6 @@ internal class IotSDKMQTTService private constructor(
 
     private var subscriptionTopic: String? = null
 
- //   private var brokerType = ""
 
     private val CPID_DEVICEID = "$cpId-$uniqueId"
 
@@ -168,10 +167,6 @@ internal class IotSDKMQTTService private constructor(
         try {
             if (sdkOptions != null) {
                 sdkObj = JSONObject(sdkOptions)
-
-                /*if (sdkObj.has("brokerType")) {
-                    brokerType = sdkObj.getString("brokerType")
-                }*/
 
                 if (BuildConfig.BrokerType == BrokerType.AZ.value) {
                     TWIN_SHADOW_PUB_TOPIC = "\$iothub/twin/PATCH/properties/reported/?\$rid=1"

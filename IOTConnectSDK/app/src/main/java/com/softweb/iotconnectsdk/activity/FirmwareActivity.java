@@ -324,7 +324,6 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         sdkOptions.certificate = certificate;
         sdkOptions.offlineStorage = offlineStorage;
         sdkOptions.setSkipValidation(false);
-      /*  sdkOptions.brokerType = BrokerType.AZ; */   //pass broker type either AZ or AWS from mentioned enums
 
         String sdkOptionsJsonStr = new Gson().toJson(sdkOptions);
 
