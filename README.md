@@ -35,7 +35,6 @@ This library only abstract JSON responses from both end D2C and C2D
 - SdkOptions is for the SDK configuration and needs to parse in SDK object initialize call. You need to manage the below configuration as per your device authentication type.
 ```json
 	 String sdkOptions = {
-		"brokerType": <<BrokerType>> ,
 		"devicePK": "",
 		"skipValidation": false,
 		"certificate" : {
@@ -50,7 +49,6 @@ This library only abstract JSON responses from both end D2C and C2D
 		}
 	}
 ```
-* "brokerType": pass broker type either AZ or AWS from mentioned enum(BrokerType)
 * "devicePK":  If authentication type is symmetric key then use it.
 * "skipValidation": false = do not want to skip data validation for attributes, true= want to skip data validation for attributes
 * "certificate": It is indicated to define the path of the certificate file. Mandatory for X.509/SSL device CA signed or self-signed authentication type only.
@@ -62,7 +60,7 @@ This library only abstract JSON responses from both end D2C and C2D
 	- availSpaceInMb : Define the file size of off-line data which should be in (MB)
 	- fileCount : Number of files need to create for off-line data
 
-         > ****Note**:-**  In sdkOptions it is mandatory to pass broker type, and define other setting acording to needs. 
+         > ****Note**:-** sdkOptions is optional but mandatory for SSL/x509 device authentication type only. Define proper setting or leave it NULL.
 If you do not provide off-line storage, it will set the default settings as per defined above. It may harm your device by storing the large data. Once memory gets full may chance to stop the execution.
 
 	
@@ -268,10 +266,19 @@ Note : (*) indicates the mandatory element of the object.
 ```
 
 2.Add below dependency in build.gradle file.
+- For AZ Platform
+  
+```java	
+	dependencies {
+	       implementation 'com.github.avnet-iotconnect:iotc-android-sdk:12.2.1-azTest'
+	}
+```
+
+- For AWS Platform
 
 ```java	
 	dependencies {
-	        implementation 'com.iotconnectsdk:iotconnectpoc:3.1.2'		
+	      implementation 'com.github.avnet-iotconnect:iotc-android-sdk:12.2.1-awsTest'
 	}
 ```	
 
