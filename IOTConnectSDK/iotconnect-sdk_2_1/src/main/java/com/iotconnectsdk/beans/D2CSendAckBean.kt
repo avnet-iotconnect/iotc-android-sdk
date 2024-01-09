@@ -14,9 +14,9 @@ data class D2CSendAckBean @JvmOverloads constructor(
         @SerializedName("ack")
         val ack: String,
         @SerializedName("type")
-        val type: Int, // 0
+        val type: Int,
         @SerializedName("st")
-        val st: Int, // 0
+        val st: Int,
         @SerializedName("msg")
         val msg: String,
         @SerializedName("cid")

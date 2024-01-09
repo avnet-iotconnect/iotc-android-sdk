@@ -53,11 +53,6 @@ import java.io.FileReader
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 
-
-/**
- * class for SDKClient
- */
-
 internal class SDKClientManager(
     private val context: Context?,
     private val cpId: String?,
@@ -474,7 +469,6 @@ internal class SDKClientManager(
                         }
                         return
                     } else if (rc != 0) {
-//                            onConnectionStateChange(false);
                         iotSDKLogUtils!!.log(
                             true, isDebug, "ERR_IN10", context!!.getString(R.string.ERR_IN10)
                         )

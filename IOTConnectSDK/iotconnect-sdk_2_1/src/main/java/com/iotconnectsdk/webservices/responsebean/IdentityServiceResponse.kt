@@ -9,100 +9,100 @@ data class IdentityServiceResponse(
 ) {
     data class D(
         @SerializedName("ct")
-        val ct: Int, // 200
+        val ct: Int,
         @SerializedName("ec")
-        val ec: Int, // 0 Error Code:  0 – No error
+        val ec: Int,
         @SerializedName("has")
-        val has: Has, // Device ability information
+        val has: Has,
         @SerializedName("meta")
-        val meta: Meta, // Device Meta information
+        val meta: Meta,
         @SerializedName("p")
-        val p: P // Protocol information
+        val p: P
     ) {
         data class Has(
             @SerializedName("attr")
-            val attr: Int, // 1 ---- If 1 – Device can send 201 message to get all attribute details
+            val attr: Int,
             @SerializedName("d")
-            val d: Int, // 0 ---- If 1 – Gateway Device can send 204 message to get all child devices
+            val d: Int,
             @SerializedName("ota")
-            val ota: Int, // 0 ---If 1 – Device can send 205 message to get pending OTA
+            val ota: Int,
             @SerializedName("r")
-            val r: Int, // 0 ---If 1 – Edge Device can send 203 message to get all rules
+            val r: Int,
             @SerializedName("set")
-            val set: Int // 0 -- If 1 – Device can send 202 message to get updates on settings/twins
+            val set: Int
         )
 
         data class Meta(
             @SerializedName("at")
-            val at: Int, // 1---  Authentication type of device.
+            val at: Int,
             @SerializedName("cd")
-            val cd: String, // Unique code with 7 or 8 characters.
+            val cd: String,
             @SerializedName("df")
-            var df: Int, // 60--  Data Frequency defined on template to control device data send frequency
+            var df: Int,
             @SerializedName("edge")
-            val edge: Int, // 0--- 1 – If device is Edge Device
+            val edge: Int,
             @SerializedName("gtw")
-            val gtw: Gtw, //** gtw will be null if device is not Gateway
+            val gtw: Gtw,
             @SerializedName("hwv")
-            val hwv: String, // Hardware version of the firmware pushed by OTA
+            val hwv: String,
             @SerializedName("pf")
-            val pf: Int, // 1--- TBD. 1 – If need to add prefix while enrolling into Azure DPS
+            val pf: Int,
             @SerializedName("swv")
-            val swv: String, // Software version of the firmware pushed by OTA Device software version
+            val swv: String,
             @SerializedName("v")
-            val v: Double // 2.1 --- Message Protocol Version
+            val v: Double
         ) {
             data class Gtw(
                 @SerializedName("g")
-                val g: String, // GUID represents the device GUID
+                val g: String,
                 @SerializedName("tg")
-                val tg: String // String represents the gateway Tag
+                val tg: String
             )
         }
 
         data class P(
             @SerializedName("auth")
-            val auth: String, //A string represents the authorization of url
+            val auth: String,
             @SerializedName("h")
-            val h: String, // A string represents the mqtt host name to connect
+            val h: String,
             @SerializedName("id")
-            val id: String, //A string represents the mqtt client id
+            val id: String,
             @SerializedName("n")
-            val n: String, // mqtt -- A string represents the name of protocol.
+            val n: String,
             @SerializedName("p")
-            val p: Int, // 8883 -- A fixed integer represents port to connect mqtt host
+            val p: Int,
             @SerializedName("pwd")
-            val pwd: String, //A string represents the password to connect mqtt broker
+            val pwd: String,
             @SerializedName("rid")
-            val rid: String, //A string represents registration id (if device is not acquired)
+            val rid: String,
             @SerializedName("topics")
-            val topics: Topics, // Object contains the topics for device to send and receive messages
+            val topics: Topics,
             @SerializedName("un")
-            val un: String, //A string represents the username for mqtt connection
+            val un: String,
             @SerializedName("url")
-            val url: String  // A string represents the mqtt host name to connect
+            val url: String
         ) {
             data class Topics(
                 @SerializedName("ack")
-                val ack: String, // A string represents the publish topic to send acknowledgements
+                val ack: String,
                 @SerializedName("c2d")
-                val c2d: String, // A string represents the topic for subscribe to receive cloud to device messages
+                val c2d: String,
                 @SerializedName("di")
-                val di: String, // A string represents the publish topic to send Device Identity messages
+                val di: String,
                 @SerializedName("dl")
-                val dl: String, // A string represents the publish topic to send Device Logs
+                val dl: String,
                 @SerializedName("erm")
-                val erm: String, // A string represents the publish topic of rule matched message
+                val erm: String,
                 @SerializedName("erpt")
-                val erpt: String, // A string represents the publish topic of edge reporting message
+                val erpt: String,
                 @SerializedName("flt")
-                val flt: String, // A string represents the publish topic of fault message
+                val flt: String,
                 @SerializedName("hb")
-                val hb: String, // A string represents the publish topic of heartbeat message
+                val hb: String,
                 @SerializedName("od")
-                val od: String, // A string represents the publish topic of offline message
+                val od: String,
                 @SerializedName("rpt")
-                val rpt: String // A string represents the publish topic of reporting message
+                val rpt: String
             )
         }
     }

@@ -21,11 +21,11 @@ internal data class CommonResponseBean(
         @SerializedName("ota")
         val ota: GetOTAUpdateBean? = null,
         @SerializedName("ct")
-        val ct: Int? = null, // 201
+        val ct: Int? = null,
         @SerializedName("ec")
-        val ec: Int? = null, // 0
+        val ec: Int? = null,
         @SerializedName("dt")
-        val dt: String? = null // 2023-02-03T08:36:00.4237005Z
+        val dt: String? = null
     )
 }
 
