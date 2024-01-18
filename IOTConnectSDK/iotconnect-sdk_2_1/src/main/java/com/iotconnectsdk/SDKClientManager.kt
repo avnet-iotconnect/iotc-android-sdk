@@ -90,7 +90,11 @@ internal class SDKClientManager(
 
     private val DEFAULT_DISCOVERY_URL_AZ = "https://discovery.iotconnect.io/"
 
-    private val DEFAULT_DISCOVERY_URL_AWS = "http://54.160.162.148:219/"
+    private val DEFAULT_DISCOVERY_URL_AWS_PREQA = "http://54.160.162.148:219/"
+
+    private val DEFAULT_DISCOVERY_URL_AWS_POC = "https://awsdiscovery.iotconnect.io/"
+
+    private val DEFAULT_DISCOVERY_URL_AWS_PROD = "https://discoveryconsole.iotconnect.io/"
 
     private val URL_PATH = "api/$appVersion/dsdk/"
 
@@ -304,8 +308,13 @@ internal class SDKClientManager(
                     discoveryUrl =
                         DEFAULT_DISCOVERY_URL_AZ //set default discovery url when it is empty from client end.
                 } else if (BuildConfig.BrokerType == BrokerType.AWS.value) {
-                    discoveryUrl =
-                        DEFAULT_DISCOVERY_URL_AWS //set default discovery url when it is empty from client end.
+                    if (environment.value == IoTCEnvironment.PREQA.value) {
+                        discoveryUrl = DEFAULT_DISCOVERY_URL_AWS_PREQA //set default discovery url when it is empty from client end.
+                    } else if (environment.value == IoTCEnvironment.POC.value) {
+                        discoveryUrl = DEFAULT_DISCOVERY_URL_AWS_POC
+                    } else if (environment.value == IoTCEnvironment.PROD.value) {
+                        discoveryUrl = DEFAULT_DISCOVERY_URL_AWS_PROD
+                    }
                 } else {
                     discoveryUrl =
                         DEFAULT_DISCOVERY_URL_AZ //set default discovery url when it is empty from client end.
@@ -326,8 +335,13 @@ internal class SDKClientManager(
                 discoveryUrl =
                     DEFAULT_DISCOVERY_URL_AZ //set default discovery url when sdkOption is null.
             } else if (BuildConfig.BrokerType == BrokerType.AWS.value) {
-                discoveryUrl =
-                    DEFAULT_DISCOVERY_URL_AWS //set default discovery url when sdkOption is null.
+                if (environment.value == IoTCEnvironment.PREQA.value) {
+                    discoveryUrl = DEFAULT_DISCOVERY_URL_AWS_PREQA //set default discovery url when it is empty from client end.
+                } else if (environment.value == IoTCEnvironment.POC.value) {
+                    discoveryUrl = DEFAULT_DISCOVERY_URL_AWS_POC
+                } else if (environment.value == IoTCEnvironment.PROD.value) {
+                    discoveryUrl = DEFAULT_DISCOVERY_URL_AWS_PROD
+                }
             } else {
                 discoveryUrl =
                     DEFAULT_DISCOVERY_URL_AZ //set default discovery url when sdkOption is null.
