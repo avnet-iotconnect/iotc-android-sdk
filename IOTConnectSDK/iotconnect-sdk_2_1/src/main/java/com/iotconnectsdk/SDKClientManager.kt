@@ -90,7 +90,7 @@ internal class SDKClientManager(
 
     private val DEFAULT_DISCOVERY_URL_AZ = "https://discovery.iotconnect.io/"
 
-    private val DEFAULT_DISCOVERY_URL_AWS_PREQA = "http://54.160.162.148:219/"
+    private val DEFAULT_DISCOVERY_URL_AWS_PREQA = "https://jzbybwq654.execute-api.us-east-1.amazonaws.com/Prod/"
 
     private val DEFAULT_DISCOVERY_URL_AWS_POC = "https://awsdiscovery.iotconnect.io/"
 
