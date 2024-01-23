@@ -29,6 +29,7 @@ internal class IotSDKMQTTService private constructor(
     private val sdkOptions: String?,
     private val protocolBean: IdentityServiceResponse.D.P,
     private val authenticationType: Int,
+    private val topics: IdentityServiceResponse.D.P.Topics,
     private val hubToSdkCallback: HubToSdkCallback,
     private val publishMessageCallback: PublishMessageCallback,
     private val twinCallbackMessage: TwinUpdateCallback,
@@ -65,10 +66,18 @@ internal class IotSDKMQTTService private constructor(
         @Volatile
         private var iotSDKMQTTService: IotSDKMQTTService? = null
         fun getInstance(
-            context: Context, sdkOptions: String?, protocolBean: IdentityServiceResponse.D.P,
-            authenticationType: Int, hubToSdkCallback: HubToSdkCallback,
-            publishMessageCallback: PublishMessageCallback, twinCallbackMessage: TwinUpdateCallback,
-            iotSDKLogUtils: IotSDKLogUtils, isDebug: Boolean, uniqueId: String, cpId: String
+            context: Context,
+            sdkOptions: String?,
+            protocolBean: IdentityServiceResponse.D.P,
+            authenticationType: Int,
+            topics: IdentityServiceResponse.D.P.Topics,
+            hubToSdkCallback: HubToSdkCallback,
+            publishMessageCallback: PublishMessageCallback,
+            twinCallbackMessage: TwinUpdateCallback,
+            iotSDKLogUtils: IotSDKLogUtils,
+            isDebug: Boolean,
+            uniqueId: String,
+            cpId: String
         ): IotSDKMQTTService? {
 
             synchronized(this) {
@@ -78,6 +87,7 @@ internal class IotSDKMQTTService private constructor(
                         sdkOptions,
                         protocolBean,
                         authenticationType,
+                        topics,
                         hubToSdkCallback,
                         publishMessageCallback,
                         twinCallbackMessage,
@@ -174,15 +184,13 @@ internal class IotSDKMQTTService private constructor(
                     TWIN_SHADOW_PUB_TOPIC_BLANK_MSG = "\$iothub/twin/GET/?\$rid=0"
                     TWIN_SHADOW_SUB_TOPIC_BLANK_MSG = "\$iothub/twin/res/#"
                 } else if (BuildConfig.BrokerType == BrokerType.AWS.value) {
-                    TWIN_SHADOW_PUB_TOPIC =
-                        "\$rid=1\$aws/things/$CPID_DEVICEID/shadow/name/${CPID_DEVICEID}_twin_shadow/report"
-                    TWIN_SHADOW_SUB_TOPIC =
-                        "\$aws/things/$CPID_DEVICEID/shadow/name/${CPID_DEVICEID}_twin_shadow/property-shadow"
 
-                    TWIN_SHADOW_PUB_TOPIC_BLANK_MSG =
-                        "\$aws/things/$CPID_DEVICEID/shadow/name/${CPID_DEVICEID}_twin_shadow/get"
-                    TWIN_SHADOW_SUB_TOPIC_BLANK_MSG =
-                        "\$aws/things/$CPID_DEVICEID/shadow/name/${CPID_DEVICEID}_twin_shadow/get/all"
+                    TWIN_SHADOW_PUB_TOPIC = topics.set?.pub!!
+                    TWIN_SHADOW_SUB_TOPIC = topics.set?.sub!!
+
+                    TWIN_SHADOW_PUB_TOPIC_BLANK_MSG = topics.set?.pubForAll!!
+                    TWIN_SHADOW_SUB_TOPIC_BLANK_MSG = topics.set?.subForAll!!
+
                 } else {
                     TWIN_SHADOW_PUB_TOPIC = "\$iothub/twin/PATCH/properties/reported/?\$rid=1"
                     TWIN_SHADOW_SUB_TOPIC = "\$iothub/twin/PATCH/properties/desired/#"

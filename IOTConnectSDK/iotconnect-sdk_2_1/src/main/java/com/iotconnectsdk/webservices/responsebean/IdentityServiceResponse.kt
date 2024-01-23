@@ -102,8 +102,21 @@ data class IdentityServiceResponse(
                 @SerializedName("od")
                 val od: String,  // A string represents the publish topic of offline message
                 @SerializedName("rpt")
-                val rpt: String   // A string represents the publish topic of reporting message
-            )
+                val rpt: String,   // A string represents the publish topic of reporting message
+                @SerializedName("set")
+                var set: Set? = null // Represent shadow property in case of AWS broker
+            ) {
+                data class Set(
+                    @SerializedName("pub")
+                    var pub: String? = null,
+                    @SerializedName("sub")
+                    var sub: String? = null,
+                    @SerializedName("pubForAll")
+                    var pubForAll: String? = null,
+                    @SerializedName("subForAll")
+                    var subForAll: String? = null
+                )
+            }
         }
     }
 }

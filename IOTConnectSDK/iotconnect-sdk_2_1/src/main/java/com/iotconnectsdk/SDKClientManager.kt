@@ -167,6 +167,12 @@ internal class SDKClientManager(
 
     private var isRefreshAttribute = false
 
+    private val PREQA = "preqa"
+
+    private val POC = "POC"
+
+    private val PROD = "prod"
+
     val scope = MainScope()
     var job: Job? = null
 
@@ -308,11 +314,11 @@ internal class SDKClientManager(
                     discoveryUrl =
                         DEFAULT_DISCOVERY_URL_AZ //set default discovery url when it is empty from client end.
                 } else if (BuildConfig.BrokerType == BrokerType.AWS.value) {
-                    if (environment.value == IoTCEnvironment.PREQA.value) {
+                    if (environment.value == PREQA) {
                         discoveryUrl = DEFAULT_DISCOVERY_URL_AWS_PREQA //set default discovery url when it is empty from client end.
-                    } else if (environment.value == IoTCEnvironment.POC.value) {
+                    } else if (environment.value == POC) {
                         discoveryUrl = DEFAULT_DISCOVERY_URL_AWS_POC
-                    } else if (environment.value == IoTCEnvironment.PROD.value) {
+                    } else if (environment.value == PROD) {
                         discoveryUrl = DEFAULT_DISCOVERY_URL_AWS_PROD
                     }
                 } else {
@@ -335,11 +341,11 @@ internal class SDKClientManager(
                 discoveryUrl =
                     DEFAULT_DISCOVERY_URL_AZ //set default discovery url when sdkOption is null.
             } else if (BuildConfig.BrokerType == BrokerType.AWS.value) {
-                if (environment.value == IoTCEnvironment.PREQA.value) {
+                if (environment.value == PREQA) {
                     discoveryUrl = DEFAULT_DISCOVERY_URL_AWS_PREQA //set default discovery url when it is empty from client end.
-                } else if (environment.value == IoTCEnvironment.POC.value) {
+                } else if (environment.value == POC) {
                     discoveryUrl = DEFAULT_DISCOVERY_URL_AWS_POC
-                } else if (environment.value == IoTCEnvironment.PROD.value) {
+                } else if (environment.value == PROD) {
                     discoveryUrl = DEFAULT_DISCOVERY_URL_AWS_PROD
                 }
             } else {
@@ -526,6 +532,7 @@ internal class SDKClientManager(
             sdkOptions,
             response.d.p,
             response.d.meta.at,
+            response.d.p.topics,
             this,
             this,
             this,
