@@ -20,7 +20,6 @@ import com.iotconnectsdk.interfaces.DeviceCallback
 import com.iotconnectsdk.interfaces.HubToSdkCallback
 import com.iotconnectsdk.interfaces.PublishMessageCallback
 import com.iotconnectsdk.interfaces.TwinUpdateCallback
-import com.iotconnectsdk.iotconnectconfigs.EnvironmentType
 import com.iotconnectsdk.mqtt.IotSDKMQTTService
 import com.iotconnectsdk.utils.*
 import com.iotconnectsdk.utils.DateTimeUtils.getCurrentTime
@@ -54,18 +53,13 @@ import java.io.FileReader
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 
-
-/**
- * class for SDKClient
- */
-
 internal class SDKClientManager(
     private val context: Context?,
     private val cpId: String?,
     private val uniqueId: String?,
     private val deviceCallback: DeviceCallback?,
     private val sdkOptions: String?,
-    private val environment: EnvironmentType,
+    private val environment: IoTCEnvironment,
 
     ) : WsResponseInterface, HubToSdkCallback, PublishMessageCallback, TwinUpdateCallback,
     NetworkStateReceiver.NetworkStateReceiverListener {
@@ -96,7 +90,11 @@ internal class SDKClientManager(
 
     private val DEFAULT_DISCOVERY_URL_AZ = "https://discovery.iotconnect.io/"
 
-    private val DEFAULT_DISCOVERY_URL_AWS = "http://54.160.162.148:219/"
+    private val DEFAULT_DISCOVERY_URL_AWS_PREQA = "https://jzbybwq654.execute-api.us-east-1.amazonaws.com/Prod/"
+
+    private val DEFAULT_DISCOVERY_URL_AWS_POC = "https://awsdiscovery.iotconnect.io/"
+
+    private val DEFAULT_DISCOVERY_URL_AWS_PROD = "https://discoveryconsole.iotconnect.io/"
 
     private val URL_PATH = "api/$appVersion/dsdk/"
 
@@ -169,12 +167,17 @@ internal class SDKClientManager(
 
     private var isRefreshAttribute = false
 
+    private val PREQA = "preqa"
+
+    private val POC = "POC"
+
+    private val PROD = "prod"
+
     val scope = MainScope()
     var job: Job? = null
 
     var isSkipValidation = false
 
-    var brokerType = ""
 
 
     /*return singleton object for this class.
@@ -191,8 +194,8 @@ internal class SDKClientManager(
             uniqueId: String?,
             deviceCallback: DeviceCallback?,
             sdkOptions: String?,
-            environment: EnvironmentType
-        ): SDKClientManager {
+            environment: IoTCEnvironment
+        ): SDKClientManager? {
             synchronized(this) {
                 if (sdkClientManger == null) {
                     sdkClientManger = SDKClientManager(
@@ -204,9 +207,14 @@ internal class SDKClientManager(
                         environment
                     )
                 }
-                sdkClientManger?.connect()
-                sdkClientManger?.registerNetworkState()
-                return sdkClientManger!!
+                try {
+                    sdkClientManger?.connect()
+                    sdkClientManger?.registerNetworkState()
+                    return sdkClientManger!!
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    return null
+                }
             }
 
         }
@@ -229,6 +237,7 @@ internal class SDKClientManager(
     }
 
     private fun connect() {
+
         directoryPath = ""
         reCheckingCountTime = 0
         commandType = null
@@ -236,7 +245,6 @@ internal class SDKClientManager(
         isSaveToOffline = false
         isDebug = false
         isSkipValidation = false
-        brokerType = ""
         fileCount = 0
 
         //get is debug option.
@@ -252,9 +260,6 @@ internal class SDKClientManager(
                     isSkipValidation = sdkObj.getBoolean("skipValidation")
                 }
 
-                if (sdkObj.has("brokerType")) {
-                    brokerType = sdkObj.getString("brokerType")
-                }
 
                 if (sdkObj.has("offlineStorage")) {
                     val offlineStorage = sdkObj.getJSONObject("offlineStorage")
@@ -305,12 +310,17 @@ internal class SDKClientManager(
                         e.printStackTrace()
                     }
                 }
-                if (brokerType == BrokerType.AZ.value) {
+                if (BuildConfig.BrokerType == BrokerType.AZ.value) {
                     discoveryUrl =
                         DEFAULT_DISCOVERY_URL_AZ //set default discovery url when it is empty from client end.
-                } else if (brokerType == BrokerType.AWS.value) {
-                    discoveryUrl =
-                        DEFAULT_DISCOVERY_URL_AWS //set default discovery url when it is empty from client end.
+                } else if (BuildConfig.BrokerType == BrokerType.AWS.value) {
+                    if (environment.value == PREQA) {
+                        discoveryUrl = DEFAULT_DISCOVERY_URL_AWS_PREQA //set default discovery url when it is empty from client end.
+                    } else if (environment.value == POC) {
+                        discoveryUrl = DEFAULT_DISCOVERY_URL_AWS_POC
+                    } else if (environment.value == PROD) {
+                        discoveryUrl = DEFAULT_DISCOVERY_URL_AWS_PROD
+                    }
                 } else {
                     discoveryUrl =
                         DEFAULT_DISCOVERY_URL_AZ //set default discovery url when it is empty from client end.
@@ -327,25 +337,42 @@ internal class SDKClientManager(
             }
         } else {
 
-            if (brokerType == BrokerType.AZ.value) {
+            if (BuildConfig.BrokerType == BrokerType.AZ.value) {
                 discoveryUrl =
                     DEFAULT_DISCOVERY_URL_AZ //set default discovery url when sdkOption is null.
-            } else if (brokerType == BrokerType.AWS.value) {
-                discoveryUrl =
-                    DEFAULT_DISCOVERY_URL_AWS //set default discovery url when sdkOption is null.
+            } else if (BuildConfig.BrokerType == BrokerType.AWS.value) {
+                if (environment.value == PREQA) {
+                    discoveryUrl = DEFAULT_DISCOVERY_URL_AWS_PREQA //set default discovery url when it is empty from client end.
+                } else if (environment.value == POC) {
+                    discoveryUrl = DEFAULT_DISCOVERY_URL_AWS_POC
+                } else if (environment.value == PROD) {
+                    discoveryUrl = DEFAULT_DISCOVERY_URL_AWS_PROD
+                }
             } else {
                 discoveryUrl =
                     DEFAULT_DISCOVERY_URL_AZ //set default discovery url when sdkOption is null.
             }
         }
         if (!validationUtils!!.isEmptyValidation(
-                cpId, "ERR_IN04", context.getString(R.string.ERR_IN04)
+                cpId,
+                "ERR_IN04",
+                context.getString(R.string.ERR_IN04)
             )
-        ) return
+        ) {
+            deviceCallback?.onReceiveMsg(context.getString(R.string.ERR_IN04))
+            sdkClientManger = null
+            return
+        }
         if (!validationUtils!!.isEmptyValidation(
-                uniqueId, "ERR_IN05", context.getString(R.string.ERR_IN05)
+                uniqueId,
+                "ERR_IN05",
+                context.getString(R.string.ERR_IN05)
             )
-        ) return
+        ) {
+            deviceCallback?.onReceiveMsg(context.getString(R.string.ERR_IN05))
+            sdkClientManger = null
+            return
+        }
         callDiscoveryService()
     }
 
@@ -359,9 +386,9 @@ internal class SDKClientManager(
 
         if (appVersion != null) {
 
-            if (brokerType == BrokerType.AZ.value) {
+            if (BuildConfig.BrokerType == BrokerType.AZ.value) {
                 discoveryApi = discoveryUrl + URL_PATH + CPID + cpId + ENV + environment.value
-            } else if (brokerType == BrokerType.AWS.value) {
+            } else if (BuildConfig.BrokerType == BrokerType.AWS.value) {
                 discoveryApi =
                     discoveryUrl + URL_PATH + CPID + cpId + ENV + environment.value + END_POINT_AWS
             } else {
@@ -462,7 +489,6 @@ internal class SDKClientManager(
                         }
                         return
                     } else if (rc != 0) {
-//                            onConnectionStateChange(false);
                         iotSDKLogUtils!!.log(
                             true, isDebug, "ERR_IN10", context!!.getString(R.string.ERR_IN10)
                         )
@@ -506,6 +532,7 @@ internal class SDKClientManager(
             sdkOptions,
             response.d.p,
             response.d.meta.at,
+            response.d.p.topics,
             this,
             this,
             this,

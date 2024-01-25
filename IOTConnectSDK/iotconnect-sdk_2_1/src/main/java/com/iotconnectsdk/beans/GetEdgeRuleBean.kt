@@ -8,7 +8,7 @@ internal data class GetEdgeRuleBean(
     @SerializedName("g")
     val g: String,
     @SerializedName("es")
-    val es: String, // 0
+    val es: String,
     @SerializedName("con")
     val con: String,
     @SerializedName("cmd")

@@ -13,7 +13,6 @@ android {
         targetSdk 33
         versionCode 1
         versionName "1.0"
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -36,6 +35,7 @@ dependencies {
     implementation 'com.google.android.material:material:1.7.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
 
+
     testImplementation 'junit:junit:'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
@@ -47,8 +47,13 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 
-    implementation project(path: ':iotconnect-sdk_2_1')
-//    implementation 'com.github.avnet-iotconnect:iotc-android-sdk:3.1.2'
+
+     implementation 'com.github.avnet-iotconnect:iotc-android-sdk:12.2.1-azTest'
+   //  implementation 'com.github.avnet-iotconnect:iotc-android-sdk:12.2.1-awsTest'
+
+
+  //  implementation project(':iotconnect-sdk_2_1')
+
 }
 
 

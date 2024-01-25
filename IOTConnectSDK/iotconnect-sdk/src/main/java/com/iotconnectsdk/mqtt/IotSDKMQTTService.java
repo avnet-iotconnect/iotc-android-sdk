@@ -25,8 +25,6 @@ import org.json.JSONObject;
  */
 public class IotSDKMQTTService {
 
-    private static final String TAG = IotSDKMQTTService.class.getSimpleName();
-
     private MqttAndroidClient mqttAndroidClient;
     private final HubToSdkCallback mHubToSdkCallback;
     private final TwinUpdateCallback twinCallbackMessage;
@@ -43,7 +41,6 @@ public class IotSDKMQTTService {
     private final String DESIRED = "desired";
     private final String UNIQUE_ID = "uniqueId";
 
-    private final String TWIN_SUBTOPIC_CONTAINT = "$iothub/twin/";
 
     private String subscriptionTopic;// = "devices/520uta-sdk003/messages/devicebound/#";
     private String publishTopic;// = "devices/520uta-sdk003/messages/events/";

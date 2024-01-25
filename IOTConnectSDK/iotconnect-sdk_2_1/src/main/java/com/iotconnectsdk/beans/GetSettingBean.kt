@@ -8,7 +8,7 @@ internal data class GetSettingBean(
     @SerializedName("ln")
     val ln: String,
     @SerializedName("dt")
-    val dt: Int, // 0
+    val dt: Int,
     @SerializedName("dv")
     val dv: String,
 )

@@ -7,7 +7,7 @@ internal data class DiscoveryApiResponse(
     @SerializedName("d")
     val d: D,
     @SerializedName("message")
-    val message: String,    /* Success
+    val message: String, /* Success
                                based on value of ec
                             // 0 – Success
                             // 1 – Invalid value of SID
@@ -15,7 +15,7 @@ internal data class DiscoveryApiResponse(
                             // 3 – Subscription Expired */
 
     @SerializedName("status")
-    val status: Int // 200
+    val status: Int
 ) {
     data class D(
         @SerializedName("bu")
@@ -25,9 +25,9 @@ internal data class DiscoveryApiResponse(
         @SerializedName("log:https")
         val logHttps: String, // HTTPS url where log message needs to send [POST API]
         @SerializedName("pf")
-        val pf: String,       // value may vary based on the broker
+        val pf: String, // value may vary based on the broker
         @SerializedName("log:mqtt")
-        val logMqtt: LogMqtt  // MQTT connection details to optionally send device logging
+        val logMqtt: LogMqtt // MQTT connection details to optionally send device logging
     ) {
         data class LogMqtt(
             @SerializedName("hn")
@@ -37,7 +37,7 @@ internal data class DiscoveryApiResponse(
             @SerializedName("topic")
             val topic: String,  // Topic on which log messages can be sent
             @SerializedName("un")
-            val un: String  // Username to connect MQTT broker
+            val un: String // Username to connect MQTT broker
         )
     }
 }

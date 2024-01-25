@@ -6,7 +6,7 @@ import com.google.gson.annotations.SerializedName
 
 internal data class GetOTAUpdateBean(
     @SerializedName("cmd")
-    val cmd: String? = null, // ota
+    val cmd: String? = null,
     @SerializedName("ack")
     val ack: String? = null,
     @SerializedName("ver")

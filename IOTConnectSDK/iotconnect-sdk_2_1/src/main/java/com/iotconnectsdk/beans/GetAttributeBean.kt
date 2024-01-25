@@ -8,7 +8,7 @@ internal data class GetAttributeBean(
     @SerializedName("p")
     val p: String,
     @SerializedName("dt")
-    val dt: Int, // 0
+    val dt: Int,
     @SerializedName("tg")
     val tg: String? = null,
     @SerializedName("tw")
@@ -18,13 +18,13 @@ internal data class GetAttributeBean(
 ) {
     data class D(
         @SerializedName("ln")
-        val ln: String, // Temp
+        val ln: String,
         @SerializedName("dt")
-        val dt: Int, // 1
+        val dt: Int,
         @SerializedName("dv")
         val dv: String,
         @SerializedName("sq")
-        val sq: Int, // 1
+        val sq: Int,
         @SerializedName("tg")
         val tg: String,
         @SerializedName("tw")

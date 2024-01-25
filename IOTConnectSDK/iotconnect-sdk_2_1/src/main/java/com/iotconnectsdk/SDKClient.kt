@@ -1,14 +1,14 @@
 package com.iotconnectsdk
 
+
 import android.content.Context
 import com.google.gson.Gson
 import com.iotconnectsdk.beans.D2CSendAckBean
 import com.iotconnectsdk.interfaces.DeviceCallback
-import com.iotconnectsdk.iotconnectconfigs.EnvironmentType
+
 import com.iotconnectsdk.utils.*
 import com.iotconnectsdk.utils.DateTimeUtils.currentDate
 import org.json.JSONObject
-import java.util.*
 
 /**
  * class for SDKClient
@@ -40,7 +40,7 @@ class SDKClient(
             uniqueId: String?,
             deviceCallback: DeviceCallback?,
             sdkOptions: String?,
-            environment: EnvironmentType
+            environment: IoTCEnvironment
         ): SDKClient {
             synchronized(this) {
                 if (sdkClient == null) {
@@ -71,7 +71,7 @@ class SDKClient(
         uniqueId: String?,
         deviceCallback: DeviceCallback?,
         sdkOptions: String?,
-        environment: EnvironmentType
+        environment: IoTCEnvironment
     ) {
         sdkClientManager = SDKClientManager.getInstance(
             context,

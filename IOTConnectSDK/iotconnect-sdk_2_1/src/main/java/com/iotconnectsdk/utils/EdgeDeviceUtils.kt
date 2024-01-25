@@ -1,11 +1,12 @@
 package com.iotconnectsdk.utils
 
+
 import android.content.Context
-import android.util.Log
 import com.google.common.collect.ListMultimap
+import com.iotconnectsdk.IoTCEnvironment
 import com.iotconnectsdk.beans.GetEdgeRuleBean
 import com.iotconnectsdk.beans.TumblingWindowBean
-import com.iotconnectsdk.iotconnectconfigs.EnvironmentType
+
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -84,7 +85,7 @@ internal object EdgeDeviceUtils {
         edgeDeviceAttributeMap: ListMultimap<String, TumblingWindowBean>?,
         uniqueId: String?,
         cpId: String?,
-        environment: EnvironmentType,
+        environment: IoTCEnvironment,
         appVersion: String?,
         dtg: String?
     ): JSONObject? {

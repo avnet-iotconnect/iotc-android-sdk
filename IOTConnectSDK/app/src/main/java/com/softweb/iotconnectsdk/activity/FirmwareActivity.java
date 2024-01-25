@@ -11,10 +11,12 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.RadioButton;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -25,8 +27,8 @@ import androidx.core.content.ContextCompat;
 
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.gson.Gson;
+import com.iotconnectsdk.IoTCEnvironment;
 import com.iotconnectsdk.SDKClient;
-import com.iotconnectsdk.enums.BrokerType;
 import com.iotconnectsdk.interfaces.DeviceCallback;
 
 import org.json.JSONArray;
@@ -39,6 +41,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -46,7 +49,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
-import com.iotconnectsdk.iotconnectconfigs.EnvironmentType;
+
 import com.softweb.iotconnectsdk.model.Attribute;
 import com.softweb.iotconnectsdk.model.AttributesModel;
 import com.iotconnectsdk.iotconnectconfigs.Certificate;
@@ -70,7 +73,7 @@ import com.softweb.iotconnectsdk.R;
  * Hope you have imported SDK v3.1.2 in build.gradle as guided in README.md file or from documentation portal.
  */
 
-public class FirmwareActivity extends AppCompatActivity implements View.OnClickListener, DeviceCallback {
+public class FirmwareActivity extends AppCompatActivity implements View.OnClickListener, AdapterView.OnItemSelectedListener, DeviceCallback {
 
     private static final String TAG = FirmwareActivity.class.getSimpleName();
 
@@ -88,10 +91,8 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
     private EditText etUniqueId;
     private EditText etSubscribe;
 
-    private RadioButton rbtnDev;
-    private RadioButton rbtnAvnet;
-    private RadioButton rbtnProd;
-    private RadioButton rbtnQa;
+
+    private Spinner spEnvironment;
 
     private LinearLayout linearLayout;
 
@@ -116,7 +117,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
      **/
     private String cpId = "";
     private String uniqueId = "";
-    private EnvironmentType environment;
+    private IoTCEnvironment environment;
 
     static SDKClient sdkClient;
 
@@ -126,6 +127,8 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
     String childId = "";
     int cmdType = -1;
     JSONObject mainObject = null;
+
+    List<IoTCEnvironment> enumValues;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -146,19 +149,25 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         btnGetAllTwins = findViewById(R.id.btnGetAllTwins);
         btnClear = findViewById(R.id.btnClear);
         btnChildDevices = findViewById(R.id.btnChildDevices);
+        spEnvironment = findViewById(R.id.spEnvironment);
 
         btnConnect.setOnClickListener(this);
         btnSendData.setOnClickListener(this);
         btnGetAllTwins.setOnClickListener(this);
         btnClear.setOnClickListener(this);
         btnChildDevices.setOnClickListener(this);
+        spEnvironment.setOnItemSelectedListener(this);
 
-        rbtnDev = findViewById(R.id.rbtnDev);
-        rbtnAvnet = findViewById(R.id.rbtnAvnet);
-        rbtnProd = findViewById(R.id.rbtnProd);
-        rbtnQa = findViewById(R.id.rbtnQa);
 
         checkPermissions();
+
+        enumValues = Arrays.asList(IoTCEnvironment.values());
+
+
+        ArrayAdapter<IoTCEnvironment> adapter = new ArrayAdapter<>(FirmwareActivity.this, R.layout.spinner_list, enumValues);
+        adapter.setDropDownViewResource(R.layout.spinner_list);
+        spEnvironment.setAdapter(adapter);
+
     }
 
     @Override
@@ -180,6 +189,8 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                     cpId = etCpid.getText().toString();
                     uniqueId = etUniqueId.getText().toString();
 
+                    showDialog(FirmwareActivity.this);
+
                     /*
                      * Type    : Object Initialization "new SDKClient()"
                      * Usage   : To Initialize SDK and Device connection
@@ -188,7 +199,6 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                      */
                     sdkClient = SDKClient.getInstance(FirmwareActivity.this, cpId, uniqueId, FirmwareActivity.this, getSdkOptions(), environment);
 
-                    showDialog(FirmwareActivity.this);
                 }
             }
         } else if (v.getId() == R.id.btnSendData) {
@@ -313,7 +323,6 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         sdkOptions.certificate = certificate;
         sdkOptions.offlineStorage = offlineStorage;
         sdkOptions.setSkipValidation(false);
-        sdkOptions.brokerType = BrokerType.AZ;    //pass broker type either AZ or AWS from mentioned enums
 
         String sdkOptionsJsonStr = new Gson().toJson(sdkOptions);
 
@@ -726,37 +735,6 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
     }
 
     /*
-     * Type    : Public Method "onRadioButtonClicked()"
-     * Usage   : Radio button click event handled.
-     * Input   :
-     * Output  :
-     */
-    public void onRadioButtonClicked(View view) {
-        // Is the button now checked?
-        boolean checked = ((RadioButton) view).isChecked();
-        // Check which radio button was clicked
-
-        switch (view.getId()) {
-            case R.id.rbtnDev:
-                if (checked)
-                    environment = EnvironmentType.DEV;
-                break;
-            case R.id.rbtnProd:
-                if (checked)
-                    environment = EnvironmentType.PROD;
-                break;
-            case R.id.rbtnAvnet:
-                if (checked)
-                    environment = EnvironmentType.AVNET;
-                break;
-            case R.id.rbtnQa:
-                if (checked)
-                    environment = EnvironmentType.QA;
-                break;
-        }
-    }
-
-    /*
      * Type    : private function "setStatusText()"
      * Usage   : To set the text to textView.
      * Input   : String.xml value for specific text.
@@ -866,5 +844,15 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         }
 
         return new File("");
+    }
+
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        environment = enumValues.get(position);
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+
     }
 }

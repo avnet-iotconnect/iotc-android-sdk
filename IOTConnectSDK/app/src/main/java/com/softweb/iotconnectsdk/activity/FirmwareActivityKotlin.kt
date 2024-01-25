@@ -1,5 +1,6 @@
 package com.softweb.iotconnectsdk.activity
 
+
 import android.Manifest
 import android.app.Activity
 import android.app.ProgressDialog
@@ -17,15 +18,16 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.android.material.textfield.TextInputLayout
 import com.google.gson.Gson
+import com.iotconnectsdk.IoTCEnvironment
 import com.iotconnectsdk.SDKClient
-import com.iotconnectsdk.enums.BrokerType
 import com.iotconnectsdk.interfaces.DeviceCallback
 import com.iotconnectsdk.iotconnectconfigs.Certificate
-import com.iotconnectsdk.iotconnectconfigs.EnvironmentType
+
 import com.iotconnectsdk.iotconnectconfigs.OfflineStorage
 import com.iotconnectsdk.iotconnectconfigs.SdkOptions
 import com.softweb.iotconnectsdk.R
 import com.softweb.iotconnectsdk.model.*
+
 import kotlinx.android.synthetic.main.activity_firmware.*
 import org.json.JSONArray
 import org.json.JSONException
@@ -48,7 +50,7 @@ import java.util.*
  * Hope you have imported SDK v3.1.2 in build.gradle as guided in README.md file or from documentation portal.
  */
 class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
-    DeviceCallback {
+    AdapterView.OnItemSelectedListener, DeviceCallback {
     private val TAG = FirmwareActivityKotlin::class.java.simpleName
 
     private var inputMap: MutableMap<String, List<TextInputLayout>>? = null
@@ -70,7 +72,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
      **/
     private var cpId = ""
     private var uniqueId = ""
-    private lateinit var environment:EnvironmentType
+    private lateinit var environment: IoTCEnvironment
 
     private var sdkClient: SDKClient? = null
 
@@ -83,6 +85,8 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
     var cmdType = -1
     var mainObject: JSONObject? = null
 
+    var enumValues: List<IoTCEnvironment>? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_firmware)
@@ -93,8 +97,15 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
         btnGetAllTwins.setOnClickListener(this)
         btnClear.setOnClickListener(this)
         btnChildDevices.setOnClickListener(this)
+        spEnvironment.onItemSelectedListener = this
 
         checkPermissions()
+
+        enumValues = IoTCEnvironment.values().asList()
+
+        val adapter = ArrayAdapter(this@FirmwareActivityKotlin, R.layout.spinner_list, enumValues!!)
+        adapter.setDropDownViewResource(R.layout.spinner_list)
+        spEnvironment.adapter = adapter
     }
 
     override fun onClick(v: View) {
@@ -102,20 +113,22 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
             if (sdkClient != null && isConnected) {
                 sdkClient!!.dispose()
             } else {
-                 if (!::environment.isInitialized) {
-                     Toast.makeText(
-                         this@FirmwareActivityKotlin,
-                         getString(R.string.string_select_environment),
-                         Toast.LENGTH_LONG
-                     ).show()
-                     return
-                 }
+                if (!::environment.isInitialized) {
+                    Toast.makeText(
+                        this@FirmwareActivityKotlin,
+                        getString(R.string.string_select_environment),
+                        Toast.LENGTH_LONG
+                    ).show()
+                    return
+                }
                 if (checkValidation()) {
                     setStatusText(R.string.initializing_sdk)
                     btnSendData!!.isEnabled = false
                     btnGetAllTwins!!.isEnabled = false
                     cpId = etCpid!!.text.toString()
                     uniqueId = etUniqueId!!.text.toString()
+
+                    showDialog(this@FirmwareActivityKotlin)
 
                     /*
                      * Type    : Object Initialization "new SDKClient()"
@@ -130,7 +143,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
                         sdkOptions,
                         environment
                     )
-                    showDialog(this@FirmwareActivityKotlin)
+
                 }
             }
         } else if (v.id == R.id.btnSendData) {
@@ -279,7 +292,6 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
             sdkOptions.certificate = certificate
             sdkOptions.offlineStorage = offlineStorage
             sdkOptions.isSkipValidation = false
-            sdkOptions.brokerType = BrokerType.AZ//pass broker type either "az" or "aws"
 
             val sdkOptionsJsonStr = Gson().toJson(sdkOptions)
             Log.d(
@@ -639,22 +651,6 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
         }
     }
 
-    /*
-     * Type    : Public Method "onRadioButtonClicked()"
-     * Usage   : Radio button click event handled.
-     * Input   :
-     * Output  :
-     */
-    fun onRadioButtonClicked(view: View) {
-        // Is the button now checked?
-        val checked = (view as RadioButton).isChecked
-        when (view.getId()) {
-            R.id.rbtnDev -> if (checked) environment = EnvironmentType.DEV
-            R.id.rbtnProd -> if (checked) environment = EnvironmentType.PROD
-            R.id.rbtnAvnet -> if (checked) environment = EnvironmentType.AVNET
-            R.id.rbtnQa -> if (checked) environment = EnvironmentType.QA
-        }
-    }
 
     /*
      * Type    : private function "setStatusText()"
@@ -777,5 +773,13 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
                 df.timeZone = TimeZone.getTimeZone("gmt")
                 return df.format(Date())
             }
+    }
+
+    override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+        environment = enumValues!![position]
+    }
+
+    override fun onNothingSelected(parent: AdapterView<*>?) {
+
     }
 }
