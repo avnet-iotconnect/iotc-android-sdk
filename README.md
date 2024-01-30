@@ -288,6 +288,10 @@ Note : (*) indicates the mandatory element of the object.
 - Android software development kit
 - Android Studio
 
+## Legacy Device Message 1.0 Format
+Please refer this [link](https://github.com/avnet-iotconnect/iotc-android-sdk/blob/release/3.1.4/README.md)
+
+
 # Third Party Frameworks Used
 
 - [Retrofit](https://github.com/square/retrofit) for HTTP networking
