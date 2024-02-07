@@ -25,10 +25,14 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.util.Log;
+import android.widget.Toast;
 
 /**
  * Default ping sender implementation on Android. It is based on AlarmManager.
@@ -113,7 +117,27 @@ class AlarmPingSender implements MqttPingSender {
 		AlarmManager alarmManager = (AlarmManager) service
 				.getSystemService(Service.ALARM_SERVICE);
 
-		if(Build.VERSION.SDK_INT >= 23){
+
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+			Log.d(TAG, "Alarm scheule using setExactAndAllowWhileIdle, next: " + delayInMilliseconds);
+
+			if (alarmManager.canScheduleExactAlarms()) {
+				alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nextAlarmInMilliseconds,
+						pendingIntent);
+			} else {
+				new Handler(Looper.getMainLooper()).post(new Runnable() {
+					@Override
+					public void run() {
+						Toast.makeText(service,"Please allow Permissions",Toast.LENGTH_LONG).show();
+					}
+				});
+
+				Intent intent = new Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+				intent.setData(Uri.fromParts("package", service.getPackageName(), null));
+				intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+				service.startActivity(intent);
+			}
+		} else if (Build.VERSION.SDK_INT >= 23) {
 			// In SDK 23 and above, dosing will prevent setExact, setExactAndAllowWhileIdle will force
 			// the device to run this task whilst dosing.
 			Log.d(TAG, "Alarm scheule using setExactAndAllowWhileIdle, next: " + delayInMilliseconds);
