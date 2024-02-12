@@ -55,6 +55,12 @@ This library only abstract JSON responses from both end D2C and C2D
 	- SSLKeyPath: your device key
 	- SSLCertPath: your device certificate
 	- SSLCaPath : Root CA certificate
+> ****Note**:-** For **AWS platform** you have to convert files mentioned with below openssl command for SSLKeyPath and SSLCertPath:                          
+		**SSLKeyPath** -> openssl rsa -in device.pem -out device.key                             
+		**SSLCertPath** -> openssl x509 -in certificate.crt -out certificate.pem                               
+		**SSLCaPath**  -> For Root CA you have to go to Settings->KeyVault of IOTConnect portal and save rootCA file from AmazonRootCA1 title and rename to .pem file
+
+
 * "offlineStorage" : Define the configuration related to the offline data storage 
 	- disabled : false = offline data storing, true = not storing offline data 
 	- availSpaceInMb : Define the file size of off-line data which should be in (MB)
@@ -281,6 +287,8 @@ Note : (*) indicates the mandatory element of the object.
 	      implementation 'com.github.avnet-iotconnect:iotc-android-sdk:12.2.1-awsTest'
 	}
 ```	
+
+
 
 ## Prerequisite tools
 
