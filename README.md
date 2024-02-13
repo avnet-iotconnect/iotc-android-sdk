@@ -295,6 +295,7 @@ Note : (*) indicates the mandatory element of the object.
 - Java 8 ( or above )
 - Android software development kit
 - Android Studio
+- For support of SDK in Android 14 devices permission regarding Schedule exact alarms should be given when asked or manually by yourself
 
 ## Legacy Device Message 1.0 Format
 Please refer this [link](https://github.com/avnet-iotconnect/iotc-android-sdk/blob/release/3.1.4/README.md)
