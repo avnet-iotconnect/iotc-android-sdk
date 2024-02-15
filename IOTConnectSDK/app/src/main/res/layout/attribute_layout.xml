@@ -12,6 +12,8 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="5dp"
         android:backgroundTint="@color/white"
+        android:imeOptions="actionNext"
+        android:inputType="text"
         android:textAppearance="@style/TextLabel"
         android:textSize="20sp" />
 

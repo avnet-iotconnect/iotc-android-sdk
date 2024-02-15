@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.softweb.iotconnectsdk">
-
     <!-- Permissions the Application Requires -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
@@ -14,7 +13,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.IoTConnectSDK">
-
+        <activity
+            android:name=".activity.GatewayChildDevicesActivity"
+            android:exported="false" />
         <activity
             android:name=".activity.FirmwareActivity"
             android:exported="true">
@@ -24,5 +25,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+
+        <activity
+            android:name=".activity.FirmwareActivityKotlin"
+            android:exported="true">
+        </activity>
     </application>
+
 </manifest>

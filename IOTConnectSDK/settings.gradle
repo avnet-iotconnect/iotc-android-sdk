@@ -10,3 +10,4 @@ dependencyResolutionManagement {
 rootProject.name = "IoTConnectSDK"
 include ':app'
 include ':iotconnect-sdk'
+include ':iotconnect-sdk_2_1'

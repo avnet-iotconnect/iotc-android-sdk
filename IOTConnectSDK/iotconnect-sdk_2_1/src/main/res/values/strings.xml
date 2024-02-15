@@ -1,0 +1,92 @@
+<resources>
+
+    <string name="device_is_barred">Device:%s is barred - method:%s not Permitted</string>
+
+    <string name="ERR_IN01">Invalid URL</string>
+    <string name="ERR_IN02"><![CDATA[Discovery URL can not be blank]]></string>
+    <string name="ERR_IN03"><![CDATA[Missing required parameter \'discoveryUrl\' in sdkOptions]]></string>
+    <string name="ERR_IN04">cpId can not be blank</string>
+    <string name="ERR_IN05">uniqueId can not be blank</string>
+    <string name="ERR_IN08"><![CDATA[Network connection error or invalid url]]></string>
+    <string name="ERR_IN09">Unable to get baseUrl</string>
+    <string name="ERR_IN10">Device information not found</string>
+    <string name="ERR_IN11">Device broker information not found</string>
+    <string name="ERR_SD04">Device is barred SendData() method is not permitted</string>
+    <string name="ERR_SD05">Invalid data type to send the data. It should be in array of object type</string>
+    <string name="ERR_SD06">Missing required parameter \'data\'</string>
+    <string name="ERR_SD07">Missing required parameter \'time\'</string>
+    <string name="ERR_SD08">Missing required parameter \'uniqueId\'</string>
+    <string name="ERR_TP01">" Device is barred UpdateTwin() method is not permitted"</string>
+    <string name="ERR_TP03">Missing required parameter \'key\' or \'value\' to update twin property</string>
+    <string name="ERR_CM02">" Missing required parameter 'obj' or 'msgType' to send acknowledgement"</string>
+    <string name="ERR_CM03">Invalid data type to send the acknowledgment. It should be in \'object\' type</string>
+    <string name="ERR_CM04">Device is barred SendAck() method is not permitted</string>
+    <string name="ERR_SD02">It does not matched with payload\'s \'uniqueId\'</string>
+    <string name="ERR_SD03">" It does not matched with predefined standard date time format for payload's 'time'"</string>
+    <string name="ERR_SD10">Publish data failed : MQTT connection not found</string>
+
+    <string name="INFO_IN02">Device connected </string>
+    <string name="INFO_IN03">Device disconnected</string>
+    <string name="INFO_IN04">Initializing…</string>
+    <string name="INFO_IN05">Connecting...</string>
+    <string name="INFO_SD01">Publish data :</string>
+    <string name="INFO_TP01">Twin property updated successfully :</string>
+
+    <string name="INFO_CM01">Command : 0 : STANDARD_COMMAND</string>
+
+    <string name="INFO_CM02">Command : 1 : FIRMWARE_UPDATE</string>
+    <string name="INFO_CM02Module">Command : 2 : MODULE_UPDATE</string>
+    <string name="INFO_CM08">Command : 0x99 : STOP_SDK_CONNECTION</string>
+    <string name="INFO_CM16">Command : 116 : DEVICE_CONNECTION_STATUS</string>
+
+    <string name="INFO_DC01">Device already disconnected</string>
+    <string name="INFO_IN06">Rechecking…</string>
+    <string name="ERR_GA02"><![CDATA[Attributes data not found]]></string>
+    <string name="ERR_TP04"><![CDATA[Device is barred getAllTwins() method is not permitted]]></string>
+    <string name="ERR_IN13"><![CDATA[Client connection failed]]></string>
+    <string name="INFO_IN15">Response Code : \'NO_RESPONSE_CODE_MATCHED\'</string>
+    <string name="INFO_IN08">Response Code : 0 \'OK\'</string>
+    <string name="INFO_IN09">Response Code : 1 \'DEVICE_NOT_REGISTERED\'</string>
+    <string name="INFO_IN10">Response Code : 2 \'AUTO_REGISTER\'</string>
+    <string name="INFO_IN11">Response Code : 3 \'DEVICE_NOT_FOUND\'</string>
+    <string name="INFO_IN12">Response Code : 4 \'DEVICE_INACTIVE\'</string>
+    <string name="INFO_IN13">Response Code : 5 \'OBJECT_MOVED\'</string>
+    <string name="INFO_IN14">Response Code : 6 \'CPID_NOT_FOUND\'</string>
+    <string name="INFO_IN07"><![CDATA[BaseUrl received to sync the device information]]></string>
+    <string name="INFO_TP02"><![CDATA[Request sent successfully to get the all twin properties]]></string>
+    <string name="INFO_GA01"><![CDATA[Get attributes successfully]]></string>
+    <string name="ERR_OS03">"Unable to read or write file - "</string>
+    <string name="ERR_OS02">"Error while creating log directory - "</string>
+    <string name="INFO_OS02">Offline data saved</string>
+    <string name="INFO_OS03">File has been created to store offline data.</string>
+    <string name="INFO_OS04">Offline log file deleted</string>
+    <string name="INFO_OS05">No offline data found</string>
+
+    <string name="tv_device_not_found">Device not found. Device is not whitelisted to platform</string>
+    <string name="tv_device_not_active">Device is not active</string>
+    <string name="tv_device_unassociated">Un-Associated. Device has not any template associated with it</string>
+    <string name="tv_device_not_acquired">Device is not acquired. Device is created but it is in release state</string>
+    <string name="tv_device_disabled">Device is disabled. It’s disabled from IoTHub by Platform Admin</string>
+    <string name="tv_company_not_found">Company not found as SID is not valid</string>
+    <string name="tv_subs_expired">Subscription is expired</string>
+    <string name="tv_conn_not_allow">Connection Not Allowed</string>
+    <string name="tv_invalid_boot_certificate">Invalid Bootstrap Certificate</string>
+    <string name="tv_invalid_opp_certificate">Invalid Operational Certificate</string>
+
+
+    <string name="tv_device_created">Child Device created successfully</string>
+    <string name="tv_missing_child_tag">Missing child tag</string>
+    <string name="tv_missing_uniqueid">Missing child device uniqueid</string>
+    <string name="tv_missing_name">Missing child device display name</string>
+    <string name="tv_missing_gatewaydevice">Gateway device not found</string>
+    <string name="tv_something_wrong">Could not create device, something went wrong</string>
+    <string name="tv_tag_not_valid">Child device tag is not valid</string>
+    <string name="tv_tag_issue">Child device tag name cannot be same as Gateway device</string>
+    <string name="tv_id_exist">Child uniqueid is already exists.</string>
+    <string name="tv_id_limit">Child uniqueid should not exceed 128 characters</string>
+
+
+    <string name="tv_device_deleted">Child Device deleted successfully</string>
+    <string name="tv_child_device_not_found">Child device not found</string>
+
+</resources>

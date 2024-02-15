@@ -25,11 +25,9 @@ import org.json.JSONObject;
  */
 public class IotSDKMQTTService {
 
-    private static String TAG = IotSDKMQTTService.class.getSimpleName();
-
     private MqttAndroidClient mqttAndroidClient;
-    private HubToSdkCallback mHubToSdkCallback;
-    private TwinUpdateCallback twinCallbackMessage;
+    private final HubToSdkCallback mHubToSdkCallback;
+    private final TwinUpdateCallback twinCallbackMessage;
 
     //- To receive the desired property and update the Reported Property
     private final String TWIN_PUB_TOPIC = "$iothub/twin/PATCH/properties/reported/?$rid=1";
@@ -43,16 +41,15 @@ public class IotSDKMQTTService {
     private final String DESIRED = "desired";
     private final String UNIQUE_ID = "uniqueId";
 
-    private final String TWIN_SUBTOPIC_CONTAINT = "$iothub/twin/";
 
     private String subscriptionTopic;// = "devices/520uta-sdk003/messages/devicebound/#";
     private String publishTopic;// = "devices/520uta-sdk003/messages/events/";
 
-    private IotSDKLogUtils iotSDKLogUtils;
-    private boolean isDebug;
-    private Context context;
-    private String uniqueId;
-    private SyncServiceResponse.DBeanXX.PBean protocolBean;
+    private final IotSDKLogUtils iotSDKLogUtils;
+    private final boolean isDebug;
+    private final Context context;
+    private final String uniqueId;
+    private final SyncServiceResponse.DBeanXX.PBean protocolBean;
 
 
     private static IotSDKMQTTService iotSDKMQTTService;
@@ -91,14 +88,14 @@ public class IotSDKMQTTService {
         mqttAndroidClient.setCallback(new MqttCallbackExtended() {
             @Override
             public void connectComplete(boolean reconnect, String serverURI) {
-                if (reconnect) {
+                //if (reconnect) {
                     // Because Clean Session is true, we need to re-subscribe
                     if (subscriptionTopic != null) {
                         subscribeToTopic();
                     }
-                } else {
+                /*} else {
 //                    addToHistory("Connected to: " + serverURI);
-                }
+                }*/
             }
 
             @Override

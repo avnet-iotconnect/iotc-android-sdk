@@ -531,8 +531,8 @@ public class SDKClientUtils {
                 for (int i = 0; i <= param.length; i++) {
                     String att = param[i];
                     if (att.contains(".")) {           //gyro#vibration.x > 5
-                        String KeyValue[] = att.split("\\.");
-                        String parent[] = KeyValue[0].split("#"); //gyro#vibration
+                        String[] KeyValue = att.split("\\.");
+                        String[] parent = KeyValue[0].split("#"); //gyro#vibration
                         String parentAttName = parent[0]; //gyro
 //                        String childAttName = parent[1]; //vibration
 //                        String keyAttName = KeyValue[1]; //x > 5
@@ -540,7 +540,7 @@ public class SDKClientUtils {
                         return parentAttName;
                     } else if (con.contains("#")) {                    //gyro#x > 5
 
-                        String parent[] = att.split("#"); //gyro#x > 5
+                        String[] parent = att.split("#"); //gyro#x > 5
                         String parentAttName = parent[0]; //gyro
 //                        String childAttName = parent[1]; //x > 5
                         return parentAttName;
@@ -549,8 +549,8 @@ public class SDKClientUtils {
                 }
             } else if (con.contains("#")) {     //ac1#vibration.x > 5
 
-                String KeyValue[] = con.split("\\.");
-                String parent[] = KeyValue[0].split("#"); //gyro#vibration
+                String[] KeyValue = con.split("\\.");
+                String[] parent = KeyValue[0].split("#"); //gyro#vibration
                 String parentAttName = parent[0]; //gyro
                 String childAttName = parent[1]; //vibration
 
@@ -558,7 +558,7 @@ public class SDKClientUtils {
                 return SDKClientUtils.getAttName(keyAttName);
 
             } else if (con.contains(".")) {
-                String keyValue[] = con.split("\\.");
+                String[] keyValue = con.split("\\.");
                 return keyValue[0];
             } else {    //x > 5
                 return SDKClientUtils.getAttName(con);
@@ -614,7 +614,7 @@ public class SDKClientUtils {
     }
 
     private static String getRuleAttName(String con, String operator) {
-        String att[] = con.split(operator);
+        String[] att = con.split(operator);
         return (att[0].replaceAll("\\s", ""));
     }
 
@@ -660,7 +660,7 @@ public class SDKClientUtils {
 
 
     private static int getRuleValue(String con, String operator) {
-        String att[] = con.split(operator);
+        String[] att = con.split(operator);
         return Integer.parseInt(att[1].replaceAll("\\s", ""));
     }
 

@@ -3,33 +3,45 @@ package com.softweb.iotconnectsdk.activity;
 import android.Manifest;
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.RadioButton;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.gson.Gson;
+import com.iotconnectsdk.IoTCEnvironment;
 import com.iotconnectsdk.SDKClient;
 import com.iotconnectsdk.interfaces.DeviceCallback;
-import com.iotconnectsdk.interfaces.TwinUpdateCallback;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -37,13 +49,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
+
 import com.softweb.iotconnectsdk.model.Attribute;
 import com.softweb.iotconnectsdk.model.AttributesModel;
-import com.softweb.iotconnectsdk.model.Certificate;
+import com.iotconnectsdk.iotconnectconfigs.Certificate;
 import com.softweb.iotconnectsdk.model.D;
 import com.softweb.iotconnectsdk.model.Device;
-import com.softweb.iotconnectsdk.model.OfflineStorage;
-import com.softweb.iotconnectsdk.model.SdkOptions;
+import com.iotconnectsdk.iotconnectconfigs.OfflineStorage;
+import com.iotconnectsdk.iotconnectconfigs.SdkOptions;
 import com.softweb.iotconnectsdk.R;
 
 
@@ -60,7 +73,7 @@ import com.softweb.iotconnectsdk.R;
  * Hope you have imported SDK v3.1.2 in build.gradle as guided in README.md file or from documentation portal.
  */
 
-public class FirmwareActivity extends AppCompatActivity implements View.OnClickListener, DeviceCallback, TwinUpdateCallback {
+public class FirmwareActivity extends AppCompatActivity implements View.OnClickListener, AdapterView.OnItemSelectedListener, DeviceCallback {
 
     private static final String TAG = FirmwareActivity.class.getSimpleName();
 
@@ -69,6 +82,8 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
     private Button btnGetAllTwins;
     private Button btnClear;
 
+    private Button btnChildDevices;
+
     private TextView tvConnStatus;
     private TextView tvStatus;
 
@@ -76,16 +91,17 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
     private EditText etUniqueId;
     private EditText etSubscribe;
 
-    private RadioButton rbtnDev;
-    private RadioButton rbtnAvnet;
-    private RadioButton rbtnStage;
-    private RadioButton rbtnQa;
+
+    private Spinner spEnvironment;
 
     private LinearLayout linearLayout;
 
     private HashMap<String, List<TextInputLayout>> inputMap;
+
+    private ArrayList<String> tagsList;
+
     private List<TextInputLayout> editTextInputList;
-    private String[] permissions = new String[]{
+    private final String[] permissions = new String[]{
             Manifest.permission.READ_PHONE_STATE,
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
@@ -101,11 +117,18 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
      **/
     private String cpId = "";
     private String uniqueId = "";
-    private String environment = "";
+    private IoTCEnvironment environment;
 
-    private SDKClient sdkClient;
+    static SDKClient sdkClient;
 
-    private static String DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+    private static final String DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+
+    String ackId = "";
+    String childId = "";
+    int cmdType = -1;
+    JSONObject mainObject = null;
+
+    List<IoTCEnvironment> enumValues;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -125,18 +148,26 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         btnSendData = findViewById(R.id.btnSendData);
         btnGetAllTwins = findViewById(R.id.btnGetAllTwins);
         btnClear = findViewById(R.id.btnClear);
+        btnChildDevices = findViewById(R.id.btnChildDevices);
+        spEnvironment = findViewById(R.id.spEnvironment);
 
         btnConnect.setOnClickListener(this);
         btnSendData.setOnClickListener(this);
         btnGetAllTwins.setOnClickListener(this);
         btnClear.setOnClickListener(this);
+        btnChildDevices.setOnClickListener(this);
+        spEnvironment.setOnItemSelectedListener(this);
 
-        rbtnDev = findViewById(R.id.rbtnDev);
-        rbtnAvnet = findViewById(R.id.rbtnAvnet);
-        rbtnStage = findViewById(R.id.rbtnStage);
-        rbtnQa = findViewById(R.id.rbtnQa);
 
         checkPermissions();
+
+        enumValues = Arrays.asList(IoTCEnvironment.values());
+
+
+        ArrayAdapter<IoTCEnvironment> adapter = new ArrayAdapter<>(FirmwareActivity.this, R.layout.spinner_list, enumValues);
+        adapter.setDropDownViewResource(R.layout.spinner_list);
+        spEnvironment.setAdapter(adapter);
+
     }
 
     @Override
@@ -145,7 +176,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
             if (sdkClient != null && isConnected) {
                 sdkClient.dispose();
             } else {
-                if (environment.isEmpty()) {
+                if (environment == null) {
                     Toast.makeText(FirmwareActivity.this, getString(R.string.string_select_environment), Toast.LENGTH_LONG).show();
                     return;
                 }
@@ -158,20 +189,24 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                     cpId = etCpid.getText().toString();
                     uniqueId = etUniqueId.getText().toString();
 
+                    showDialog(FirmwareActivity.this);
+
                     /*
                      * Type    : Object Initialization "new SDKClient()"
                      * Usage   : To Initialize SDK and Device connection
                      * Input   : context, cpId, uniqueId, deviceCallback, twinUpdateCallback, sdkOptions, env.
                      * Output  : Callback methods for device command and twin properties
                      */
-                    sdkClient = SDKClient.getInstance(FirmwareActivity.this, cpId, uniqueId, FirmwareActivity.this, FirmwareActivity.this, getSdkOptions(), environment);
+                    sdkClient = SDKClient.getInstance(FirmwareActivity.this, cpId, uniqueId, FirmwareActivity.this, getSdkOptions(), environment);
 
-                    showDialog(FirmwareActivity.this);
                 }
             }
         } else if (v.getId() == R.id.btnSendData) {
-            showDialog(FirmwareActivity.this);
-            sendInputData();
+            try {
+                sendInputData();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         } else if (v.getId() == R.id.btnGetAllTwins) {
             if (sdkClient != null) {
                 if (isConnected) {
@@ -181,11 +216,17 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                      * Input   :
                      * Output  :
                      */
-                    sdkClient.getAllTwins();
+                    sdkClient.getTwins();
                 } else {
                     Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
                 }
             }
+        } else if (v.getId() == R.id.btnChildDevices) {
+
+            Intent intent = new Intent(this, GatewayChildDevicesActivity.class);
+            intent.putExtra("tagsList", tagsList);
+            startActivity(intent);
+
         } else if (v.getId() == R.id.btnClear) {
             etSubscribe.setText("");
         }
@@ -213,15 +254,17 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         return true;
     }
 
+    /*
+     * Check here that permission is granted or not and do accordingly
+     * */
     @Override
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == 100) {
             if (grantResults.length > 0
                     && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // do something
             }
-            return;
         }
     }
 
@@ -262,17 +305,24 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         SdkOptions sdkOptions = new SdkOptions();
 
         Certificate certificate = new Certificate();
-        certificate.setsSLKeyPath("");
-        certificate.setsSLCertPath("");
-        certificate.setsSLCaPath("");
+
+        //put certificate file in asset folder
+        certificate.setsSLKeyPath(getRobotCacheFile(this, "").getAbsolutePath());
+        certificate.setsSLCertPath(getRobotCacheFile(this, "").getAbsolutePath());
+        certificate.setsSLCaPath(getRobotCacheFile(this, "").getAbsolutePath());
+
+
+        //For using symmetric key authentication type
+        sdkOptions.devicePK = "";
 
         OfflineStorage offlineStorage = new OfflineStorage();
         offlineStorage.setDisabled(false); //default value false
-        offlineStorage.setAvailSpaceInMb(1); //This will be in MB. mean total available space is 1 MB.
-        offlineStorage.setFileCount(5); //5 files can be created.
+        offlineStorage.availSpaceInMb = 1; //This will be in MB. mean total available space is 1 MB.
+        offlineStorage.fileCount = 5; //5 files can be created.
 
-        sdkOptions.setCertificate(certificate);
-        sdkOptions.setOfflineStorage(offlineStorage);
+        sdkOptions.certificate = certificate;
+        sdkOptions.offlineStorage = offlineStorage;
+        sdkOptions.setSkipValidation(false);
 
         String sdkOptionsJsonStr = new Gson().toJson(sdkOptions);
 
@@ -280,6 +330,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
 
         return sdkOptionsJsonStr;
     }
+
 
     /*
      * Type    : Private function sendInputData()"
@@ -314,16 +365,22 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                         //for object type values.
                         objectKeyName = label.split(":")[0];
                         String lab = label.split(":")[1];
-                        gyroObj.put(lab, value);
+
+                        boolean keyExist = keyExists(dObj, objectKeyName);
+                        if (keyExist) {
+                            gyroObj.put(lab, value);
+                            dObj.putOpt(objectKeyName, gyroObj);
+                        } else {
+                            gyroObj = new JSONObject();
+                            gyroObj.put(lab, value);
+                            dObj.putOpt(objectKeyName, gyroObj);
+                        }
+
+
                     } else {
                         //for simple key values.
                         dObj.put(label, value);
                     }
-                }
-
-                // add object type values.
-                if (gyroObj.length() != 0) {
-                    dObj.putOpt(objectKeyName, gyroObj);
                 }
 
                 valueObj.put("data", dObj);
@@ -346,6 +403,21 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
             Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
     }
 
+
+    private boolean keyExists(JSONObject object, String searchedKey) throws JSONException {
+        boolean exists = object.has(searchedKey);
+        if (!exists) {
+            Iterator<?> keys = object.keys();
+            while (keys.hasNext()) {
+                String key = (String) keys.next();
+                if (object.get(key) instanceof JSONObject) {
+                    exists = keyExists((JSONObject) object.get(key), searchedKey);
+                }
+            }
+        }
+        return exists;
+    }
+
     /*
      * Type    : private function "getCurrentTime()"
      * Usage   : To get current time with format of "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'".
@@ -366,101 +438,165 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
      */
     @Override
     public void onReceiveMsg(String message) {
-        hideDialog(FirmwareActivity.this);
+
+        try {
+            getJsonMessage(message);
+
+            if (cmdType == 0 || cmdType == 1 || cmdType == 2) {
+            } else if (cmdType == 116) {
+                /*command type "116" for Device "Connection Status"
+                      true = connected, false = disconnected*/
+
+                Log.d(TAG, "--- Device connection status ---");
+                // JSONObject dataObj = mainObject.getJSONObject("data");
+                //  Log.d(TAG, "DeviceId ::: [" + mainObject.getString("uniqueId") + "] :: Device status :: " + mainObject.getString("command") + "," + new Date());
+
+                if (mainObject.has("command")) {
+                    isConnected = mainObject.getBoolean("command");
+                    onConnectionStateChange(isConnected);
+                }
+            } else if (cmdType == -1) {
+                hideDialog(FirmwareActivity.this);
+                setStatusText(R.string.device_disconnected);
+                Toast.makeText(FirmwareActivity.this, message, Toast.LENGTH_LONG).show();
+            } else {
+                hideDialog(FirmwareActivity.this);
+                // Toast.makeText(FirmwareActivity.this, message, Toast.LENGTH_LONG).show();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    @Override
+    public void onDeviceCommand(@Nullable String message) {
+
+        getJsonMessage(message);
+
+        /*
+         * Type    : Public Method "sendAck()"
+         * Usage   : Send device command received acknowledgment to cloud
+         *
+         * - status Type
+         *     st = 6; // Device command Ack status
+         *     st = 4; // Failed Ack
+         *
+         */
+
+        if (isConnected) {
+            if (TextUtils.isEmpty(childId)) {
+                sdkClient.sendAckCmd(ackId, 6, "");
+            } else {
+                sdkClient.sendAckCmd(ackId, 6, "", childId);
+            }
+        } else {
+            Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
+        }
+
+    }
+
+    @Override
+    public void onOTACommand(@Nullable String message) {
+
+        getJsonMessage(message);
+
+        /*
+         * Type    : Public Method "sendAck()"
+         * Usage   : Send firmware command received acknowledgement to cloud
+         * - status Type
+         *     st = 0; // firmware OTA command Ack status
+         *     st = 4; // Failed Ack
+         *
+         */
+
+        if (isConnected) {
+
+            if (TextUtils.isEmpty(childId)) {
+                sdkClient.sendOTAAckCmd(ackId, 0, "");
+            } else {
+                sdkClient.sendOTAAckCmd(ackId, 0, "", childId);
+            }
+        } else {
+            Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override
+    public void onModuleCommand(@Nullable String message) {
+        getJsonMessage(message);
+        if (isConnected) {
+
+            if (TextUtils.isEmpty(childId)) {
+                sdkClient.sendAckModule(ackId, 0, "");
+            } else {
+                sdkClient.sendAckModule(ackId, 0, "", childId);
+            }
+        } else {
+            Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override
+    public void onAttrChangeCommand(@Nullable String message) {
+        getJsonMessage(message);
+    }
+
+    @Override
+    public void onTwinChangeCommand(@Nullable String message) {
+        getJsonMessage(message);
+    }
+
+    @Override
+    public void onRuleChangeCommand(@Nullable String message) {
+        getJsonMessage(message);
+    }
+
+    @Override
+    public void onDeviceChangeCommand(@Nullable String message) {
+        getJsonMessage(message);
+    }
+
+
+    private void getJsonMessage(String message) {
+        btnClear.setEnabled(true);
         Log.d(TAG, "onReceiveMsg => " + message);
 
-        if (!message.isEmpty()) {
-            btnClear.setEnabled(true);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
 
-            etSubscribe.append("\n--- Device Command Received ---\n");
-            etSubscribe.append(message + "");
+                etSubscribe.setText(message);
 
-            String messageType = "";
+            }
+        });
 
+        boolean jsonValid = isJSONValid(message);
+
+        if (jsonValid) {
             try {
-                JSONObject mainObject = new JSONObject(message);
-
+                mainObject = new JSONObject(message);
                 //Publish message call back received.
-                if (!mainObject.has("cmdType")) {
+                if (!mainObject.has("ct")) {
+                    cmdType = -2;
                     return;
                 }
 
-                String cmdType = mainObject.getString("cmdType");
+                cmdType = mainObject.getInt("ct");
 
-                String ackId = mainObject.getJSONObject("data").getString("ackId");
-
-                switch (cmdType) {
-                    case "0x01":
-                        Log.d(TAG, "--- Device Command Received ---");
-                        if (ackId != null && !ackId.isEmpty()) {
-                            messageType = "5";
-                            JSONObject objD = getAckObject(mainObject);
-                            objD.put("st", 6);
-
-                            /*
-                             * Type    : Public Method "sendAck()"
-                             * Usage   : Send device command received acknowledgment to cloud
-                             *
-                             * - status Type
-                             *     st = 6; // Device command Ack status
-                             *     st = 4; // Failed Ack
-                             * - Message Type
-                             *     msgType = 5; // for "0x01" device command
-                             */
-                            if (isConnected)
-                                sdkClient.sendAck(objD, messageType);
-                            else
-                                Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
-                        }
-                        break;
-                    case "0x02":
-                        Log.d(TAG, "--- Firmware OTA Command Received ---");
-                        if (ackId != null && !ackId.isEmpty()) {
-                            messageType = "11";
-                            JSONObject obj = getAckObject(mainObject);
-                            obj.put("st", 7);
-
-                            /*
-                             * Type    : Public Method "sendAck()"
-                             * Usage   : Send firmware command received acknowledgement to cloud
-                             * - status Type
-                             *     st = 7; // firmware OTA command Ack status
-                             *     st = 4; // Failed Ack
-                             * - Message Type
-                             *     msgType = 11; // for "0x02" Firmware command
-                             */
-
-                            if (isConnected)
-                                sdkClient.sendAck(obj, messageType);
-                            else
-                                Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
-                        }
-                        break;
-                    case "0x16":
-                          /*command type "0x16" for Device "Connection Status"
-                          true = connected, false = disconnected*/
-
-                        Log.d(TAG, "--- Device connection status ---");
-                        JSONObject dataObj = mainObject.getJSONObject("data");
-                        Log.d(TAG, "DeviceId ::: [" + dataObj.getString("uniqueId") + "] :: Device status :: " + dataObj.getString("command") + "," + new Date());
-
-                        if (dataObj.has("command")) {
-                            if (dataObj.getBoolean("command")) {
-                                this.isConnected = true;
-                            } else {
-                                this.isConnected = false;
-                            }
-                            onConnectionStateChange(this.isConnected);
-                        }
-                        break;
-
-                    default:
-                        break;
+                if (mainObject.has("ack")) {
+                    ackId = mainObject.getString("ack");
                 }
 
-            } catch (JSONException e) {
+                if (mainObject.has("id")) {
+                    childId = mainObject.getString("id");
+                }
+            } catch (Exception e) {
                 e.printStackTrace();
             }
+        } else {
+            cmdType = -1;
         }
     }
 
@@ -468,7 +604,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
      * Type    : Function "onConnectionStateChange()"
      */
     private void onConnectionStateChange(boolean isConnected) {
-        hideDialog(FirmwareActivity.this);
+
         linearLayout.removeAllViews();
         if (isConnected) {
 
@@ -482,61 +618,28 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
              * Input   :
              * Output  :
              */
+
             String data = sdkClient.getAttributes();
-            if (data != null) {
+            Log.d("attdata", "::" + data);
+            if (data != null && !data.equalsIgnoreCase("[]")) {
                 btnSendData.setEnabled(true);
                 btnGetAllTwins.setEnabled(true);
                 createDynamicViews(data);
+            } else {
+                return;
             }
 
         } else {
             setStatusText(R.string.device_disconnected);
             tvConnStatus.setSelected(false);
             btnConnect.setText("Connect");
-
             btnSendData.setEnabled(false);
             btnGetAllTwins.setEnabled(false);
+            btnChildDevices.setEnabled(false);
         }
+        hideDialog(FirmwareActivity.this);
     }
 
-
-    private JSONObject getAckObject(JSONObject mainObject) {
-
-        JSONObject objD = null;
-        String childId = "";
-        try {
-            JSONObject dataObj = mainObject.getJSONObject("data");
-            String ackId = dataObj.getString("ackId");
-
-//                var obj = {
-//                        "ackId": command.ackId,
-//                        "st": st, // 6 (Device '0x01'), 7 (Firmware '0x02' )
-//                        "msg": "", //Leave it blank
-//                        "childId": "" //Leave it blank
-//                 }
-
-            try {
-                if (dataObj.has("urls")) {
-                    JSONArray urlsObj = dataObj.getJSONArray("urls");
-                    JSONObject arObject = (JSONObject) urlsObj.get(0);
-
-                    if (arObject.has("uniqueId"))
-                        childId = arObject.getString("uniqueId");
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
-            //create json object.
-            objD = new JSONObject();
-            objD.put("ackId", ackId);
-            objD.put("msg", "OTA updated successfully..!!");
-            objD.put("childId", childId);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        return objD;
-    }
 
     /*
      * Type    : private function "createDynamicViews()"
@@ -549,6 +652,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         inputMap = new HashMap<String, List<TextInputLayout>>();
         editTextInputList = new ArrayList<>();
 
+
         try {
             Gson gson = new Gson();
             AttributesModel[] attributesModelList = gson.fromJson(data, AttributesModel[].class);
@@ -556,6 +660,13 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
             for (AttributesModel model : attributesModelList) {
                 Device device = model.getDevice();
 
+                if (model.getTags() != null && model.getTags().size() > 0) {
+                    tagsList = new ArrayList<>();
+                    tagsList.addAll(model.getTags());
+                    btnChildDevices.setEnabled(true);
+                } else {
+                    btnChildDevices.setEnabled(false);
+                }
                 TextView textViewTitle = new TextView(this);
                 textViewTitle.setText("TAG : : " + device.getTg() + " : " + device.getId());
                 linearLayout.addView(textViewTitle);
@@ -624,37 +735,6 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
     }
 
     /*
-     * Type    : Public Method "onRadioButtonClicked()"
-     * Usage   : Radio button click event handled.
-     * Input   :
-     * Output  :
-     */
-    public void onRadioButtonClicked(View view) {
-        // Is the button now checked?
-        boolean checked = ((RadioButton) view).isChecked();
-        // Check which radio button was clicked
-
-        switch (view.getId()) {
-            case R.id.rbtnDev:
-                if (checked)
-                    environment = rbtnDev.getText().toString();
-                break;
-            case R.id.rbtnStage:
-                if (checked)
-                    environment = rbtnStage.getText().toString();
-                break;
-            case R.id.rbtnAvnet:
-                if (checked)
-                    environment = rbtnAvnet.getText().toString();
-                break;
-            case R.id.rbtnQa:
-                if (checked)
-                    environment = rbtnQa.getText().toString();
-                break;
-        }
-    }
-
-    /*
      * Type    : private function "setStatusText()"
      * Usage   : To set the text to textView.
      * Input   : String.xml value for specific text.
@@ -701,7 +781,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                     }
                 }
             }
-        } catch (JSONException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -727,4 +807,52 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         }
     }
 
+    public boolean isJSONValid(String message) {
+        try {
+            new JSONObject(message);
+        } catch (JSONException ex) {
+            // edited, to include @Arthur's comment
+            // e.g. in case JSONArray is valid as well...
+            try {
+                new JSONArray(message);
+            } catch (JSONException ex1) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private File getRobotCacheFile(Context context, String fileName) {
+
+        if (!TextUtils.isEmpty(fileName)) {
+            File cacheFile = new File(context.getCacheDir(), fileName);
+            try {
+                try (InputStream inputStream = context.getAssets().open(fileName)) {
+                    try (FileOutputStream outputStream = new FileOutputStream(cacheFile)) {
+                        byte[] buf = new byte[1024];
+                        int len;
+                        while ((len = inputStream.read(buf)) > 0) {
+                            outputStream.write(buf, 0, len);
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+
+            }
+            return cacheFile;
+        }
+
+        return new File("");
+    }
+
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        environment = enumValues.get(position);
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+
+    }
 }
