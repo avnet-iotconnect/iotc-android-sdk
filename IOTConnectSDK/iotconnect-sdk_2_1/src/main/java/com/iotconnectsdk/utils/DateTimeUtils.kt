@@ -26,8 +26,8 @@ internal object DateTimeUtils {
 
     val currentDate: String
         get() {
-            @SuppressLint("SimpleDateFormat") val df =
-                SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSS'Z'")
+           val df =
+                SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
             df.timeZone = TimeZone.getTimeZone("gmt")
             return df.format(Date())
         }
