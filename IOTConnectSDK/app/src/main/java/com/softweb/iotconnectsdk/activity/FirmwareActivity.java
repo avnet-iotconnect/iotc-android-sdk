@@ -197,7 +197,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                      * Input   : context, cpId, uniqueId, deviceCallback, twinUpdateCallback, sdkOptions, env.
                      * Output  : Callback methods for device command and twin properties
                      */
-                    sdkClient = SDKClient.getInstance(FirmwareActivity.this, cpId, uniqueId, FirmwareActivity.this, getSdkOptions(), environment);
+                    sdkClient = SDKClient.getInstance(FirmwareActivity.this, uniqueId, FirmwareActivity.this, getSdkOptions());
 
                 }
             }
@@ -322,7 +322,10 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
 
         sdkOptions.certificate = certificate;
         sdkOptions.offlineStorage = offlineStorage;
-        sdkOptions.setSkipValidation(false);
+        sdkOptions.isSkipValidation = false;
+        sdkOptions.cpId = cpId;
+        sdkOptions.env = environment;
+        sdkOptions.pf = "az";
 
         String sdkOptionsJsonStr = new Gson().toJson(sdkOptions);
 

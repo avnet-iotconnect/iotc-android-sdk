@@ -36,26 +36,19 @@ class SDKClient(
         @JvmStatic
         fun getInstance(
             context: Context?,
-            cpId: String?,
             uniqueId: String?,
             deviceCallback: DeviceCallback?,
             sdkOptions: String?,
-            environment: IoTCEnvironment
         ): SDKClient {
             synchronized(this) {
                 if (sdkClient == null) {
-                    sdkClient = SDKClient(
-                        context,
-                        cpId
-                    )
+                    sdkClient = SDKClient(context, uniqueId)
                 }
                 sdkClient?.callSdkClientManager(
                     context,
-                    cpId,
                     uniqueId,
                     deviceCallback,
-                    sdkOptions,
-                    environment
+                    sdkOptions
                 )
                 return sdkClient!!
             }
@@ -67,19 +60,15 @@ class SDKClient(
     @JvmSynthetic
    private fun callSdkClientManager(
         context: Context?,
-        cpId: String?,
         uniqueId: String?,
         deviceCallback: DeviceCallback?,
-        sdkOptions: String?,
-        environment: IoTCEnvironment
+        sdkOptions: String?
     ) {
         sdkClientManager = SDKClientManager.getInstance(
             context,
-            cpId,
             uniqueId,
             deviceCallback,
-            sdkOptions,
-            environment
+            sdkOptions
         )
     }
 

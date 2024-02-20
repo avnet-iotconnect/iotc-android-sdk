@@ -135,13 +135,13 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
                      * Usage   : To Initialize SDK and Device connection
                      * Input   : context, cpId, uniqueId, deviceCallback, twinUpdateCallback, sdkOptions, env.
                      * Output  : Callback methods for device command and twin properties
-                     */sdkClient = SDKClient.getInstance(
+                     */
+
+                    sdkClient = SDKClient.getInstance(
                         this@FirmwareActivityKotlin,
-                        cpId,
                         uniqueId,
                         this@FirmwareActivityKotlin,
-                        sdkOptions,
-                        environment
+                        sdkOptions
                     )
 
                 }
@@ -292,6 +292,9 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
             sdkOptions.certificate = certificate
             sdkOptions.offlineStorage = offlineStorage
             sdkOptions.isSkipValidation = false
+            sdkOptions.cpId = cpId
+            sdkOptions.env = environment
+            sdkOptions.pf = "az"
 
             val sdkOptionsJsonStr = Gson().toJson(sdkOptions)
             Log.d(
