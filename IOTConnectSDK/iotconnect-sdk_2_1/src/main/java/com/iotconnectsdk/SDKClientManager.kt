@@ -77,7 +77,7 @@ internal class SDKClientManager(
 
     private var cpId: String? = null
 
-    private var environment: IoTCEnvironment? = null
+    private var environment: String? = null
 
     private var pf: String? = null
 
@@ -257,7 +257,7 @@ internal class SDKClientManager(
                 }
 
                 if (sdkObj.has("env")) {
-                    environment = sdkObj.get("env") as IoTCEnvironment?
+                    environment = sdkObj.getString("env")
                 }
 
                 if (sdkObj.has("pf")) {
@@ -326,12 +326,12 @@ internal class SDKClientManager(
                     discoveryUrl =
                         DEFAULT_DISCOVERY_URL_AZ //set default discovery url when it is empty from client end.
                 } else if (BuildConfig.BrokerType == BrokerType.AWS.value) {
-                    if (environment?.value == PREQA) {
+                    if (environment== PREQA) {
                         discoveryUrl =
                             DEFAULT_DISCOVERY_URL_AWS_PREQA //set default discovery url when it is empty from client end.
-                    } else if (environment?.value == POC) {
+                    } else if (environment == POC) {
                         discoveryUrl = DEFAULT_DISCOVERY_URL_AWS_POC
-                    } else if (environment?.value == PROD) {
+                    } else if (environment == PROD) {
                         discoveryUrl = DEFAULT_DISCOVERY_URL_AWS_PROD
                     }
                 } else {
@@ -354,12 +354,12 @@ internal class SDKClientManager(
                 discoveryUrl =
                     DEFAULT_DISCOVERY_URL_AZ //set default discovery url when sdkOption is null.
             } else if (BuildConfig.BrokerType == BrokerType.AWS.value) {
-                if (environment?.value == PREQA) {
+                if (environment == PREQA) {
                     discoveryUrl =
                         DEFAULT_DISCOVERY_URL_AWS_PREQA //set default discovery url when it is empty from client end.
-                } else if (environment?.value == POC) {
+                } else if (environment == POC) {
                     discoveryUrl = DEFAULT_DISCOVERY_URL_AWS_POC
-                } else if (environment?.value == PROD) {
+                } else if (environment == PROD) {
                     discoveryUrl = DEFAULT_DISCOVERY_URL_AWS_PROD
                 }
             } else {
@@ -401,12 +401,12 @@ internal class SDKClientManager(
         if (appVersion != null) {
 
             if (BuildConfig.BrokerType == BrokerType.AZ.value) {
-                discoveryApi = discoveryUrl + URL_PATH + CPID + cpId + ENV + environment?.value+ END_POINT_PF + pf
+                discoveryApi = discoveryUrl + URL_PATH + CPID + cpId + ENV + environment+ END_POINT_PF + pf
             } else if (BuildConfig.BrokerType == BrokerType.AWS.value) {
                 discoveryApi =
-                    discoveryUrl + URL_PATH + CPID + cpId + ENV + environment?.value + END_POINT_PF + pf
+                    discoveryUrl + URL_PATH + CPID + cpId + ENV + environment + END_POINT_PF + pf
             } else {
-                discoveryApi = discoveryUrl + URL_PATH + CPID + cpId + ENV + environment?.value+ END_POINT_PF + pf
+                discoveryApi = discoveryUrl + URL_PATH + CPID + cpId + ENV + environment+ END_POINT_PF + pf
             }
 
             CallWebServices().getDiscoveryApi(discoveryApi, this)

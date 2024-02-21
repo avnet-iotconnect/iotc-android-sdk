@@ -2,6 +2,7 @@ package com.iotconnectsdk.iotconnectconfigs
 
 import com.google.gson.annotations.SerializedName
 import com.iotconnectsdk.IoTCEnvironment
+import com.iotconnectsdk.IoTCPF
 import com.iotconnectsdk.enums.BrokerType
 
 class SdkOptions {
@@ -39,6 +40,6 @@ class SdkOptions {
 
     @JvmField
     @SerializedName("pf")
-    var pf = ""
+    var pf: IoTCPF? = null
 
 }

@@ -28,6 +28,7 @@ import androidx.core.content.ContextCompat;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.gson.Gson;
 import com.iotconnectsdk.IoTCEnvironment;
+import com.iotconnectsdk.IoTCPF;
 import com.iotconnectsdk.SDKClient;
 import com.iotconnectsdk.interfaces.DeviceCallback;
 
@@ -325,7 +326,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         sdkOptions.isSkipValidation = false;
         sdkOptions.cpId = cpId;
         sdkOptions.env = environment;
-        sdkOptions.pf = "az";
+        sdkOptions.pf = IoTCPF.AWS;
 
         String sdkOptionsJsonStr = new Gson().toJson(sdkOptions);
 

@@ -85,7 +85,7 @@ internal object EdgeDeviceUtils {
         edgeDeviceAttributeMap: ListMultimap<String, TumblingWindowBean>?,
         uniqueId: String?,
         cpId: String?,
-        environment: IoTCEnvironment?,
+        environment: String?,
         appVersion: String?,
         dtg: String?
     ): JSONObject? {

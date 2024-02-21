@@ -19,6 +19,7 @@ import androidx.core.content.ContextCompat
 import com.google.android.material.textfield.TextInputLayout
 import com.google.gson.Gson
 import com.iotconnectsdk.IoTCEnvironment
+import com.iotconnectsdk.IoTCPF
 import com.iotconnectsdk.SDKClient
 import com.iotconnectsdk.interfaces.DeviceCallback
 import com.iotconnectsdk.iotconnectconfigs.Certificate
@@ -294,7 +295,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
             sdkOptions.isSkipValidation = false
             sdkOptions.cpId = cpId
             sdkOptions.env = environment
-            sdkOptions.pf = "az"
+            sdkOptions.pf = IoTCPF.AWS
 
             val sdkOptionsJsonStr = Gson().toJson(sdkOptions)
             Log.d(
