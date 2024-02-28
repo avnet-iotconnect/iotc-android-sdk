@@ -401,9 +401,7 @@ internal object EdgeDeviceUtils {
         return att[1].replace("\\s".toRegex(), "").toDouble()
     }
 
-    /*create bellow json and publish on edge device rule matched.
-     * {"cpId":"","dtg":"","t":"2020-11-25T12:56:34.487Z","mt":3,"sdk":{"e":"qa","l":"M_android","v":"2.0"},"d":[{"id":"AAA02","dt":"2020-11-25T12:56:34.487Z","rg":"3A171114-4CC4-4A1C-924C-D3FCF84E4BD1","ct":"gyro.x = 10 AND gyro.y > 10 AND gyro.z < 10","sg":"","d":[{"temp":"10","gyro":{"x":"10","y":"11","z":"9"}}],"cv":{"gyro":{"x":"10","y":"11","z":"9"}}}]}
-     * */
+
     fun getPublishStringEdgeDevice(
         uniqueId: String?, currentTime: String?, bean: GetEdgeRuleBean,
         inputJsonString: String, cvAttObj: JSONObject?, mainObj: JSONObject
@@ -448,8 +446,7 @@ internal object EdgeDeviceUtils {
                     ) {
                         val gyro = JSONObject()
 
-                        // get value for
-                        // "gyro": {"x":"7","y":"8","z":"9"}
+
                         val innerObj = dataObj.getJSONObject(key)
                         val innerJsonKey = innerObj.keys()
                         while (innerJsonKey.hasNext()) {

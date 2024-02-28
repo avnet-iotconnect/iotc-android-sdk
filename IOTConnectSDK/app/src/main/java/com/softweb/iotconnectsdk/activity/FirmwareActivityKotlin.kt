@@ -295,7 +295,7 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
             sdkOptions.isSkipValidation = false
             sdkOptions.cpId = cpId
             sdkOptions.env = environment
-            sdkOptions.pf = IoTCPF.AWS
+            sdkOptions.pf = IoTCPF.AZ
 
             val sdkOptionsJsonStr = Gson().toJson(sdkOptions)
             Log.d(

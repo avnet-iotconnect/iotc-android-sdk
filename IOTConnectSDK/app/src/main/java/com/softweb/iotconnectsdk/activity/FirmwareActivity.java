@@ -326,7 +326,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         sdkOptions.isSkipValidation = false;
         sdkOptions.cpId = cpId;
         sdkOptions.env = environment;
-        sdkOptions.pf = IoTCPF.AWS;
+        sdkOptions.pf = IoTCPF.AZ;
 
         String sdkOptionsJsonStr = new Gson().toJson(sdkOptions);
 
