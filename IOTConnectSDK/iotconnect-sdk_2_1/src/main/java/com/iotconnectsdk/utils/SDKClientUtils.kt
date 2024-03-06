@@ -31,7 +31,7 @@ internal object SDKClientUtils {
         attributesLists: List<GetAttributeBean>, tag: String?
     ): JSONArray {
 
-        //CREATE ATTRIBUTES ARRAY and OBJECT, "attributes":[{"ln":"Temp","dt":"number","dv":"5 to 20, 25","tg":"gateway","tw":"60s"},{"p":"gyro","dt":"object","tg":"gateway","tw":"90s","d":[{"ln":"x","dt":"number","dv":"","tg":"gateway","tw":"90s"},{"ln":"y","dt":"string","dv":"red, gray,   blue","tg":"gateway","tw":"90s"},{"ln":"z","dt":"number","dv":"-5 to 5, 10","tg":"gateway","tw":"90s"}]}]
+
         val attributesArray = JSONArray()
         for (attribute in attributesLists) {
 
@@ -64,7 +64,7 @@ internal object SDKClientUtils {
 
     fun getTagsList(attributesLists: List<GetAttributeBean>): JSONArray {
 
-        //CREATE ATTRIBUTES ARRAY and OBJECT, "attributes":[{"ln":"Temp","dt":"number","dv":"5 to 20, 25","tg":"gateway","tw":"60s"},{"p":"gyro","dt":"object","tg":"gateway","tw":"90s","d":[{"ln":"x","dt":"number","dv":"","tg":"gateway","tw":"90s"},{"ln":"y","dt":"string","dv":"red, gray,   blue","tg":"gateway","tw":"90s"},{"ln":"z","dt":"number","dv":"-5 to 5, 10","tg":"gateway","tw":"90s"}]}]
+
         val attributesArray = JSONArray()
         for (attribute in attributesLists) {
 

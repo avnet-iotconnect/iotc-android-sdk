@@ -231,7 +231,7 @@ internal object ValidationTelemetryUtils {
     private fun validateBoolean(value: String, dataValidation: String?): Int {
         return try {
 
-            if (dataValidation != null && dataValidation.isEmpty()) {
+            if (dataValidation != null && !dataValidation.isEmpty()) {
                 if (dataValidation == value) {
                     REPORTING
                 } else {

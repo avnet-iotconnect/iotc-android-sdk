@@ -24,18 +24,18 @@ This library only abstract JSON responses from both end D2C and C2D
 -Prerequisite input data *
 ```java	
   	String uniqueId = <<uniqueId>>;
-	String cpId = <<CPID>>; 
-	String environment = <<EnvironmentType>>; 
+
 ```
 
 * "uniqueId" 	: Your device uniqueId
-* "cpId" 		: It is the company code. It gets from the IoTConnect UI portal "Settings->Key Vault"
-* "environment" 		: pass environment type from mentioned enum(EnvironmentType) i.e. AVNET, DEV, QA, PROD
 
 - SdkOptions is for the SDK configuration and needs to parse in SDK object initialize call. You need to manage the below configuration as per your device authentication type.
 ```json
 	 String sdkOptions = {
 		"devicePK": "",
+	        "cpId": "",
+   		"env": "",
+		"pf": "",
 		"skipValidation": false,
 		"certificate" : {
 			"SSLKeyPath"	: "<< SystemPath >>/device.key",
@@ -50,6 +50,9 @@ This library only abstract JSON responses from both end D2C and C2D
 	}
 ```
 * "devicePK":  If authentication type is symmetric key then use it.
+* "cpId" 		: It is the company code. It gets from the IoTConnect UI portal "Settings->Key Vault"
+* "env" : Enter the given environment value
+* "pf" : give the platform AZ or AWS
 * "skipValidation": false = do not want to skip data validation for attributes, true= want to skip data validation for attributes
 * "certificate": It is indicated to define the path of the certificate file. Mandatory for X.509/SSL device CA signed or self-signed authentication type only.
 	- SSLKeyPath: your device key
@@ -72,7 +75,7 @@ If you do not provide off-line storage, it will set the default settings as per 
 	
 - To Initialize the SDK object and connect to the cloud.
 ```java		
-	SDKClient sdkClient = SDKClient.getInstance(Context, cpId, uniqueId, DeviceCallback, sdkOptions, environment);
+	SDKClient sdkClient = SDKClient.getInstance(Context,uniqueId, DeviceCallback, sdkOptions);
 ```
 
 - To receive the command from Cloud to Device(C2D).	

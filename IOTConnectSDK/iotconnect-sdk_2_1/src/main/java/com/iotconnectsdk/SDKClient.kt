@@ -36,26 +36,19 @@ class SDKClient(
         @JvmStatic
         fun getInstance(
             context: Context?,
-            cpId: String?,
             uniqueId: String?,
             deviceCallback: DeviceCallback?,
             sdkOptions: String?,
-            environment: IoTCEnvironment
         ): SDKClient {
             synchronized(this) {
                 if (sdkClient == null) {
-                    sdkClient = SDKClient(
-                        context,
-                        cpId
-                    )
+                    sdkClient = SDKClient(context, uniqueId)
                 }
                 sdkClient?.callSdkClientManager(
                     context,
-                    cpId,
                     uniqueId,
                     deviceCallback,
-                    sdkOptions,
-                    environment
+                    sdkOptions
                 )
                 return sdkClient!!
             }
@@ -67,26 +60,20 @@ class SDKClient(
     @JvmSynthetic
    private fun callSdkClientManager(
         context: Context?,
-        cpId: String?,
         uniqueId: String?,
         deviceCallback: DeviceCallback?,
-        sdkOptions: String?,
-        environment: IoTCEnvironment
+        sdkOptions: String?
     ) {
         sdkClientManager = SDKClientManager.getInstance(
             context,
-            cpId,
             uniqueId,
             deviceCallback,
-            sdkOptions,
-            environment
+            sdkOptions
         )
     }
 
 
-    /*Method creates json string to be given to framework.
-    *[{"device":{"id":"ch1","tg":"ch"},"attributes":[{"dt":1,"dv":"5 to 10","ln":"Humidity","sq":2,"tg":"ch"},{"dt":1,"dv":"","ln":"Lumosity","sq":4,"tg":"ch"}]},{"device":{"id":"","tg":"p"},"attributes":[{"dt":1,"dv":"5 to 10","ln":"Temp","sq":1,"tg":"p"},{"d":[{"dt":1,"dv":"","ln":"x","sq":1,"tg":"p"},{"dt":1,"dv":"","ln":"y","sq":2,"tg":"p"}],"dt":11,"p":"Gyroscope","tg":"p"}]}]
-    * */
+
     fun getAttributes(): String? {
         return sdkClientManager?.getAttributes()
     }
@@ -232,9 +219,6 @@ class SDKClient(
 
     /*
      *https://docs.iotconnect.io/iotconnect/resources/device-message-2-1-2/device-identity-messages/#devices
-     *
-     * If device is of gateway type then below function will get child device from IOT connect portal
-     * {"d": {"d": [{"tg": "","id": ""}],"ct": 204,"ec": 0 }}
      *
      */
     fun getChildDevices() {
