@@ -55,13 +55,11 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 internal class SDKClientManager(
     private val context: Context?,
-    private val cpId: String?,
     private val uniqueId: String?,
     private val deviceCallback: DeviceCallback?,
-    private val sdkOptions: String?,
-    private val environment: IoTCEnvironment,
+    private val sdkOptions: String?
 
-    ) : WsResponseInterface, HubToSdkCallback, PublishMessageCallback, TwinUpdateCallback,
+) : WsResponseInterface, HubToSdkCallback, PublishMessageCallback, TwinUpdateCallback,
     NetworkStateReceiver.NetworkStateReceiverListener {
 
 
@@ -77,6 +75,11 @@ internal class SDKClientManager(
 
     private var isConnected = false
 
+    private var cpId: String? = null
+
+    private var environment: String? = null
+
+    private var pf: String? = null
 
     private var isSaveToOffline = false
 
@@ -98,7 +101,7 @@ internal class SDKClientManager(
 
     private val URL_PATH = "api/$appVersion/dsdk/"
 
-    private val END_POINT_AWS = "?pf=aws"
+    private val END_POINT_PF = "?pf="
 
     private val CPID = "cpid/"
 
@@ -190,21 +193,17 @@ internal class SDKClientManager(
         @JvmSynthetic
         fun getInstance(
             context: Context?,
-            cpId: String?,
             uniqueId: String?,
             deviceCallback: DeviceCallback?,
-            sdkOptions: String?,
-            environment: IoTCEnvironment
+            sdkOptions: String?
         ): SDKClientManager? {
             synchronized(this) {
                 if (sdkClientManger == null) {
                     sdkClientManger = SDKClientManager(
                         context,
-                        cpId,
                         uniqueId,
                         deviceCallback,
-                        sdkOptions,
-                        environment
+                        sdkOptions
                     )
                 }
                 try {
@@ -252,6 +251,19 @@ internal class SDKClientManager(
         try {
             if (sdkOptions != null) {
                 sdkObj = JSONObject(sdkOptions)
+
+                if (sdkObj.has("cpId")) {
+                    cpId = sdkObj.getString("cpId")
+                }
+
+                if (sdkObj.has("env")) {
+                    environment = sdkObj.getString("env")
+                }
+
+                if (sdkObj.has("pf")) {
+                    pf = sdkObj.getString("pf")
+                }
+
                 if (sdkObj.has(IS_DEBUG)) {
                     isDebug = sdkObj.getBoolean(IS_DEBUG)
                 }
@@ -314,11 +326,12 @@ internal class SDKClientManager(
                     discoveryUrl =
                         DEFAULT_DISCOVERY_URL_AZ //set default discovery url when it is empty from client end.
                 } else if (BuildConfig.BrokerType == BrokerType.AWS.value) {
-                    if (environment.value == PREQA) {
-                        discoveryUrl = DEFAULT_DISCOVERY_URL_AWS_PREQA //set default discovery url when it is empty from client end.
-                    } else if (environment.value == POC) {
+                    if (environment== PREQA) {
+                        discoveryUrl =
+                            DEFAULT_DISCOVERY_URL_AWS_PREQA //set default discovery url when it is empty from client end.
+                    } else if (environment == POC) {
                         discoveryUrl = DEFAULT_DISCOVERY_URL_AWS_POC
-                    } else if (environment.value == PROD) {
+                    } else if (environment == PROD) {
                         discoveryUrl = DEFAULT_DISCOVERY_URL_AWS_PROD
                     }
                 } else {
@@ -341,11 +354,12 @@ internal class SDKClientManager(
                 discoveryUrl =
                     DEFAULT_DISCOVERY_URL_AZ //set default discovery url when sdkOption is null.
             } else if (BuildConfig.BrokerType == BrokerType.AWS.value) {
-                if (environment.value == PREQA) {
-                    discoveryUrl = DEFAULT_DISCOVERY_URL_AWS_PREQA //set default discovery url when it is empty from client end.
-                } else if (environment.value == POC) {
+                if (environment == PREQA) {
+                    discoveryUrl =
+                        DEFAULT_DISCOVERY_URL_AWS_PREQA //set default discovery url when it is empty from client end.
+                } else if (environment == POC) {
                     discoveryUrl = DEFAULT_DISCOVERY_URL_AWS_POC
-                } else if (environment.value == PROD) {
+                } else if (environment == PROD) {
                     discoveryUrl = DEFAULT_DISCOVERY_URL_AWS_PROD
                 }
             } else {
@@ -354,7 +368,7 @@ internal class SDKClientManager(
             }
         }
         if (!validationUtils!!.isEmptyValidation(
-                cpId,
+                cpId!!,
                 "ERR_IN04",
                 context.getString(R.string.ERR_IN04)
             )
@@ -377,7 +391,7 @@ internal class SDKClientManager(
     }
 
     /*API call for discovery.
-     *@param discoveryUrl  discovery URL ("discoveryUrl" : "https://discovery.iotconnect.io")
+     *@param discoveryUrl  discovery URL
      * */
     private fun callDiscoveryService() {
         if (!validationUtils!!.networkConnectionCheck()) return
@@ -387,12 +401,12 @@ internal class SDKClientManager(
         if (appVersion != null) {
 
             if (BuildConfig.BrokerType == BrokerType.AZ.value) {
-                discoveryApi = discoveryUrl + URL_PATH + CPID + cpId + ENV + environment.value
+                discoveryApi = discoveryUrl + URL_PATH + CPID + cpId + ENV + environment+ END_POINT_PF + pf
             } else if (BuildConfig.BrokerType == BrokerType.AWS.value) {
                 discoveryApi =
-                    discoveryUrl + URL_PATH + CPID + cpId + ENV + environment.value + END_POINT_AWS
+                    discoveryUrl + URL_PATH + CPID + cpId + ENV + environment + END_POINT_PF + pf
             } else {
-                discoveryApi = discoveryUrl + URL_PATH + CPID + cpId + ENV + environment.value
+                discoveryApi = discoveryUrl + URL_PATH + CPID + cpId + ENV + environment+ END_POINT_PF + pf
             }
 
             CallWebServices().getDiscoveryApi(discoveryApi, this)
@@ -670,7 +684,7 @@ internal class SDKClientManager(
 
 
                 if (cmdType == DeviceIdentityMessages.CREATE_CHILD_DEVICE.value) {
-                    /*{"d":{"ec":0,"ct":221,"d":{"tg":"werw","id":"dfsfd","s":0}}}*/
+
 
                     val responseCodeMessage =
                         validationUtils?.rcMessageChildDevice(responseCode!!)
@@ -692,7 +706,7 @@ internal class SDKClientManager(
                     }
 
                 } else if (cmdType == DeviceIdentityMessages.DELETE_CHILD_DEVICE.value) {
-                    /*{"d":{"ec":0,"ct":222,"d":{"tg":"werw","id":"dfsfd","s":0}}}*/
+
 
                     val responseCodeMessage =
                         validationUtils?.rcMessageDelChildDevice(responseCode!!)
@@ -718,7 +732,7 @@ internal class SDKClientManager(
 
                     if (commonModel?.d?.ct != null) {
                         when (commonModel.d.ct) {
-                            /*{"d":{"att":[{"p":"","dt":0,"tg":"","d":[{"ln":"Temp","dt":1,"dv":"5 to 10","sq":1,"tg":"p","tw":"60s"},{"ln":"Humidity","dt":1,"dv":"5 to 10","sq":2,"tg":"ch","tw":"60s"},{"ln":"Lumosity","dt":1,"dv":"","sq":4,"tg":"ch","tw":"60s"}]},{"p":"Gyroscope","dt":11,"tg":"p","d":[{"ln":"x","dt":1,"dv":"","sq":1,"tg":"p","tw":"60s"},{"ln":"y","dt":1,"dv":"","sq":2,"tg":"p","tw":"60s"}]}],"ct":201,"ec":0,"dt":"2023-02-22T10:41:18.6947577Z"}}*/
+
                             DeviceIdentityMessages.GET_DEVICE_TEMPLATE_ATTRIBUTES.value -> {
                                 val response = getSyncResponse()
 
@@ -738,9 +752,7 @@ internal class SDKClientManager(
 
                             }
 
-                            /*
-                            * {"d":{"set":[{"ln":"Motor","dt":1,"dv":""}],"ct":202,"ec":0,"dt":"2023-02-22T10:41:18.6948342Z"}}
-                            * */
+
                             DeviceIdentityMessages.GET_DEVICE_TEMPLATE_SETTINGS_TWIN.value -> {
                                 IotSDKPreferences.getInstance(context!!)!!.putStringData(
                                     IotSDKPreferences.SETTING_TWIN_RESPONSE,
@@ -754,9 +766,7 @@ internal class SDKClientManager(
                                 )
                             }
 
-                            /*
-                            * {"d":{"d":[{"tg":"ch","id":"ch1"}],"ct":204,"ec":0,"dt":"2023-02-22T10:41:18.2683604Z"}}
-                            * */
+
                             DeviceIdentityMessages.GET_CHILD_DEVICES.value -> {
                                 IotSDKPreferences.getInstance(context!!)!!.putStringData(
                                     IotSDKPreferences.CHILD_DEVICE_RESPONSE,
@@ -804,7 +814,7 @@ internal class SDKClientManager(
 
                             /*Device command received by the device from the cloud
                             *
-                            * {"v":"2.1","ct":0,"cmd":"ON ON","ack":"6198c520-1ebc-4556-b12c-dde9d790decc"}
+                            *
                             * */
 
                             C2DMessageEnums.DEVICE_COMMAND.value -> {
@@ -1024,9 +1034,7 @@ internal class SDKClientManager(
     }
 
 
-    /*Method creates json string to be given to framework.
-    *[{"device":{"id":"ch1","tg":"ch"},"attributes":[{"dt":1,"dv":"5 to 10","ln":"Humidity","sq":2,"tg":"ch"},{"dt":1,"dv":"","ln":"Lumosity","sq":4,"tg":"ch"}]},{"device":{"id":"","tg":"p"},"attributes":[{"dt":1,"dv":"5 to 10","ln":"Temp","sq":1,"tg":"p"},{"d":[{"dt":1,"dv":"","ln":"x","sq":1,"tg":"p"},{"dt":1,"dv":"","ln":"y","sq":2,"tg":"p"}],"dt":11,"p":"Gyroscope","tg":"p"}]}]
-    * */
+
     @JvmSynthetic
     fun getAttributes(): String {
 
@@ -1061,7 +1069,7 @@ internal class SDKClientManager(
                 if (attributeResponse != null) {
 
 
-                    //CREATE DEVICE OBJECT, "device":{"id":"dee02","tg":"gateway"}
+                    //CREATE DEVICE OBJECT
                     val deviceObj = JSONObject()
                     deviceObj.put(DEVICE_ID, childDeviceBean.id)
                     deviceObj.put(DEVICE_TAG, childDeviceBean.tg)
@@ -1254,7 +1262,7 @@ internal class SDKClientManager(
 
     /* ON DEVICE CONNECTION STATUS CHANGE command create json with bellow format and provide to framework.
         *
-        * {"ackb":false,"ack":"","ct":116,"command":"false","cpid":"","guid":"","uniqueId":""}
+        *
         *
         * command = (true = connected, false = disconnected)
         * */
@@ -1483,7 +1491,7 @@ internal class SDKClientManager(
     *https://docs.iotconnect.io/iotconnect/resources/device-message-2-1-2/device-identity-messages/#devices
     *
     * If device is of gateway type then below function will get child device from IOT connect portal
-    * {"d": {"d": [{"tg": "","id": ""}],"ct": 204,"ec": 0 }}
+    *
     *
     */
 
@@ -1500,7 +1508,7 @@ internal class SDKClientManager(
 
     /*Create child Device
     *
-    *{"mt":221,"d":{"dn":"adasdad","id":"asdasd","tg":"qwe","g":"xvxcvx"}}
+    *
     * */
     @JvmSynthetic
     fun createChildDevice(innerObject: JSONObject) {
@@ -1517,7 +1525,7 @@ internal class SDKClientManager(
 
     /*Delete child device
     *
-    *{"mt":222,"d":{"id":"asdasd"}}
+    *
     *
     * */
     @JvmSynthetic
@@ -1612,8 +1620,7 @@ internal class SDKClientManager(
                 val innerD_Obj_reporting = JSONObject()
                 val innerD_Obj_faulty = JSONObject()
 
-                //getting value for
-//                 "d": {"Temp":"66","humidity":"55","abc":"y","gyro":{"x":"7","y":"8","z":"9"}}
+
                 while (dataJsonKey.hasNext()) {
                     val key = dataJsonKey.next()
                     val value = dataObj.getString(key)
@@ -1626,8 +1633,7 @@ internal class SDKClientManager(
                         val innerObj = dataObj.getJSONObject(key)
                         val innerJsonKey = innerObj.keys()
 
-                        // get value for
-//                         "gyro": {"x":"7","y":"8","z":"9"}
+
                         while (innerJsonKey.hasNext()) {
                             val InnerKey = innerJsonKey.next()
                             val InnerKValue = innerObj.getString(InnerKey)
@@ -1698,8 +1704,7 @@ internal class SDKClientManager(
             outerD_Obj_Faulty.put(D_OBJ, arrayObj_attributes_faulty)
 
 
-            //Reporting json string as below.
-//{"dt":"2023-02-22T11:27:24.870Z","d":[{"dt":"2023-02-22T11:27:24.866Z","id":"ch1","tg":"ch","d":{"Humidity":"6","Lumosity":"6"}},{"dt":"2023-02-22T11:27:24.868Z","id":"AndroidGateway","tg":"p","d":{"Temp":"6","Gyroscope":{"x":"7","y":"8"}}}]}
+
 
             //publish reporting data
             if (doReportingPublish) publishMessage(
@@ -1750,15 +1755,14 @@ internal class SDKClientManager(
                         ) {
                             val AttObj = JSONObject()
 
-                            // get value for
-                            // "gyro": {"x":"7","y":"8","z":"9"}
+
                             val innerObj = dataObj.getJSONObject(key)
                             val innerJsonKey = innerObj.keys()
                             while (innerJsonKey.hasNext()) {
                                 val innerKey = innerJsonKey.next()
                                 val innerKValue = innerObj.getString(innerKey)
 
-                                //check for input validation dv=data validation dv="data validation". {"ln":"x","dt":0,"dv":"10to20","tg":"","sq":1,"agt":63,"tw":"40s"}
+
                                 val validation: Int = compareForInputValidationNew(
                                     innerKey, innerKValue, tag, attributeResponse, isSkipValidation
                                 )
@@ -1791,7 +1795,7 @@ internal class SDKClientManager(
                             publishRuleEvaluatedData()
                         } else {
 
-                            //check for input validation dv="data validation". {"ln":"abc","dt":0,"dv":"10","tg":"","sq":8,"agt":63,"tw":"60s"}
+
                             val validation: Int = compareForInputValidationNew(
                                 key, value, tag, attributeResponse, isSkipValidation
                             )
@@ -2024,8 +2028,7 @@ internal class SDKClientManager(
                     ""
                 )
 
-                //check publish object is not empty of data. check to inner "d":[] object. Example below json string inner "d":[] object is empty.
-                //{"cpId":"uei","dtg":"b55d6d86-5320-4b26-8df2-b65e3221385e","t":"2021-01-11T02:36:19.644Z","mt":2,"sdk":{"e":"qa","l":"M_android","v":"2.0"},"d":[{"id":"AAA02","dt":"2021-01-11T02:36:19.644Z","tg":"","d":[]}]}
+
                 var isPublish = true
                 try {
                     val dArray = publishObj?.getJSONArray(D_OBJ)
@@ -2101,10 +2104,7 @@ internal class SDKClientManager(
         reCheckingTimer!!.schedule(timerTaskObj, 10000, 10000)
     }
 
-    /* On edge device rule match, send below json format to firmware.
-    *{"cmdType":"0x01","data":{"cpid":"deviceData.cpId","guid":"deviceData.company","uniqueId":"device uniqueId","command":"json.cmd","ack":true,"ackId":null,"cmdType":"config.commandType.CORE_COMMAND, 0x01"}}
-    *
-    * */
+
     private fun onEdgeDeviceRuleMatched(bean: GetEdgeRuleBean) {
         val strJson = SDKClientUtils.createCommandFormat(
             C2DMessageEnums.DEVICE_COMMAND.value, cpId, bean.g, uniqueId, bean.cmd, true, ""
@@ -2121,7 +2121,7 @@ internal class SDKClientManager(
 
     /*Process edge device rule matched attribute and publish.
      *
-     * @param    ruleBeansList      array list of rule  ("r":[{"g":"3A171114-4CC4-4A1C-924C-D3FCF84E4BD1","es":"514076B1-3C21-4849-A777-F423B1821FC7","con":"humidity = 15","att":[{"g":["AF644BEB-C615-4587-AE38-8EAE59248376"]}],"cmd":"reboot"}])
+     * @param    ruleBeansList      array list of rule
      * @param    parentKey          parent attribute name (temp, gyro etc..)
      * @param    innerKey           gyro object child key (x,y,z etc..)
      * @param    inputValue         attribute input value
@@ -2295,7 +2295,7 @@ internal class SDKClientManager(
 
     /* 1.Publish edge device rule matched data with bellow json format.
      * 2.This method publish gyro type attributes data.(//"gyro.x = 10 AND gyro.y > 10")
-     * {"cpId":"uei","dtg":"b55d6d86-5320-4b26-8df2-b65e3221385e","t":"2020-11-25T12:56:34.487Z","mt":3,"sdk":{"e":"qa","l":"M_android","v":"2.0"},"d":[{"id":"AAA02","dt":"2020-11-25T12:56:34.487Z","rg":"3A171114-4CC4-4A1C-924C-D3FCF84E4BD1","ct":"gyro.x = 10 AND gyro.y > 10 AND gyro.z < 10","sg":"514076B1-3C21-4849-A777-F423B1821FC7","d":[{"temp":"10","gyro":{"x":"10","y":"11","z":"9"}}],"cv":{"gyro":{"x":"10","y":"11","z":"9"}}}]}
+     *
      * */
     private fun publishRuleEvaluatedData() {
         val syncResponse = getSyncResponse()

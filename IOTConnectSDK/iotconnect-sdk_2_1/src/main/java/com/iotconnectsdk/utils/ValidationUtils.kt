@@ -33,7 +33,7 @@ internal class ValidationUtils private constructor(
     }
 
     /*  Check discovery url is empty or not.
-     * @ param discoveryUrl  discovery URL ("discoveryUrl" : "https://discovery.iotconnect.io")
+     * @ param discoveryUrl  discovery URL
      * */
     fun checkDiscoveryURL(DISCOVERY_URL: String?, sdkObj: JSONObject): Boolean {
         try {

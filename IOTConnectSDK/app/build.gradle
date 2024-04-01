@@ -13,6 +13,7 @@ android {
         targetSdk 33
         versionCode 1
         versionName "1.0"
+        missingDimensionStrategy 'version'/*, 'brokeraws'*/, 'brokeraz'
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -48,11 +49,11 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 
 
-     implementation 'com.github.avnet-iotconnect:iotc-android-sdk:12.2.1-azTest'
+   //  implementation 'com.github.avnet-iotconnect:iotc-android-sdk:12.2.1-azTest'
    //  implementation 'com.github.avnet-iotconnect:iotc-android-sdk:12.2.1-awsTest'
 
 
-  //  implementation project(':iotconnect-sdk_2_1')
+     implementation project(':iotconnect-sdk_2_1')
 
 }
 
