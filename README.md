@@ -19,7 +19,58 @@ This library only abstract JSON responses from both end D2C and C2D
 * It allows to disconnect the device from firmware.
 * Offline Storage is used to store device data in a text file when the internet is not available.
 
-# Example Usage:
+
+# Dependencies:
+
+1.Verify jCenter in your root build.gradle at the end of repositories.
+
+```java
+	allprojects {
+		repositories {
+			...
+			maven { url 'https://jitpack.io' }
+		}
+	}
+```
+
+2.Add below dependency in build.gradle file.
+- For AZ Platform
+  
+```java	
+	dependencies {
+	       implementation 'com.github.avnet-iotconnect:iotc-android-sdk:12.2.1-azTest'
+	}
+```
+
+- For AWS Platform
+
+```java	
+	dependencies {
+	      implementation 'com.github.avnet-iotconnect:iotc-android-sdk:12.2.1-awsTest'
+	}
+```	
+
+
+# Third Party Frameworks Used
+
+- [Retrofit](https://github.com/square/retrofit) for HTTP networking
+- [Retrofit Json Converter](https://github.com/square/retrofit) for json converter
+- [OkHttp](https://github.com/square/okhttp) is an HTTP client 
+- [OkHttp Interceptor](https://github.com/square/okhttp) for logging request and response
+- [MQTTClient](https://github.com/eclipse/paho.mqtt.java) for MQTT
+- [Bouncy Castle](https://github.com/bcgit/bc-java) for use of cryptographic algorithms
+
+
+## Requirements
+
+- Java 8 ( or above )
+- Android software development kit
+- Android Studio
+- For support of SDK in Android 14 devices permission regarding Schedule exact alarms should be given when asked or manually by yourself
+
+
+
+# SDK Usage:
 	
 -Prerequisite input data *
 ```java	
@@ -261,56 +312,6 @@ Note : (*) indicates the mandatory element of the object.
     }
 ```
 
-# Dependencies:
-
-1.Verify jCenter in your root build.gradle at the end of repositories.
-
-```java
-	allprojects {
-		repositories {
-			...
-			maven { url 'https://jitpack.io' }
-		}
-	}
-```
-
-2.Add below dependency in build.gradle file.
-- For AZ Platform
-  
-```java	
-	dependencies {
-	       implementation 'com.github.avnet-iotconnect:iotc-android-sdk:12.2.1-azTest'
-	}
-```
-
-- For AWS Platform
-
-```java	
-	dependencies {
-	      implementation 'com.github.avnet-iotconnect:iotc-android-sdk:12.2.1-awsTest'
-	}
-```	
-
-
-
-## Prerequisite tools
-
-- Java 8 ( or above )
-- Android software development kit
-- Android Studio
-- For support of SDK in Android 14 devices permission regarding Schedule exact alarms should be given when asked or manually by yourself
 
 ## Legacy Device Message 1.0 Format
 Please refer this [link](https://github.com/avnet-iotconnect/iotc-android-sdk/blob/release/3.1.4/README.md)
-
-
-# Third Party Frameworks Used
-
-- [Retrofit](https://github.com/square/retrofit) for HTTP networking
-- [Retrofit Json Converter](https://github.com/square/retrofit) for json converter
-- [OkHttp](https://github.com/square/okhttp) is an HTTP client 
-- [OkHttp Interceptor](https://github.com/square/okhttp) for logging request and response
-- [MQTTClient](https://github.com/eclipse/paho.mqtt.java) for MQTT
-- [Bouncy Castle](https://github.com/bcgit/bc-java) for use of cryptographic algorithms
-
-
