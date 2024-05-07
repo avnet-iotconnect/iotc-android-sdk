@@ -3,7 +3,7 @@
 This is Android library to connect with IoTConnect cloud by MQTT
 This library only abstract JSON responses from both end D2C and C2D 
 
-## Features:
+# Features:
 
 * The SDK supports to send telemetry data and receive commands from IoTConnect portal.
 * User can update firmware Over The Air using "OTA update" Feature supported by SDK.
@@ -61,7 +61,7 @@ This library only abstract JSON responses from both end D2C and C2D
 - [Bouncy Castle](https://github.com/bcgit/bc-java) for use of cryptographic algorithms
 
 
-## Requirements
+# Requirements
 
 - Java 8 ( or above )
 - Android software development kit
@@ -72,7 +72,7 @@ This library only abstract JSON responses from both end D2C and C2D
 
 # SDK Usage:
 	
--Prerequisite input data *
+## Prerequisite input data 
 ```java	
   	String uniqueId = <<uniqueId>>;
 
@@ -123,7 +123,7 @@ This library only abstract JSON responses from both end D2C and C2D
          > ****Note**:-** sdkOptions is optional but mandatory for SSL/x509 device authentication type only. Define proper setting or leave it NULL.
 If you do not provide off-line storage, it will set the default settings as per defined above. It may harm your device by storing the large data. Once memory gets full may chance to stop the execution.
 
-	
+## Functions and callbacks:	
 - To Initialize the SDK object and connect to the cloud.
 ```java		
 	SDKClient sdkClient = SDKClient.getInstance(Context,uniqueId, DeviceCallback, sdkOptions);
@@ -312,6 +312,15 @@ Note : (*) indicates the mandatory element of the object.
     }
 ```
 
+# Build Details
+* Key Branches
+	- develop: contains the latest dev code.
+	- main: contains the code for the current library release.
 
-## Legacy Device Message 1.0 Format
+# License
+- [Softweb Proprietor](https://www.softwebsolutions.com/)
+
+  
+
+# Legacy Device Message 1.0 Format
 Please refer this [link](https://github.com/avnet-iotconnect/iotc-android-sdk/blob/release/3.1.4/README.md)
