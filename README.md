@@ -70,7 +70,7 @@ This library only abstract JSON responses from both end D2C and C2D
 
 
 
-# SDK Usage:
+# Example Usage:
 	
 ## Prerequisite input data 
 ```java	
