@@ -34,7 +34,7 @@ This library only abstract JSON responses from both end D2C and C2D
 ```
 
 2.Add below dependency in build.gradle file.
-- For AZ Platform
+- #### For AZ Platform
   
 ```java	
 	dependencies {
@@ -42,7 +42,7 @@ This library only abstract JSON responses from both end D2C and C2D
 	}
 ```
 
-- For AWS Platform
+- #### For AWS Platform
 
 ```java	
 	dependencies {
@@ -72,13 +72,12 @@ This library only abstract JSON responses from both end D2C and C2D
 
 # Example Usage:
 	
-## Prerequisite input data 
+## Input data 
+   ### Required Values: 
 ```java	
-  	String uniqueId = <<uniqueId>>;
+  	String uniqueId = <<uniqueId>>;  //Your device uniqueID
 
 ```
-
-* "uniqueId" 	: Your device uniqueId
 
 - SdkOptions is for the SDK configuration and needs to parse in SDK object initialize call. You need to manage the below configuration as per your device authentication type.
 ```json
@@ -100,28 +99,24 @@ This library only abstract JSON responses from both end D2C and C2D
 		}
 	}
 ```
-* "devicePK":  If authentication type is symmetric key then use it.
-* "cpId" 		: It is the company code. It gets from the IoTConnect UI portal "Settings->Key Vault"
-* "env" : Enter the given environment value
-* "pf" : give the platform AZ or AWS
-* "skipValidation": false = do not want to skip data validation for attributes, true= want to skip data validation for attributes
-* "certificate": It is indicated to define the path of the certificate file. Mandatory for X.509/SSL device CA signed or self-signed authentication type only.
+  ### Required Values: 
+  * "cpId"      : It is the company code. It gets from the IoTConnect UI portal "Settings->Key Vault"
+  * "env"       : Enter the given environment value
+  * "pf"        : give the platform AZ or AWS
+
+  ### Optional values:
+  * "devicePK":  If authentication type is symmetric key then use it.
+  * "skipValidation": false = do not want to skip data validation for attributes, true= want to skip data validation for attributes
+  * "certificate": It is indicated to define the path of the certificate file. Mandatory for X.509/SSL device CA signed or self-signed authentication type only.
 	- SSLKeyPath: your device key
 	- SSLCertPath: your device certificate
 	- SSLCaPath : Root CA certificate
-> ****Note**:-** For **AWS platform** you have to convert files mentioned with below openssl command for SSLKeyPath and SSLCertPath:                          
-		**SSLKeyPath** -> openssl rsa -in device.pem -out device.key                             
-		**SSLCertPath** -> openssl x509 -in certificate.crt -out certificate.pem                               
-		**SSLCaPath**  -> For Root CA you have to go to Settings->KeyVault of IOTConnect portal and save rootCA file from AmazonRootCA1 title and rename to .pem file
-
-
-* "offlineStorage" : Define the configuration related to the offline data storage 
+  * "offlineStorage" : Define the configuration related to the offline data storage 
 	- disabled : false = offline data storing, true = not storing offline data 
 	- availSpaceInMb : Define the file size of off-line data which should be in (MB)
 	- fileCount : Number of files need to create for off-line data
 
-         > ****Note**:-** sdkOptions is optional but mandatory for SSL/x509 device authentication type only. Define proper setting or leave it NULL.
-If you do not provide off-line storage, it will set the default settings as per defined above. It may harm your device by storing the large data. Once memory gets full may chance to stop the execution.
+         > ****Note**:-** If you do not provide off-line storage, it will set the default settings as per defined above. It may harm your device by storing the large data. Once memory gets full may chance to stop the execution.
 
 ## Functions and callbacks:	
 - To Initialize the SDK object and connect to the cloud.
@@ -260,8 +255,6 @@ If you do not provide off-line storage, it will set the default settings as per 
 	}]
 	sdkClient.sendData(String data);
 ```
-"time" : Date format should be as defined //"2021-01-24T10:06:17.857Z" 
-"data" : JSON data type format // {"temperature": 15.55, "gyroscope" : { 'x' : -1.2 }}
 
 - To send the command acknowledgment from device to cloud.
 ```java
