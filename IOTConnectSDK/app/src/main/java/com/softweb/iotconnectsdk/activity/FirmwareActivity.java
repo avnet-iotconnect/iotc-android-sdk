@@ -8,9 +8,11 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -187,18 +189,24 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                     btnSendData.setEnabled(false);
                     btnGetAllTwins.setEnabled(false);
 
-                    cpId = etCpid.getText().toString();
-                    uniqueId = etUniqueId.getText().toString();
+                    cpId = etCpid.getText().toString().trim();
+                    uniqueId = etUniqueId.getText().toString().trim();
 
-                    showDialog(FirmwareActivity.this);
+                    try {
+                        hideKeyboard(FirmwareActivity.this);
+                        showDialog(FirmwareActivity.this);
 
-                    /*
-                     * Type    : Object Initialization "new SDKClient()"
-                     * Usage   : To Initialize SDK and Device connection
-                     * Input   : context, cpId, uniqueId, deviceCallback, twinUpdateCallback, sdkOptions, env.
-                     * Output  : Callback methods for device command and twin properties
-                     */
-                    sdkClient = SDKClient.getInstance(FirmwareActivity.this, uniqueId, FirmwareActivity.this, getSdkOptions());
+                        /*
+                         * Type    : Object Initialization "new SDKClient()"
+                         * Usage   : To Initialize SDK and Device connection
+                         * Input   : context, cpId, uniqueId, deviceCallback, twinUpdateCallback, sdkOptions, env.
+                         * Output  : Callback methods for device command and twin properties
+                         */
+                        sdkClient = SDKClient.getInstance(FirmwareActivity.this, uniqueId, FirmwareActivity.this, getSdkOptions());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
 
                 }
             }
@@ -858,5 +866,16 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
     @Override
     public void onNothingSelected(AdapterView<?> parent) {
 
+    }
+
+    public void hideKeyboard(Activity activity) {
+        InputMethodManager imm = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        //Find the currently focused view, so we can grab the correct window token from it.
+        View view = activity.getCurrentFocus();
+        //If no view currently has focus, create a new one, just so we can grab a window token from it
+        if (view == null) {
+            view = new View(activity);
+        }
+        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 }

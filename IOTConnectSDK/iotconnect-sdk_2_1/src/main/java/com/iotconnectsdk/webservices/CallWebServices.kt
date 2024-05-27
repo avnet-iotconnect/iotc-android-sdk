@@ -25,16 +25,18 @@ internal class CallWebServices {
                                 wsResponseInterface.onSuccessResponse(IotSDKUrls.SYNC_SERVICE, response.body()!!.string())
                             }
                         } else {
-
+                            wsResponseInterface.onFailedResponse(IotSDKUrls.SYNC_SERVICE, response.code(), response.message()+" "+response.errorBody()?.string())
                         }
                     }
                 }
             } catch (e: HttpException) {
                 Log.e("REQUEST", "Exception ${e.message}")
+                wsResponseInterface.onFailedResponse(IotSDKUrls.SYNC_SERVICE, 0, e.message)
             } catch (t: Throwable) {
                 wsResponseInterface.onFailedResponse(IotSDKUrls.SYNC_SERVICE, 0, t.message)
             }catch (e: Exception) {
                 e.printStackTrace()
+                wsResponseInterface.onFailedResponse(IotSDKUrls.SYNC_SERVICE, 0, e.message)
             }
         }
 
@@ -53,15 +55,19 @@ internal class CallWebServices {
                                 wsResponseInterface.onSuccessResponse(IotSDKUrls.DISCOVERY_SERVICE, response.body()!!.string())
                             }
                         } else {
-
+                            wsResponseInterface.onFailedResponse(IotSDKUrls.DISCOVERY_SERVICE, response.code(), response.message()+" "+response.errorBody()?.string())
                         }
                     }
+                }else{
+
                 }
             } catch (e: HttpException) {
                 Log.e("REQUEST", "Exception ${e.message}")
+                wsResponseInterface.onFailedResponse(IotSDKUrls.DISCOVERY_SERVICE, 0, e.message)
             } catch (t: Throwable) {
                 wsResponseInterface.onFailedResponse(IotSDKUrls.DISCOVERY_SERVICE, 0, t.message)
             }catch (e: Exception) {
+                wsResponseInterface.onFailedResponse(IotSDKUrls.DISCOVERY_SERVICE, 0, e.message)
                 e.printStackTrace()
             }
         }

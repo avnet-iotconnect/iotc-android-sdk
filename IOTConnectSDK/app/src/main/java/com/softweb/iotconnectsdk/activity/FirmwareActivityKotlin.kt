@@ -12,6 +12,7 @@ import android.text.TextUtils
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -129,21 +130,27 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
                     cpId = etCpid!!.text.toString()
                     uniqueId = etUniqueId!!.text.toString()
 
-                    showDialog(this@FirmwareActivityKotlin)
+                    try {
+                        hideKeyboard(this@FirmwareActivityKotlin)
+                        showDialog(this@FirmwareActivityKotlin)
 
-                    /*
-                     * Type    : Object Initialization "new SDKClient()"
-                     * Usage   : To Initialize SDK and Device connection
-                     * Input   : context, cpId, uniqueId, deviceCallback, twinUpdateCallback, sdkOptions, env.
-                     * Output  : Callback methods for device command and twin properties
-                     */
+                        /*
+                         * Type    : Object Initialization "new SDKClient()"
+                         * Usage   : To Initialize SDK and Device connection
+                         * Input   : context, cpId, uniqueId, deviceCallback, twinUpdateCallback, sdkOptions, env.
+                         * Output  : Callback methods for device command and twin properties
+                         */
 
-                    sdkClient = SDKClient.getInstance(
-                        this@FirmwareActivityKotlin,
-                        uniqueId,
-                        this@FirmwareActivityKotlin,
-                        sdkOptions
-                    )
+                        sdkClient = SDKClient.getInstance(
+                            this@FirmwareActivityKotlin,
+                            uniqueId,
+                            this@FirmwareActivityKotlin,
+                            sdkOptions
+                        )
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+
 
                 }
             }
@@ -785,5 +792,16 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
 
     override fun onNothingSelected(parent: AdapterView<*>?) {
 
+    }
+
+    private fun hideKeyboard(activity: Activity) {
+        val imm = activity.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+        //Find the currently focused view, so we can grab the correct window token from it.
+        var view = activity.currentFocus
+        //If no view currently has focus, create a new one, just so we can grab a window token from it
+        if (view == null) {
+            view = View(activity)
+        }
+        imm.hideSoftInputFromWindow(view.windowToken, 0)
     }
 }

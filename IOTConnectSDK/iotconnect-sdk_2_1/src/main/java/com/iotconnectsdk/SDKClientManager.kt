@@ -93,7 +93,8 @@ internal class SDKClientManager(
 
     private val DEFAULT_DISCOVERY_URL_AZ = "https://discovery.iotconnect.io/"
 
-    private val DEFAULT_DISCOVERY_URL_AWS_PREQA = "https://jzbybwq654.execute-api.us-east-1.amazonaws.com/Prod/"
+    private val DEFAULT_DISCOVERY_URL_AWS_PREQA =
+        "https://jzbybwq654.execute-api.us-east-1.amazonaws.com/Prod/"
 
     private val DEFAULT_DISCOVERY_URL_AWS_POC = "https://awsdiscovery.iotconnect.io/"
 
@@ -180,7 +181,6 @@ internal class SDKClientManager(
     var job: Job? = null
 
     var isSkipValidation = false
-
 
 
     /*return singleton object for this class.
@@ -326,7 +326,7 @@ internal class SDKClientManager(
                     discoveryUrl =
                         DEFAULT_DISCOVERY_URL_AZ //set default discovery url when it is empty from client end.
                 } else if (BuildConfig.BrokerType == BrokerType.AWS.value) {
-                    if (environment== PREQA) {
+                    if (environment == PREQA) {
                         discoveryUrl =
                             DEFAULT_DISCOVERY_URL_AWS_PREQA //set default discovery url when it is empty from client end.
                     } else if (environment == POC) {
@@ -387,7 +387,12 @@ internal class SDKClientManager(
             sdkClientManger = null
             return
         }
-        callDiscoveryService()
+        try {
+            callDiscoveryService()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
     }
 
     /*API call for discovery.
@@ -401,12 +406,14 @@ internal class SDKClientManager(
         if (appVersion != null) {
 
             if (BuildConfig.BrokerType == BrokerType.AZ.value) {
-                discoveryApi = discoveryUrl + URL_PATH + CPID + cpId + ENV + environment+ END_POINT_PF + pf
+                discoveryApi =
+                    discoveryUrl + URL_PATH + CPID + cpId + ENV + environment + END_POINT_PF + pf
             } else if (BuildConfig.BrokerType == BrokerType.AWS.value) {
                 discoveryApi =
                     discoveryUrl + URL_PATH + CPID + cpId + ENV + environment + END_POINT_PF + pf
             } else {
-                discoveryApi = discoveryUrl + URL_PATH + CPID + cpId + ENV + environment+ END_POINT_PF + pf
+                discoveryApi =
+                    discoveryUrl + URL_PATH + CPID + cpId + ENV + environment + END_POINT_PF + pf
             }
 
             CallWebServices().getDiscoveryApi(discoveryApi, this)
@@ -417,12 +424,17 @@ internal class SDKClientManager(
     *  API call for Identity Api
     */
     private fun callSyncService() {
-        if (!validationUtils!!.networkConnectionCheck()) return
-        val baseUrl =
-            IotSDKPreferences.getInstance(context!!)?.getStringData(IotSDKPreferences.SYNC_API)
-        if (baseUrl != null) {
-            CallWebServices().sync(baseUrl, this)
+        try {
+            if (!validationUtils!!.networkConnectionCheck()) return
+            val baseUrl =
+                IotSDKPreferences.getInstance(context!!)?.getStringData(IotSDKPreferences.SYNC_API)
+            if (baseUrl != null) {
+                CallWebServices().sync(baseUrl, this)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
+
     }
 
     /*Success call back method called on service response.
@@ -514,6 +526,8 @@ internal class SDKClientManager(
             }
         } catch (e: java.lang.Exception) {
             e.printStackTrace()
+            sdkClientManger = null
+            deviceCallback?.onReceiveMsg(e.message)
         }
     }
 
@@ -528,7 +542,11 @@ internal class SDKClientManager(
     override fun onFailedResponse(methodName: String?, errorCode: Int, message: String?) {
         if (methodName.equals(IotSDKUrls.DISCOVERY_SERVICE, ignoreCase = true)) {
             iotSDKLogUtils!!.log(true, isDebug, "ERR_IN09", context!!.getString(R.string.ERR_IN09))
+            sdkClientManger = null
+            deviceCallback?.onReceiveMsg("$errorCode $message")
         } else if (methodName.equals(IotSDKUrls.SYNC_SERVICE, ignoreCase = true)) {
+            sdkClientManger = null
+            deviceCallback?.onReceiveMsg("$errorCode $message")
         }
     }
 
@@ -1032,7 +1050,6 @@ internal class SDKClientManager(
             iotSDKLogUtils!!.log(true, isDebug, "ERR_OS01", e.message!!)
         }
     }
-
 
 
     @JvmSynthetic
@@ -1702,8 +1719,6 @@ internal class SDKClientManager(
 
             outerD_Obj_Faulty.put(DT, DateTimeUtils.currentDate)
             outerD_Obj_Faulty.put(D_OBJ, arrayObj_attributes_faulty)
-
-
 
 
             //publish reporting data
