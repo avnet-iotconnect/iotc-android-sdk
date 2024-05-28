@@ -182,6 +182,10 @@ internal class SDKClientManager(
 
     var isSkipValidation = false
 
+    private val patternCpId = "^[a-zA-Z0-9]+$".toRegex()
+    private val patternUniqueId = "^[a-zA-Z0-9-]+$".toRegex()
+
+
 
     /*return singleton object for this class.
      * */
@@ -367,26 +371,30 @@ internal class SDKClientManager(
                     DEFAULT_DISCOVERY_URL_AZ //set default discovery url when sdkOption is null.
             }
         }
-        if (!validationUtils!!.isEmptyValidation(
-                cpId!!,
-                "ERR_IN04",
-                context.getString(R.string.ERR_IN04)
-            )
-        ) {
+        if (!validationUtils!!.isEmptyValidation(cpId!!, "ERR_IN04", context.getString(R.string.ERR_IN04))) {
             deviceCallback?.onReceiveMsg(context.getString(R.string.ERR_IN04))
             sdkClientManger = null
             return
         }
-        if (!validationUtils!!.isEmptyValidation(
-                uniqueId,
-                "ERR_IN05",
-                context.getString(R.string.ERR_IN05)
-            )
-        ) {
+
+        if(!patternCpId.matches(cpId!!)){
+            deviceCallback?.onReceiveMsg(context.getString(R.string.ERR_IN012))
+            sdkClientManger = null
+            return
+        }
+
+        if (!validationUtils!!.isEmptyValidation(uniqueId, "ERR_IN05", context.getString(R.string.ERR_IN05))) {
             deviceCallback?.onReceiveMsg(context.getString(R.string.ERR_IN05))
             sdkClientManger = null
             return
         }
+
+        if(!patternUniqueId.matches(uniqueId)){
+            deviceCallback?.onReceiveMsg(context.getString(R.string.ERR_IN013))
+            sdkClientManger = null
+            return
+        }
+
         try {
             callDiscoveryService()
         } catch (e: Exception) {

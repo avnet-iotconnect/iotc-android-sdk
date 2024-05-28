@@ -6,7 +6,9 @@
     <string name="ERR_IN02"><![CDATA[Discovery URL can not be blank]]></string>
     <string name="ERR_IN03"><![CDATA[Missing required parameter \'discoveryUrl\' in sdkOptions]]></string>
     <string name="ERR_IN04">cpId can not be blank</string>
+    <string name="ERR_IN012">Please enter proper cpId</string>
     <string name="ERR_IN05">uniqueId can not be blank</string>
+    <string name="ERR_IN013">Please enter proper uniqueId</string>
     <string name="ERR_IN08"><![CDATA[Network connection error or invalid url]]></string>
     <string name="ERR_IN09">Unable to get baseUrl</string>
     <string name="ERR_IN10">Device information not found</string>
