@@ -1,7 +1,9 @@
 package com.softweb.iotconnectsdk.activity
 
+import android.app.Activity
 import android.os.Bundle
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Toast
@@ -45,7 +47,10 @@ class GatewayChildDevicesActivity : AppCompatActivity(), AdapterView.OnItemSelec
 
         btnCreateDevice.setOnClickListener {
             if (checkValidation()) {
-
+                hideKeyboard(this@GatewayChildDevicesActivity)
+                etUniqueId.setText("")
+                etDisplayName.setText("")
+                etUniqueId.requestFocus()
                 sdkClient.createChildDevice(etUniqueId.text.toString(),spTags.selectedItem.toString(),etDisplayName.text.toString())
             }
         }
@@ -58,7 +63,7 @@ class GatewayChildDevicesActivity : AppCompatActivity(), AdapterView.OnItemSelec
                     Toast.LENGTH_SHORT
                 ).show()
             } else {
-
+                hideKeyboard(this@GatewayChildDevicesActivity)
                 sdkClient.deleteChildDevice(etUniqueId.text.toString())
             }
 
@@ -140,5 +145,16 @@ class GatewayChildDevicesActivity : AppCompatActivity(), AdapterView.OnItemSelec
     override fun onSupportNavigateUp(): Boolean {
         finish()
         return true
+    }
+
+    private fun hideKeyboard(activity: Activity) {
+        val imm = activity.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+        //Find the currently focused view, so we can grab the correct window token from it.
+        var view = activity.currentFocus
+        //If no view currently has focus, create a new one, just so we can grab a window token from it
+        if (view == null) {
+            view = View(activity)
+        }
+        imm.hideSoftInputFromWindow(view.windowToken, 0)
     }
 }

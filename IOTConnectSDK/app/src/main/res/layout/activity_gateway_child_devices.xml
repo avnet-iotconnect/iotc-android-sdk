@@ -42,7 +42,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:backgroundTint="@color/white"
-            android:hint="Unique Id"
+            android:hint="Unique Id *"
             android:imeOptions="actionNext"
             android:inputType="text"
             android:textSize="20sp" />
@@ -64,7 +64,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:backgroundTint="@color/white"
-            android:hint="Display Name"
+            android:hint="Display Name *"
             android:imeOptions="actionDone"
             android:inputType="text"
             android:textSize="20sp" />

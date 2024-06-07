@@ -212,6 +212,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
             }
         } else if (v.getId() == R.id.btnSendData) {
             try {
+                hideKeyboard(FirmwareActivity.this);
                 sendInputData();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -403,7 +404,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
             }
         }
         // Device to Cloud data publish.
-        if (isConnected)
+        if (isConnected) {
             /*
              * Type    : Public data Method "sendData()"
              * Usage   : To publish the data on cloud D2C
@@ -411,8 +412,27 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
              * Output  :
              */
             sdkClient.sendData(inputArray.toString());
-        else
+            clearAllInputsAndFocus();
+        } else {
             Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void clearAllInputsAndFocus() {
+        boolean first = true;
+        for (Map.Entry<String, List<TextInputLayout>> entry : inputMap.entrySet()) {
+            List<TextInputLayout> inputValue = entry.getValue();
+            for (TextInputLayout inValue : inputValue) {
+                EditText editText = inValue.getEditText();
+                if (editText != null) {
+                    editText.setText("");
+                    if (first) {
+                        editText.requestFocus();
+                        first = false;
+                    }
+                }
+            }
+        }
     }
 
 
@@ -450,6 +470,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
      */
     @Override
     public void onReceiveMsg(String message) {
+
 
         try {
             getJsonMessage(message);
@@ -622,6 +643,8 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
 
             setStatusText(R.string.device_connected);
             tvConnStatus.setSelected(true);
+            etUniqueId.setEnabled(false);
+            etCpid.setEnabled(false);
             btnConnect.setText("Disconnect");
 
             /*
@@ -642,6 +665,8 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
             }
 
         } else {
+            etUniqueId.setEnabled(true);
+            etCpid.setEnabled(true);
             setStatusText(R.string.device_disconnected);
             tvConnStatus.setSelected(false);
             btnConnect.setText("Connect");

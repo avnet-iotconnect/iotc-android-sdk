@@ -540,6 +540,8 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
             setStatusText(R.string.device_connected)
             tvConnStatus!!.isSelected = true
             btnConnect!!.text = "Disconnect"
+            etUniqueId.isEnabled = false
+            etCpid.isEnabled = false
 
             /*
              * Type    : Function "getAttributes()"
@@ -557,6 +559,8 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
                 return
             }
         } else {
+            etUniqueId.isEnabled = true
+            etCpid.isEnabled = true
             setStatusText(R.string.device_disconnected)
             tvConnStatus!!.isSelected = false
             btnConnect!!.text = "Connect"

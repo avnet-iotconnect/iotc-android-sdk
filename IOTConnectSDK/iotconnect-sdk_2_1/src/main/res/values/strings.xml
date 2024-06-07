@@ -76,7 +76,7 @@
     <string name="tv_invalid_opp_certificate">Invalid Operational Certificate</string>
 
 
-    <string name="tv_device_created">Child Device created successfully</string>
+    <string name="tv_device_created">Child Device created</string>
     <string name="tv_missing_child_tag">Missing child tag</string>
     <string name="tv_missing_uniqueid">Missing child device uniqueid</string>
     <string name="tv_missing_name">Missing child device display name</string>
@@ -88,7 +88,7 @@
     <string name="tv_id_limit">Child uniqueid should not exceed 128 characters</string>
 
 
-    <string name="tv_device_deleted">Child Device deleted successfully</string>
+    <string name="tv_device_deleted">Child Device deleted</string>
     <string name="tv_child_device_not_found">Child device not found</string>
 
 </resources>

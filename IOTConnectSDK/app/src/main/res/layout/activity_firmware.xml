@@ -56,7 +56,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="2"
-                    android:text="Environment:"
+                    android:text="Select Environment:"
                     android:textSize="20sp"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintHorizontal_bias="0.0"
@@ -89,7 +89,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:backgroundTint="@color/white"
-                        android:hint="CpId"
+                        android:hint="CpId *"
                         android:imeOptions="actionNext"
                         android:inputType="text"
                         android:textSize="20sp" />
@@ -112,7 +112,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:backgroundTint="@color/white"
-                        android:hint="Unique Id"
+                        android:hint="Unique Id *"
                         android:imeOptions="actionDone"
                         android:inputType="text"
                         android:textSize="20sp" />
@@ -167,7 +167,7 @@
                     android:layout_marginLeft="20dp"
                     android:layout_marginRight="20dp"
                     android:enabled="false"
-                    android:text="Get AllTwins"
+                    android:text="Get All Twins"
                     android:textSize="15dp"
                     app:layout_constraintLeft_toLeftOf="parent"
                     app:layout_constraintRight_toRightOf="parent"
@@ -180,7 +180,7 @@
                     android:layout_marginLeft="20dp"
                     android:layout_marginRight="20dp"
                     android:enabled="false"
-                    android:text="Child Devices Operation"
+                    android:text="Child Devices Operations"
                     android:textSize="15dp"
                     app:layout_constraintLeft_toLeftOf="parent"
                     app:layout_constraintRight_toRightOf="parent"
@@ -201,7 +201,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_weight="2"
-                        android:text="Could to decide command"
+                        android:text="Device commands and Errors"
                         android:textSize="15sp" />
 
                     <Button

@@ -128,6 +128,7 @@ internal class IotSDKMQTTService private constructor(
             }
 
             override fun connectionLost(cause: Throwable?) {
+                hubToSdkCallback.onConnectionStateChange(false)
             }
 
             @Throws(Exception::class)
@@ -169,7 +170,7 @@ internal class IotSDKMQTTService private constructor(
             }
         })
         val mqttConnectOptions = MqttConnectOptions()
-        mqttConnectOptions.isAutomaticReconnect = true
+        mqttConnectOptions.isAutomaticReconnect = false
         mqttConnectOptions.isCleanSession = true
 
         var sdkObj: JSONObject
