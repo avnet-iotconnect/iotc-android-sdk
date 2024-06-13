@@ -48,10 +48,10 @@ class GatewayChildDevicesActivity : AppCompatActivity(), AdapterView.OnItemSelec
         btnCreateDevice.setOnClickListener {
             if (checkValidation()) {
                 hideKeyboard(this@GatewayChildDevicesActivity)
+                sdkClient.createChildDevice(etUniqueId.text.toString(),spTags.selectedItem.toString(),etDisplayName.text.toString())
                 etUniqueId.setText("")
                 etDisplayName.setText("")
                 etUniqueId.requestFocus()
-                sdkClient.createChildDevice(etUniqueId.text.toString(),spTags.selectedItem.toString(),etDisplayName.text.toString())
             }
         }
 
@@ -65,6 +65,9 @@ class GatewayChildDevicesActivity : AppCompatActivity(), AdapterView.OnItemSelec
             } else {
                 hideKeyboard(this@GatewayChildDevicesActivity)
                 sdkClient.deleteChildDevice(etUniqueId.text.toString())
+                etUniqueId.setText("")
+                etDisplayName.setText("")
+                etUniqueId.requestFocus()
             }
 
         }
