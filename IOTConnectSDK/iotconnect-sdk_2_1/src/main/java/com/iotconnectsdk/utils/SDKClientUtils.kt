@@ -19,6 +19,7 @@ import java.time.ZonedDateTime
 import java.util.Calendar
 import java.util.Date
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.TimeUnit
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
@@ -254,7 +255,12 @@ internal object SDKClientUtils {
     @Throws(java.lang.Exception::class)
     fun generateSasToken(resourceUri: String?, key: String?): String? {
         // Token will expire in one year
-        val expiry = Instant.now().epochSecond + YEARS
+        // val expiry = Instant.now().epochSecond + YEARS
+
+        val currentTimeSeconds = System.currentTimeMillis() / 1000
+        val yearsInSeconds = TimeUnit.DAYS.toSeconds(365 * YEARS.toLong())
+        val expiry = currentTimeSeconds + yearsInSeconds
+
         val stringToSign = URLEncoder.encode(resourceUri, "UTF-8") + "\n" + expiry
 
         val decodedKey = Base64.decode(key, Base64.DEFAULT);
