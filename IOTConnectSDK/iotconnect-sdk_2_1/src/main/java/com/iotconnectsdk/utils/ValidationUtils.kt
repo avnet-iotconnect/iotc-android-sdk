@@ -1,13 +1,16 @@
 package com.iotconnectsdk.utils
 
 import android.content.Context
+import android.util.Patterns
 import android.webkit.URLUtil
 import com.iotconnectsdk.R
 import com.iotconnectsdk.utils.IotSDKNetworkUtils.isOnline
+import com.iotconnectsdk.utils.SDKClientUtils.ensureEndsWithSlash
 import com.iotconnectsdk.webservices.responsebean.DiscoveryApiResponse
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+
 
 internal class ValidationUtils private constructor(
     private val iotSDKLogUtils: IotSDKLogUtils,
@@ -37,8 +40,10 @@ internal class ValidationUtils private constructor(
      * */
     fun checkDiscoveryURL(DISCOVERY_URL: String?, sdkObj: JSONObject): Boolean {
         try {
+            val urlPattern = Patterns.WEB_URL
+
             if (sdkObj.has(DISCOVERY_URL)) {
-                val discoveryUrl = sdkObj.getString(DISCOVERY_URL)
+                val discoveryUrl = sdkObj.getString(DISCOVERY_URL).ensureEndsWithSlash()
                 if (discoveryUrl.isEmpty() || discoveryUrl.length == 0) {
                     iotSDKLogUtils.log(
                         true,
@@ -48,14 +53,16 @@ internal class ValidationUtils private constructor(
                     )
                     return false
                 }
-                if (!URLUtil.isValidUrl(discoveryUrl)) {
-                    iotSDKLogUtils.log(
-                        true,
-                        isDebug,
-                        "ERR_IN01",
-                        context.getString(R.string.ERR_IN01)
-                    )
-                    return false
+                if (!urlPattern.matcher(discoveryUrl).matches()) {
+                  //  if (!URLUtil.isValidUrl(discoveryUrl)) {
+                        iotSDKLogUtils.log(
+                            true,
+                            isDebug,
+                            "ERR_IN01",
+                            context.getString(R.string.ERR_IN01)
+                        )
+                        return false
+                  //  }
                 }
             } else {
                 iotSDKLogUtils.log(true, isDebug, "ERR_IN03", context.getString(R.string.ERR_IN03))
@@ -68,6 +75,8 @@ internal class ValidationUtils private constructor(
         }
         return true
     }
+
+
 
     fun validateBaseUrl(discoveryApiResponse: DiscoveryApiResponse): Boolean {
         if (discoveryApiResponse.d.bu == null || discoveryApiResponse.d.bu.isEmpty()) {

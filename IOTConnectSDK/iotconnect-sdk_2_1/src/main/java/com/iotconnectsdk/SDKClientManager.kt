@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.IntentFilter
 import android.net.ConnectivityManager
 import android.text.TextUtils
+import android.util.Patterns
 import android.webkit.URLUtil
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.ListMultimap
@@ -33,6 +34,7 @@ import com.iotconnectsdk.utils.EdgeDeviceUtils.updateEdgeDeviceGyroObj
 import com.iotconnectsdk.utils.EdgeDeviceUtils.updateEdgeDeviceObj
 import com.iotconnectsdk.utils.SDKClientUtils.createTextFile
 import com.iotconnectsdk.utils.SDKClientUtils.deleteTextFile
+import com.iotconnectsdk.utils.SDKClientUtils.ensureEndsWithSlash
 import com.iotconnectsdk.utils.SDKClientUtils.getAttributesList
 import com.iotconnectsdk.utils.ValidationTelemetryUtils.compareForInputValidationNew
 import com.iotconnectsdk.webservices.CallWebServices
@@ -92,6 +94,8 @@ internal class SDKClientManager(
     private var discoveryUrl = ""
 
     private val DEFAULT_DISCOVERY_URL_AZ = "https://discovery.iotconnect.io/"
+
+    private val DEFAULT_DISCOVERY_URL_AZ_EMEA = "https://eudiscovery.iotconnect.io/"
 
     private val DEFAULT_DISCOVERY_URL_AWS_PREQA =
         "https://jzbybwq654.execute-api.us-east-1.amazonaws.com/Prod/"
@@ -171,6 +175,8 @@ internal class SDKClientManager(
 
     private var isRefreshAttribute = false
 
+    private val EMEA = "emea"
+
     private val PREQA = "preqa"
 
     private val POC = "POC"
@@ -184,7 +190,6 @@ internal class SDKClientManager(
 
     private val patternCpId = "^[a-zA-Z0-9]+$".toRegex()
     private val patternUniqueId = "^[a-zA-Z0-9-]+$".toRegex()
-
 
 
     /*return singleton object for this class.
@@ -213,7 +218,7 @@ internal class SDKClientManager(
                 try {
                     sdkClientManger?.connect()
                     sdkClientManger?.registerNetworkState()
-                    return sdkClientManger!!
+                    return sdkClientManger
                 } catch (e: Exception) {
                     e.printStackTrace()
                     return null
@@ -318,17 +323,28 @@ internal class SDKClientManager(
             if (!validationUtils!!.checkDiscoveryURL(DISCOVERY_URL, sdkObj!!)) {
                 if (sdkObj.has(DISCOVERY_URL)) {
                     try {
-                        val discovery_Url = sdkObj.getString(DISCOVERY_URL)
-                        if (!URLUtil.isValidUrl(discovery_Url)) {
-                            return
+                        val discovery_Url = sdkObj.getString(DISCOVERY_URL).ensureEndsWithSlash()
+                        val urlPattern = Patterns.WEB_URL
+                        if (!urlPattern.matcher(discovery_Url).matches()) {
+                           // if (!URLUtil.isValidUrl(discovery_Url)) {
+                                deviceCallback?.onReceiveMsg(context.getString(R.string.ERR_IN01))
+                                sdkClientManger = null
+                                return
+                            //}
                         }
                     } catch (e: JSONException) {
                         e.printStackTrace()
                     }
                 }
                 if (BuildConfig.BrokerType == BrokerType.AZ.value) {
-                    discoveryUrl =
-                        DEFAULT_DISCOVERY_URL_AZ //set default discovery url when it is empty from client end.
+
+                    if (environment == EMEA) {
+                        discoveryUrl =
+                            DEFAULT_DISCOVERY_URL_AZ_EMEA //set default discovery url when it is empty from client end.
+                    } else {
+                        discoveryUrl =
+                            DEFAULT_DISCOVERY_URL_AZ //set default discovery url when it is empty from client end.
+                    }
                 } else if (BuildConfig.BrokerType == BrokerType.AWS.value) {
                     if (environment == PREQA) {
                         discoveryUrl =
@@ -345,7 +361,7 @@ internal class SDKClientManager(
 
             } else {
                 discoveryUrl = try {
-                    sdkObj.getString(DISCOVERY_URL)
+                    sdkObj.getString(DISCOVERY_URL).ensureEndsWithSlash()
                 } catch (e: JSONException) {
                     e.printStackTrace()
                     iotSDKLogUtils!!.log(true, isDebug, "ERR_IN01", e.message!!)
@@ -355,8 +371,13 @@ internal class SDKClientManager(
         } else {
 
             if (BuildConfig.BrokerType == BrokerType.AZ.value) {
-                discoveryUrl =
-                    DEFAULT_DISCOVERY_URL_AZ //set default discovery url when sdkOption is null.
+                if (environment == EMEA) {
+                    discoveryUrl =
+                        DEFAULT_DISCOVERY_URL_AZ_EMEA //set default discovery url when it is empty from client end.
+                } else {
+                    discoveryUrl =
+                        DEFAULT_DISCOVERY_URL_AZ //set default discovery url when it is empty from client end.
+                }
             } else if (BuildConfig.BrokerType == BrokerType.AWS.value) {
                 if (environment == PREQA) {
                     discoveryUrl =
@@ -371,25 +392,35 @@ internal class SDKClientManager(
                     DEFAULT_DISCOVERY_URL_AZ //set default discovery url when sdkOption is null.
             }
         }
-        if (!validationUtils!!.isEmptyValidation(cpId!!, "ERR_IN04", context.getString(R.string.ERR_IN04))) {
+        if (!validationUtils!!.isEmptyValidation(
+                cpId!!,
+                "ERR_IN04",
+                context.getString(R.string.ERR_IN04)
+            )
+        ) {
             deviceCallback?.onReceiveMsg(context.getString(R.string.ERR_IN04))
             sdkClientManger = null
             return
         }
 
-        if(!patternCpId.matches(cpId!!)){
+        if (!patternCpId.matches(cpId!!)) {
             deviceCallback?.onReceiveMsg(context.getString(R.string.ERR_IN012))
             sdkClientManger = null
             return
         }
 
-        if (!validationUtils!!.isEmptyValidation(uniqueId, "ERR_IN05", context.getString(R.string.ERR_IN05))) {
+        if (!validationUtils!!.isEmptyValidation(
+                uniqueId,
+                "ERR_IN05",
+                context.getString(R.string.ERR_IN05)
+            )
+        ) {
             deviceCallback?.onReceiveMsg(context.getString(R.string.ERR_IN05))
             sdkClientManger = null
             return
         }
 
-        if(!patternUniqueId.matches(uniqueId)){
+        if (!patternUniqueId.matches(uniqueId)) {
             deviceCallback?.onReceiveMsg(context.getString(R.string.ERR_IN013))
             sdkClientManger = null
             return
@@ -1575,21 +1606,21 @@ internal class SDKClientManager(
     private fun publishDeviceInputData(jsonData: String?) {
 
         val response = getSyncResponse()
-        var df = 0
-        if (response != null) {
-            df = response.d.meta.df
-        }
-        if (savedTime == 0L) {
-            savedTime = getCurrentTime()
-            savedTime = savedTime + df
-        } else {
-            val currentTime: Long = getCurrentTime()
-            if (currentTime <= savedTime) {
-                return
-            } else {
-                savedTime = savedTime + df
-            }
-        }
+        /* var df = 0
+         if (response != null) {
+             df = response.d.meta.df
+         }
+         if (savedTime == 0L) {
+             savedTime = getCurrentTime()
+             savedTime = savedTime + df
+         } else {
+             val currentTime: Long = getCurrentTime()
+             if (currentTime <= savedTime) {
+                 return
+             } else {
+                 savedTime = savedTime + df
+             }
+         }*/
         if (response != null) {
             if (jsonData != null) {
                 publishDeviceInputData(response, jsonData, getAttributeResponse())
@@ -1672,7 +1703,7 @@ internal class SDKClientManager(
                                 )
                             if (gyroValidationValue == 0) {
                                 gyroObj_reporting.put(InnerKey, InnerKValue)
-                            } else {
+                            } else if (gyroValidationValue == 1) {
                                 gyroObj_faulty.put(InnerKey, InnerKValue)
                             }
                         }
@@ -1688,7 +1719,7 @@ internal class SDKClientManager(
                             compareForInputValidationNew(key, value, tag, dObj, isSkipValidation)
                         if (othersValidation == 0) {
                             innerD_Obj_reporting.put(key, value)
-                        } else {
+                        } else if (othersValidation == 1) {
                             innerD_Obj_faulty.put(key, value)
                         }
                     }
@@ -1812,6 +1843,8 @@ internal class SDKClientManager(
                                             )
                                         }
                                     }
+                                } else {
+                                    //code for fault and neglect for blank have to test
                                 }
                             }
                             //publish
@@ -1840,6 +1873,8 @@ internal class SDKClientManager(
                                         )
                                     }
                                 }
+                            } else {
+                                //code for fault and neglect for blank have to test
                             }
                         }
                     }

@@ -281,5 +281,9 @@ internal object SDKClientUtils {
         ) + "&sig=" + URLEncoder.encode(signature, StandardCharsets.UTF_8.name()) + "&se=" + expiry)
     }
 
+    fun String.ensureEndsWithSlash(): String {
+        return if (this.endsWith("/")) this else "$this/"
+    }
+
 
 }

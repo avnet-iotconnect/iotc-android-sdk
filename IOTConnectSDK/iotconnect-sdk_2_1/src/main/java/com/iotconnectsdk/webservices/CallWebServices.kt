@@ -9,12 +9,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
+import java.net.UnknownHostException
 
 internal class CallWebServices {
 
     fun sync(url: String?, wsResponseInterface: WsResponseInterface) {
 
-        val service= getAPIService(url)
+        val service = getAPIService(url)
         CoroutineScope(Dispatchers.IO).launch {
             val response = service?.sync(url)
             try {
@@ -22,10 +23,17 @@ internal class CallWebServices {
                     withContext(Dispatchers.Main) {
                         if (response.isSuccessful) {
                             response.body()?.let {
-                                wsResponseInterface.onSuccessResponse(IotSDKUrls.SYNC_SERVICE, response.body()!!.string())
+                                wsResponseInterface.onSuccessResponse(
+                                    IotSDKUrls.SYNC_SERVICE,
+                                    response.body()!!.string()
+                                )
                             }
                         } else {
-                            wsResponseInterface.onFailedResponse(IotSDKUrls.SYNC_SERVICE, response.code(), response.message()+" "+response.errorBody()?.string())
+                            wsResponseInterface.onFailedResponse(
+                                IotSDKUrls.SYNC_SERVICE,
+                                response.code(),
+                                response.message() + " " + response.errorBody()?.string()
+                            )
                         }
                     }
                 }
@@ -34,7 +42,7 @@ internal class CallWebServices {
                 wsResponseInterface.onFailedResponse(IotSDKUrls.SYNC_SERVICE, 0, e.message)
             } catch (t: Throwable) {
                 wsResponseInterface.onFailedResponse(IotSDKUrls.SYNC_SERVICE, 0, t.message)
-            }catch (e: Exception) {
+            } catch (e: Exception) {
                 e.printStackTrace()
                 wsResponseInterface.onFailedResponse(IotSDKUrls.SYNC_SERVICE, 0, e.message)
             }
@@ -44,32 +52,44 @@ internal class CallWebServices {
 
     fun getDiscoveryApi(discoveryUrl: String?, wsResponseInterface: WsResponseInterface) {
 
-        val service= getAPIService(discoveryUrl)
-        CoroutineScope(Dispatchers.IO).launch {
-            val response = service?.getDiscoveryApi(discoveryUrl)
-            try {
-                if (response != null) {
-                    withContext(Dispatchers.Main) {
-                        if (response.isSuccessful) {
-                            response.body()?.let {
-                                wsResponseInterface.onSuccessResponse(IotSDKUrls.DISCOVERY_SERVICE, response.body()!!.string())
+        try {
+            val service = getAPIService(discoveryUrl)
+            CoroutineScope(Dispatchers.IO).launch {
+                val response = service?.getDiscoveryApi(discoveryUrl)
+                try {
+                    if (response != null) {
+                        withContext(Dispatchers.Main) {
+                            if (response.isSuccessful) {
+                                response.body()?.let {
+                                    wsResponseInterface.onSuccessResponse(
+                                        IotSDKUrls.DISCOVERY_SERVICE,
+                                        response.body()!!.string()
+                                    )
+                                }
+                            } else {
+                                wsResponseInterface.onFailedResponse(
+                                    IotSDKUrls.DISCOVERY_SERVICE,
+                                    response.code(),
+                                    response.message() + " " + response.errorBody()?.string()
+                                )
                             }
-                        } else {
-                            wsResponseInterface.onFailedResponse(IotSDKUrls.DISCOVERY_SERVICE, response.code(), response.message()+" "+response.errorBody()?.string())
                         }
-                    }
-                }else{
+                    } else {
 
+                    }
+                } catch (e: HttpException) {
+                    Log.e("REQUEST", "Exception ${e.message}")
+                    wsResponseInterface.onFailedResponse(IotSDKUrls.DISCOVERY_SERVICE, 0, e.message)
+                } catch (t: Throwable) {
+                    wsResponseInterface.onFailedResponse(IotSDKUrls.DISCOVERY_SERVICE, 0, t.message)
+                } catch (e: Exception) {
+                    wsResponseInterface.onFailedResponse(IotSDKUrls.DISCOVERY_SERVICE, 0, e.message)
+                    e.printStackTrace()
                 }
-            } catch (e: HttpException) {
-                Log.e("REQUEST", "Exception ${e.message}")
-                wsResponseInterface.onFailedResponse(IotSDKUrls.DISCOVERY_SERVICE, 0, e.message)
-            } catch (t: Throwable) {
-                wsResponseInterface.onFailedResponse(IotSDKUrls.DISCOVERY_SERVICE, 0, t.message)
-            }catch (e: Exception) {
-                wsResponseInterface.onFailedResponse(IotSDKUrls.DISCOVERY_SERVICE, 0, e.message)
-                e.printStackTrace()
             }
+        } catch (e: UnknownHostException) {
+            wsResponseInterface.onFailedResponse(IotSDKUrls.DISCOVERY_SERVICE, 0, e.message)
+            e.printStackTrace()
         }
     }
 }

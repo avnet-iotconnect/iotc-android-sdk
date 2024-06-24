@@ -18,6 +18,8 @@ internal object ValidationTelemetryUtils {
 
     private const val ERR = 0 //"ERR";
 
+    private const val NEGLECT = -2 //"ERR";
+
     private const val DATA_TYPE_INTEGER = 1
     private const val DATA_TYPE_LONG = 2
     private const val DATA_TYPE_DECIMAL = 3
@@ -60,7 +62,11 @@ internal object ValidationTelemetryUtils {
                     val dv = data.dv
                     val dt = data.dt
                     if (key.equals(ln, ignoreCase = true) && tag.equals(tg, ignoreCase = true)) {
-                        return validateDataType(dt, value, dv, isSkipValidation)
+                        if (!TextUtils.isEmpty(value.trim())) {
+                            return validateDataType(dt, value, dv, isSkipValidation)
+                        }else{
+                            return NEGLECT
+                        }
 
                     }
                 }
