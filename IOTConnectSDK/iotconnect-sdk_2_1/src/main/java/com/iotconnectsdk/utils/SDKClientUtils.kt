@@ -40,6 +40,10 @@ internal object SDKClientUtils {
             if (attribute.p != null && attribute.p.isNotEmpty()) {
                 if (tag == attribute.tg) {
                     try {
+                       attribute.d.map {
+                           it.faultyTime="60"
+                           it
+                       }
                         val attributeObj = JSONObject(Gson().toJson(attribute))
                         attributesArray.put(attributeObj)
                     } catch (e: Exception) {
@@ -51,6 +55,7 @@ internal object SDKClientUtils {
                 for (attributeValue in attributeValues) {
                     if (tag == attributeValue.tg) {
                         try {
+                            attributeValue.faultyTime="60"
                             val attributeObj = JSONObject(Gson().toJson(attributeValue))
                             attributesArray.put(attributeObj)
                         } catch (e: Exception) {

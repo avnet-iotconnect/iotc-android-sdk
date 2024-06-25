@@ -6,7 +6,6 @@ import android.content.IntentFilter
 import android.net.ConnectivityManager
 import android.text.TextUtils
 import android.util.Patterns
-import android.webkit.URLUtil
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.ListMultimap
 import com.google.gson.Gson
@@ -32,6 +31,7 @@ import com.iotconnectsdk.utils.EdgeDeviceUtils.getPublishStringEdgeDevice
 import com.iotconnectsdk.utils.EdgeDeviceUtils.publishEdgeDeviceInputData
 import com.iotconnectsdk.utils.EdgeDeviceUtils.updateEdgeDeviceGyroObj
 import com.iotconnectsdk.utils.EdgeDeviceUtils.updateEdgeDeviceObj
+import com.iotconnectsdk.utils.EdgeValidationTelemetryUtils.compareForInputValidationEdge
 import com.iotconnectsdk.utils.SDKClientUtils.createTextFile
 import com.iotconnectsdk.utils.SDKClientUtils.deleteTextFile
 import com.iotconnectsdk.utils.SDKClientUtils.ensureEndsWithSlash
@@ -1606,7 +1606,7 @@ internal class SDKClientManager(
     private fun publishDeviceInputData(jsonData: String?) {
 
         val response = getSyncResponse()
-        /* var df = 0
+         var df = 0
          if (response != null) {
              df = response.d.meta.df
          }
@@ -1620,7 +1620,7 @@ internal class SDKClientManager(
              } else {
                  savedTime = savedTime + df
              }
-         }*/
+         }
         if (response != null) {
             if (jsonData != null) {
                 publishDeviceInputData(response, jsonData, getAttributeResponse())
@@ -1788,6 +1788,14 @@ internal class SDKClientManager(
         if (syncResponse != null) {
             try {
                 val jsonArray = JSONArray(jsonData)
+                var doFaultyPublish = false
+
+                var reportingObject_faulty: JSONObject? = null
+                // 1 for faulty.
+
+                val outerD_Obj_Faulty = JSONObject()
+
+                val arrayObj_attributes_faulty = JSONArray()
 
                 val gatewayChildResponse = getGatewayChildResponse()
                 val getChildDeviceBean = GetChildDeviceBean()
@@ -1801,6 +1809,10 @@ internal class SDKClientManager(
                     val dataObj = jsonArray.getJSONObject(i).getJSONObject(DATA)
                     val dataJsonKey = dataObj.keys()
                     val tag = SDKClientUtils.getTag(uniqueId, gatewayChildResponse?.d)
+
+                    reportingObject_faulty = JSONObject()
+                    val innerD_Obj_faulty = JSONObject()
+
                     while (dataJsonKey.hasNext()) {
                         val key = dataJsonKey.next()
                         val value = dataObj.getString(key)
@@ -1809,6 +1821,7 @@ internal class SDKClientManager(
                         ) {
                             val AttObj = JSONObject()
 
+                            val gyroObj_faulty = JSONObject()
 
                             val innerObj = dataObj.getJSONObject(key)
                             val innerJsonKey = innerObj.keys()
@@ -1817,7 +1830,7 @@ internal class SDKClientManager(
                                 val innerKValue = innerObj.getString(innerKey)
 
 
-                                val validation: Int = compareForInputValidationNew(
+                                val validation: Int = compareForInputValidationEdge(
                                     innerKey, innerKValue, tag, attributeResponse, isSkipValidation
                                 )
 
@@ -1843,16 +1856,20 @@ internal class SDKClientManager(
                                             )
                                         }
                                     }
-                                } else {
-                                    //code for fault and neglect for blank have to test
+                                } else if(validation==1) {
+                                    //sending gyro fault data and neglect for blank
+
+                                        gyroObj_faulty.put(innerKey, innerKValue)
+                                      //  sendFaultyData(syncResponse,jsonData,attributeResponse,validation)
+
                                 }
                             }
+                            if (gyroObj_faulty.length() != 0) innerD_Obj_faulty.put(key, gyroObj_faulty)
+
                             //publish
                             publishRuleEvaluatedData()
                         } else {
-
-
-                            val validation: Int = compareForInputValidationNew(
+                            val validation: Int = compareForInputValidationEdge(
                                 key, value, tag, attributeResponse, isSkipValidation
                             )
 
@@ -1873,17 +1890,153 @@ internal class SDKClientManager(
                                         )
                                     }
                                 }
-                            } else {
-                                //code for fault and neglect for blank have to test
+                            } else if(validation==1) {
+                                //sending other data type fault data and neglect for blank
+
+                                    innerD_Obj_faulty.put(key, value)
+                                    //sendFaultyData(syncResponse,jsonData,attributeResponse,validation)
+
                             }
                         }
                     }
+                    reportingObject_faulty.put(DT, DateTimeUtils.currentDate)
+                    reportingObject_faulty.put(ID, uniqueId)
+                    reportingObject_faulty.put(TG, tag)
+
+                    reportingObject_faulty.put(D_OBJ, innerD_Obj_faulty)
+
+
+                    if (innerD_Obj_faulty.length() != 0) arrayObj_attributes_faulty.put(
+                        reportingObject_faulty
+                    )
+
+                    if (arrayObj_attributes_faulty.length() > 0) doFaultyPublish = true
+
                 }
+                outerD_Obj_Faulty.put(DT, DateTimeUtils.currentDate)
+                outerD_Obj_Faulty.put(D_OBJ, arrayObj_attributes_faulty)
+
+                //publish faulty data
+                if (doFaultyPublish) publishMessage(
+                    syncResponse?.d?.p?.topics!!.flt, outerD_Obj_Faulty.toString(), false
+                )
+
+
             } catch (e: Exception) {
                 iotSDKLogUtils!!.log(true, isDebug, "ERR_EE01", e.message!!)
                 e.printStackTrace()
             }
         }
+    }
+
+    private fun sendFaultyData(
+        syncResponse: IdentityServiceResponse?,
+        inputJsonStr: String,
+        dObj: CommonResponseBean?,
+        validation: Int
+    ) {
+        try {
+
+            val jsonArray = JSONArray(inputJsonStr)
+
+            var doFaultyPublish = false
+
+            var reportingObject_faulty: JSONObject? = null
+            // 1 for faulty.
+
+            val outerD_Obj_Faulty = JSONObject()
+
+            val arrayObj_attributes_faulty = JSONArray()
+
+            val gatewayChildResponse = getGatewayChildResponse()
+            val getChildDeviceBean = GetChildDeviceBean()
+
+            getChildDeviceBean.tg = syncResponse?.d?.meta?.gtw?.tg
+            getChildDeviceBean.id = uniqueId
+            gatewayChildResponse?.d?.childDevice?.add(getChildDeviceBean)
+
+
+            for (i in 0 until jsonArray.length()) {
+
+                val uniqueId = jsonArray.getJSONObject(i).getString(UNIQUE_ID_View)
+                val dataObj = jsonArray.getJSONObject(i).getJSONObject(DATA)
+                val dataJsonKey = dataObj.keys()
+
+                val tag = SDKClientUtils.getTag(uniqueId, gatewayChildResponse?.d)
+
+
+                reportingObject_faulty = JSONObject()
+
+                val innerD_Obj_faulty = JSONObject()
+
+
+                while (dataJsonKey.hasNext()) {
+                    val key = dataJsonKey.next()
+                    val value = dataObj.getString(key)
+                    if (value.replace("\\s".toRegex(), "")
+                            .isNotEmpty() && JSONTokener(value).nextValue() is JSONObject
+                    ) {
+
+                        val gyroObj_faulty = JSONObject()
+
+                        val innerObj = dataObj.getJSONObject(key)
+                        val innerJsonKey = innerObj.keys()
+
+
+                        while (innerJsonKey.hasNext()) {
+                            val InnerKey = innerJsonKey.next()
+                            val InnerKValue = innerObj.getString(InnerKey)
+                            val gyroValidationValue =
+                                compareForInputValidationNew(
+                                    InnerKey,
+                                    InnerKValue,
+                                    tag,
+                                    dObj,
+                                    isSkipValidation
+                                )
+                            if (gyroValidationValue == 1) {
+                                gyroObj_faulty.put(InnerKey, InnerKValue)
+                            }
+                        }
+
+                        if (gyroObj_faulty.length() != 0) innerD_Obj_faulty.put(key, gyroObj_faulty)
+                    } else {
+                        val othersValidation = compareForInputValidationNew(key, value, tag, dObj, isSkipValidation)
+                        if (othersValidation == 1) {
+                            innerD_Obj_faulty.put(key, value)
+                        }
+                    }
+                }
+
+                reportingObject_faulty.put(DT, DateTimeUtils.currentDate)
+                reportingObject_faulty.put(ID, uniqueId)
+                reportingObject_faulty.put(TG, tag)
+
+                reportingObject_faulty.put(D_OBJ, innerD_Obj_faulty)
+
+
+                if (innerD_Obj_faulty.length() != 0) arrayObj_attributes_faulty.put(
+                    reportingObject_faulty
+                )
+
+                if (arrayObj_attributes_faulty.length() > 0) doFaultyPublish = true
+
+
+            }
+            //add object of attribute object to parent object.
+
+            outerD_Obj_Faulty.put(DT, DateTimeUtils.currentDate)
+            outerD_Obj_Faulty.put(D_OBJ, arrayObj_attributes_faulty)
+
+            //publish faulty data
+            if (doFaultyPublish) publishMessage(
+                syncResponse?.d?.p?.topics!!.flt, outerD_Obj_Faulty.toString(), false
+            )
+        } catch (e: JSONException) {
+            e.printStackTrace()
+            iotSDKLogUtils!!.log(true, isDebug, "CM01_SD01", e.message!!)
+        }
+
     }
 
 

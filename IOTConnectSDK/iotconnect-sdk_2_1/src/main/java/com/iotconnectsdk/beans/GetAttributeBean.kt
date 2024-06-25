@@ -28,7 +28,9 @@ internal data class GetAttributeBean(
         @SerializedName("tg")
         val tg: String,
         @SerializedName("tw")
-        val tw: String? = null
+        val tw: String? = null,
+        @SerializedName("faultyTime")
+        var faultyTime: String? = null
     )
 }
 
