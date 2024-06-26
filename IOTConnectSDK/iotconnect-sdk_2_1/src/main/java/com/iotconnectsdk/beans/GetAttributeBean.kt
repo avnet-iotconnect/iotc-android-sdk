@@ -30,7 +30,7 @@ internal data class GetAttributeBean(
         @SerializedName("tw")
         val tw: String? = null,
         @SerializedName("faultyTime")
-        var faultyTime: String? = null
+        var faultyTime: Long? = null
     )
 }
 

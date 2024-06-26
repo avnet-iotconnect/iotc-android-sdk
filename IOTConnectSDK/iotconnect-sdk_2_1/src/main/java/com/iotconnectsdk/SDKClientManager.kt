@@ -10,6 +10,7 @@ import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.ListMultimap
 import com.google.gson.Gson
 import com.iotconnectsdk.beans.CommonResponseBean
+import com.iotconnectsdk.beans.GetAttributeBean
 import com.iotconnectsdk.beans.GetChildDeviceBean
 import com.iotconnectsdk.beans.GetEdgeRuleBean
 import com.iotconnectsdk.beans.TumblingWindowBean
@@ -175,6 +176,9 @@ internal class SDKClientManager(
 
     private var isRefreshAttribute = false
 
+    private var attributeList: List<GetAttributeBean>? = null
+
+
     private val EMEA = "emea"
 
     private val PREQA = "preqa"
@@ -326,10 +330,10 @@ internal class SDKClientManager(
                         val discovery_Url = sdkObj.getString(DISCOVERY_URL).ensureEndsWithSlash()
                         val urlPattern = Patterns.WEB_URL
                         if (!urlPattern.matcher(discovery_Url).matches()) {
-                           // if (!URLUtil.isValidUrl(discovery_Url)) {
-                                deviceCallback?.onReceiveMsg(context.getString(R.string.ERR_IN01))
-                                sdkClientManger = null
-                                return
+                            // if (!URLUtil.isValidUrl(discovery_Url)) {
+                            deviceCallback?.onReceiveMsg(context.getString(R.string.ERR_IN01))
+                            sdkClientManger = null
+                            return
                             //}
                         }
                     } catch (e: JSONException) {
@@ -1606,21 +1610,21 @@ internal class SDKClientManager(
     private fun publishDeviceInputData(jsonData: String?) {
 
         val response = getSyncResponse()
-         var df = 0
-         if (response != null) {
-             df = response.d.meta.df
-         }
-         if (savedTime == 0L) {
-             savedTime = getCurrentTime()
-             savedTime = savedTime + df
-         } else {
-             val currentTime: Long = getCurrentTime()
-             if (currentTime <= savedTime) {
-                 return
-             } else {
-                 savedTime = savedTime + df
-             }
-         }
+        var df = 0
+        if (response != null) {
+            df = response.d.meta.df
+        }
+        if (savedTime == 0L) {
+            savedTime = getCurrentTime()
+            savedTime = savedTime + df
+        } else {
+            val currentTime: Long = getCurrentTime()
+            if (currentTime <= savedTime) {
+                return
+            } else {
+                savedTime = savedTime + df
+            }
+        }
         if (response != null) {
             if (jsonData != null) {
                 publishDeviceInputData(response, jsonData, getAttributeResponse())
@@ -1787,6 +1791,7 @@ internal class SDKClientManager(
         publishObjForRuleMatchEdgeDevice = null
         if (syncResponse != null) {
             try {
+                val currentTime = System.currentTimeMillis() / 1000
                 val jsonArray = JSONArray(jsonData)
                 var doFaultyPublish = false
 
@@ -1856,15 +1861,31 @@ internal class SDKClientManager(
                                             )
                                         }
                                     }
-                                } else if(validation==1) {
-                                    //sending gyro fault data and neglect for blank
+                                } else if (validation == 1) {
 
-                                        gyroObj_faulty.put(innerKey, innerKValue)
-                                      //  sendFaultyData(syncResponse,jsonData,attributeResponse,validation)
+                                    //sending gyro fault data and neglect for blank
+                                    attributeList?.forEach dLoop@ { attBean ->
+                                        attBean.d.forEach {
+                                            if (innerKey == it.ln) {
+                                                if (it.faultyTime?.toInt() == 0 || currentTime > it.faultyTime!!) {
+                                                    it.faultyTime = currentTime + 60
+                                                    gyroObj_faulty.put(innerKey, innerKValue)
+                                                    return@dLoop
+                                                }
+                                            }
+                                        }
+                                    }
+
+
+                                    //gyroObj_faulty.put(innerKey, innerKValue)
+                                    //  sendFaultyData(syncResponse,jsonData,attributeResponse,validation)
 
                                 }
                             }
-                            if (gyroObj_faulty.length() != 0) innerD_Obj_faulty.put(key, gyroObj_faulty)
+                            if (gyroObj_faulty.length() != 0) innerD_Obj_faulty.put(
+                                key,
+                                gyroObj_faulty
+                            )
 
                             //publish
                             publishRuleEvaluatedData()
@@ -1890,15 +1911,27 @@ internal class SDKClientManager(
                                         )
                                     }
                                 }
-                            } else if(validation==1) {
+                            } else if (validation == 1) {
                                 //sending other data type fault data and neglect for blank
 
-                                    innerD_Obj_faulty.put(key, value)
-                                    //sendFaultyData(syncResponse,jsonData,attributeResponse,validation)
+                                attributeList?.forEach dLoop@{ attBean ->
+                                    attBean.d.forEach {
+                                        if (key == it.ln) {
+                                            if (it.faultyTime?.toInt() == 0 || currentTime > it.faultyTime!!) {
+                                                it.faultyTime = currentTime + 60
+                                                innerD_Obj_faulty.put(key, value)
+                                                return@dLoop
+                                            }
+                                        }
+                                    }
+                                }
+
+                               //sendFaultyData(syncResponse,jsonData,attributeResponse,validation)
 
                             }
                         }
                     }
+
                     reportingObject_faulty.put(DT, DateTimeUtils.currentDate)
                     reportingObject_faulty.put(ID, uniqueId)
                     reportingObject_faulty.put(TG, tag)
@@ -1929,110 +1962,11 @@ internal class SDKClientManager(
         }
     }
 
-    private fun sendFaultyData(
-        syncResponse: IdentityServiceResponse?,
-        inputJsonStr: String,
-        dObj: CommonResponseBean?,
-        validation: Int
-    ) {
+    private fun sendFaultyData() {
         try {
 
-            val jsonArray = JSONArray(inputJsonStr)
 
-            var doFaultyPublish = false
-
-            var reportingObject_faulty: JSONObject? = null
-            // 1 for faulty.
-
-            val outerD_Obj_Faulty = JSONObject()
-
-            val arrayObj_attributes_faulty = JSONArray()
-
-            val gatewayChildResponse = getGatewayChildResponse()
-            val getChildDeviceBean = GetChildDeviceBean()
-
-            getChildDeviceBean.tg = syncResponse?.d?.meta?.gtw?.tg
-            getChildDeviceBean.id = uniqueId
-            gatewayChildResponse?.d?.childDevice?.add(getChildDeviceBean)
-
-
-            for (i in 0 until jsonArray.length()) {
-
-                val uniqueId = jsonArray.getJSONObject(i).getString(UNIQUE_ID_View)
-                val dataObj = jsonArray.getJSONObject(i).getJSONObject(DATA)
-                val dataJsonKey = dataObj.keys()
-
-                val tag = SDKClientUtils.getTag(uniqueId, gatewayChildResponse?.d)
-
-
-                reportingObject_faulty = JSONObject()
-
-                val innerD_Obj_faulty = JSONObject()
-
-
-                while (dataJsonKey.hasNext()) {
-                    val key = dataJsonKey.next()
-                    val value = dataObj.getString(key)
-                    if (value.replace("\\s".toRegex(), "")
-                            .isNotEmpty() && JSONTokener(value).nextValue() is JSONObject
-                    ) {
-
-                        val gyroObj_faulty = JSONObject()
-
-                        val innerObj = dataObj.getJSONObject(key)
-                        val innerJsonKey = innerObj.keys()
-
-
-                        while (innerJsonKey.hasNext()) {
-                            val InnerKey = innerJsonKey.next()
-                            val InnerKValue = innerObj.getString(InnerKey)
-                            val gyroValidationValue =
-                                compareForInputValidationNew(
-                                    InnerKey,
-                                    InnerKValue,
-                                    tag,
-                                    dObj,
-                                    isSkipValidation
-                                )
-                            if (gyroValidationValue == 1) {
-                                gyroObj_faulty.put(InnerKey, InnerKValue)
-                            }
-                        }
-
-                        if (gyroObj_faulty.length() != 0) innerD_Obj_faulty.put(key, gyroObj_faulty)
-                    } else {
-                        val othersValidation = compareForInputValidationNew(key, value, tag, dObj, isSkipValidation)
-                        if (othersValidation == 1) {
-                            innerD_Obj_faulty.put(key, value)
-                        }
-                    }
-                }
-
-                reportingObject_faulty.put(DT, DateTimeUtils.currentDate)
-                reportingObject_faulty.put(ID, uniqueId)
-                reportingObject_faulty.put(TG, tag)
-
-                reportingObject_faulty.put(D_OBJ, innerD_Obj_faulty)
-
-
-                if (innerD_Obj_faulty.length() != 0) arrayObj_attributes_faulty.put(
-                    reportingObject_faulty
-                )
-
-                if (arrayObj_attributes_faulty.length() > 0) doFaultyPublish = true
-
-
-            }
-            //add object of attribute object to parent object.
-
-            outerD_Obj_Faulty.put(DT, DateTimeUtils.currentDate)
-            outerD_Obj_Faulty.put(D_OBJ, arrayObj_attributes_faulty)
-
-            //publish faulty data
-            if (doFaultyPublish) publishMessage(
-                syncResponse?.d?.p?.topics!!.flt, outerD_Obj_Faulty.toString(), false
-            )
-        } catch (e: JSONException) {
+        } catch (e: Exception) {
             e.printStackTrace()
             iotSDKLogUtils!!.log(true, isDebug, "CM01_SD01", e.message!!)
         }
@@ -2047,12 +1981,20 @@ internal class SDKClientManager(
     private fun processEdgeDeviceTWTimer(
         syncResponse: IdentityServiceResponse, response: CommonResponseBean
     ) {
-        val attributeList = response.d?.att
+        attributeList = response.d?.att
         edgeDeviceAttributeMap = ArrayListMultimap.create()
         edgeDeviceAttributeGyroMap = ArrayListMultimap.create()
         edgeDeviceTimersList = ArrayList()
         if (attributeList != null) {
-            for (bean in attributeList) {
+            attributeList?.forEach { attBean ->
+                attBean.d.map {
+                    it.faultyTime = 0
+                    it
+                }
+            }
+
+
+            for (bean in attributeList!!) {
                 if (bean.p != null && bean.p.isNotEmpty()) {
                     // if for not empty "p":"gyro"
                     val gyroAttributeList: MutableList<TumblingWindowBean> = ArrayList()
