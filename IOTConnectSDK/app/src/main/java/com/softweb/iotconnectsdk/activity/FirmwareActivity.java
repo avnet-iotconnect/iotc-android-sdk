@@ -512,16 +512,16 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
          * Usage   : Send device command received acknowledgment to cloud
          *
          * - status Type
-         *     st = 6; // Device command Ack status
-         *     st = 4; // Failed Ack
+         *     st = 1	Failed
+               st = 2	Executed Ack
          *
          */
 
         if (isConnected) {
             if (TextUtils.isEmpty(childId)) {
-                sdkClient.sendAckCmd(ackId, 6, "");
+                sdkClient.sendAckCmd(ackId, 2, "");
             } else {
-                sdkClient.sendAckCmd(ackId, 6, "", childId);
+                sdkClient.sendAckCmd(ackId, 2, "", childId);
             }
         } else {
             Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
@@ -538,17 +538,20 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
          * Type    : Public Method "sendAck()"
          * Usage   : Send firmware command received acknowledgement to cloud
          * - status Type
-         *     st = 0; // firmware OTA command Ack status
-         *     st = 4; // Failed Ack
+         *     st = 1	Failed
+               st = 2	Downloading
+               st = 3	Download Done
+               st = 4	Download Failed
+               st = 5	Success
          *
          */
 
         if (isConnected) {
 
             if (TextUtils.isEmpty(childId)) {
-                sdkClient.sendOTAAckCmd(ackId, 0, "");
+                sdkClient.sendOTAAckCmd(ackId, 5, "");
             } else {
-                sdkClient.sendOTAAckCmd(ackId, 0, "", childId);
+                sdkClient.sendOTAAckCmd(ackId, 5, "", childId);
             }
         } else {
             Toast.makeText(FirmwareActivity.this, getString(R.string.string_connection_not_found), Toast.LENGTH_LONG).show();
