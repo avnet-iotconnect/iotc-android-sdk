@@ -422,14 +422,16 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
         getJsonMessage(message)
 
         /*
-         * Type    : Public Method "sendAck()"
-         * Usage   : Send device command received acknowledgment to cloud
-         *
-         * - status Type
-         *     st = 6; // Device command Ack status
-         *     st = 4; // Failed Ack
-         *
-         */if (isConnected) {
+        * Type    : Public Method "sendAck()"
+        * Usage   : Send device command received acknowledgment to cloud
+        *
+        * - status Type
+        *     st = 1	Failed
+              st = 2	Executed Ack
+        *
+        */
+
+        if (isConnected) {
             if (TextUtils.isEmpty(childId)) {
                 FirmwareActivity.sdkClient.sendAckCmd(ackId, 6, "")
             } else {
@@ -451,10 +453,15 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
          * Type    : Public Method "sendAck()"
          * Usage   : Send firmware command received acknowledgement to cloud
          * - status Type
-         *     st = 0; // firmware OTA command Ack status
-         *     st = 4; // Failed Ack
+         *     st = 1	Failed
+               st = 2	Downloading
+               st = 3	Download Done
+               st = 4	Download Failed
+               st = 5	Success
          *
-         */if (isConnected) {
+         */
+
+        if (isConnected) {
             if (TextUtils.isEmpty(childId)) {
                 FirmwareActivity.sdkClient.sendOTAAckCmd(ackId, 0, "")
             } else {
