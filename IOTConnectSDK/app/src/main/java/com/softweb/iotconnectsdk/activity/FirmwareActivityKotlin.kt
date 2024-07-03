@@ -433,9 +433,9 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
 
         if (isConnected) {
             if (TextUtils.isEmpty(childId)) {
-                FirmwareActivity.sdkClient.sendAckCmd(ackId, 6, "")
+                FirmwareActivity.sdkClient.sendAckCmd(ackId, 2, "")
             } else {
-                FirmwareActivity.sdkClient.sendAckCmd(ackId, 6, "", childId)
+                FirmwareActivity.sdkClient.sendAckCmd(ackId, 2, "", childId)
             }
         } else {
             Toast.makeText(
@@ -463,9 +463,9 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
 
         if (isConnected) {
             if (TextUtils.isEmpty(childId)) {
-                FirmwareActivity.sdkClient.sendOTAAckCmd(ackId, 0, "")
+                FirmwareActivity.sdkClient.sendOTAAckCmd(ackId, 5, "")
             } else {
-                FirmwareActivity.sdkClient.sendOTAAckCmd(ackId, 0, "", childId)
+                FirmwareActivity.sdkClient.sendOTAAckCmd(ackId, 5, "", childId)
             }
         } else {
             Toast.makeText(
