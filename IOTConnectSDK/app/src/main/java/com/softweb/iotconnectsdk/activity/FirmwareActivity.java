@@ -188,8 +188,8 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
                     btnSendData.setEnabled(false);
                     btnGetAllTwins.setEnabled(false);
 
-                    cpId = etCpid.getText().toString().trim();
-                    uniqueId = etUniqueId.getText().toString().trim();
+                    cpId = etCpid.getText().toString();
+                    uniqueId = etUniqueId.getText().toString();
 
                     try {
                         hideKeyboard(FirmwareActivity.this);

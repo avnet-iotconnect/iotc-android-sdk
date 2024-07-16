@@ -244,9 +244,6 @@ internal class IotSDKMQTTService private constructor(
                 } else if (authenticationType == IotSDKUrls.AUTH_TYPE_SYMMETRIC_KEY) {
                     if (sdkObj.has("devicePK")) {
                         val devicePK = sdkObj.getString("devicePK")
-                        if (TextUtils.isEmpty(devicePK)) {
-                            return
-                        }
 
                         val resourceUri = "${protocolBean.h}/devices/${protocolBean.id}"
                         val generateSasToken = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

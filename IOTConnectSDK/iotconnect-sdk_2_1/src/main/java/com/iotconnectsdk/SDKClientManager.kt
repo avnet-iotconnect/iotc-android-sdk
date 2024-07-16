@@ -1577,6 +1577,14 @@ internal class SDKClientManager(
         innerObject.put("g", response?.d?.meta?.gtw?.g)
         mainObject.put("mt", DeviceIdentityMessages.CREATE_CHILD_DEVICE.value)
         mainObject.put("d", innerObject)
+
+        val id = innerObject.getString("id")
+
+        if (!patternUniqueId.matches(id)) {
+            deviceCallback?.onReceiveMsg(context?.getString(R.string.ERR_IN013))
+            sdkClientManger = null
+            return
+        }
         publishMessage(
             response?.d?.p?.topics?.di!!, mainObject.toString(), false
         )
