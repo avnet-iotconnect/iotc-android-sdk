@@ -28,7 +28,9 @@ class GatewayChildDevicesActivity : AppCompatActivity(), AdapterView.OnItemSelec
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_gateway_child_devices)
 
-        tagsList = intent.extras?.getStringArrayList("tagsList")
+        tagsList = intent.extras?.getStringArrayList("tagsList")?: ArrayList()
+
+        tagsList!!.add(0, "Select Tag")
 
         // calling the action bar
 
@@ -43,6 +45,8 @@ class GatewayChildDevicesActivity : AppCompatActivity(), AdapterView.OnItemSelec
             android.R.layout.simple_spinner_dropdown_item, tagsList!!
         )
         spTags.adapter = adapter
+        // Optionally, set the initial selection to the "Select Tag" option
+        spTags.setSelection(0)
         spTags.onItemSelectedListener = this
 
         btnCreateDevice.setOnClickListener {
@@ -51,6 +55,7 @@ class GatewayChildDevicesActivity : AppCompatActivity(), AdapterView.OnItemSelec
                 sdkClient.createChildDevice(etUniqueId.text.toString(),spTags.selectedItem.toString(),etDisplayName.text.toString())
                 etUniqueId.setText("")
                 etDisplayName.setText("")
+                spTags.setSelection(0)
                 etUniqueId.requestFocus()
             }
         }
@@ -136,6 +141,13 @@ class GatewayChildDevicesActivity : AppCompatActivity(), AdapterView.OnItemSelec
             Toast.makeText(
                 this@GatewayChildDevicesActivity,
                 getString(R.string.alert_enter_display_name),
+                Toast.LENGTH_SHORT
+            ).show()
+            return false
+        }else if (spTags.selectedItemPosition == 0) {
+            Toast.makeText(
+                this@GatewayChildDevicesActivity,
+                getString(R.string.alert_select_valid_tag),
                 Toast.LENGTH_SHORT
             ).show()
             return false
