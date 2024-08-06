@@ -316,10 +316,8 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         Certificate certificate = new Certificate();
 
         //put certificate file in asset folder
-        certificate.setsSLKeyPath(getRobotCacheFile(this, "").getAbsolutePath());
-        certificate.setsSLCertPath(getRobotCacheFile(this, "").getAbsolutePath());
-        certificate.setsSLCaPath(getRobotCacheFile(this, "").getAbsolutePath());
-
+        certificate.setsSLKeyPath(getRobotCacheFile(this, "device.key").getAbsolutePath());
+        certificate.setsSLCertPath(getRobotCacheFile(this, "device.pem").getAbsolutePath());
 
         //For using symmetric key authentication type
         sdkOptions.devicePK = "";
@@ -647,6 +645,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
             tvConnStatus.setSelected(true);
             etUniqueId.setEnabled(false);
             etCpid.setEnabled(false);
+            spEnvironment.setEnabled(false);
             btnConnect.setText("Disconnect");
 
             /*
@@ -669,6 +668,7 @@ public class FirmwareActivity extends AppCompatActivity implements View.OnClickL
         } else {
             etUniqueId.setEnabled(true);
             etCpid.setEnabled(true);
+            spEnvironment.setEnabled(true);
             setStatusText(R.string.device_disconnected);
             tvConnStatus.setSelected(false);
             btnConnect.setText("Connect");

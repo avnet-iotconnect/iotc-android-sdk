@@ -45,12 +45,12 @@ internal object SecurityHelper {
                 companySID,
                 deviceUniqueID
             )?.keyManagers
-            val trustManagers = createTrustManagerFactory(caFile, companySID, deviceUniqueID)!!
-                .trustManagers
+//            val trustManagers = createTrustManagerFactory(caFile, companySID, deviceUniqueID)!!
+//                .trustManagers
 
             // Create the TLS socket factory for the desired TLS version
             val context = SSLContext.getInstance("TLSv1.2")
-            context.init(keyManagers, trustManagers, SecureRandom())
+            context.init(keyManagers, null, SecureRandom())
             context.socketFactory
         } catch (e: Exception) {
             e.printStackTrace()

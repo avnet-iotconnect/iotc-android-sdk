@@ -231,7 +231,7 @@ internal class IotSDKMQTTService private constructor(
                         }
 
                         val socketFactory = createSocketFactory(
-                            caFile!!,
+                            caFile,
                             clientCrtFile!!,
                             clientKeyFile!!,
                             "",

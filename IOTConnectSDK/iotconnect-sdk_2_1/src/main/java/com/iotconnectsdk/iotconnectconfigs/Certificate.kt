@@ -15,7 +15,7 @@ class Certificate {
     var sSLCertPath: String? = null
         private set
 
-    fun setsSLCaPath(sSLCaPath: String?) {
+    private fun setsSLCaPath(sSLCaPath: String?) {
         this.sSLCaPath = sSLCaPath
     }
 

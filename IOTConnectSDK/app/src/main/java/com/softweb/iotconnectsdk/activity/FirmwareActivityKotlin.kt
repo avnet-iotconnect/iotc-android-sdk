@@ -285,8 +285,6 @@ class FirmwareActivityKotlin : AppCompatActivity(), View.OnClickListener,
             //put certificate file in asset folder
             certificate.setsSLKeyPath(getRobotCacheFile(this, "")?.absolutePath)
             certificate.setsSLCertPath(getRobotCacheFile(this, "")?.absolutePath)
-            certificate.setsSLCaPath(getRobotCacheFile(this, "")?.absolutePath)
-
 
             //For using symmetric key authentication type
             sdkOptions.devicePK = ""
