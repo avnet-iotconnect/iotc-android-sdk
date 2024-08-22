@@ -21,7 +21,7 @@
             android:background="?attr/colorPrimary"
             android:minHeight="?attr/actionBarSize"
             android:theme="?attr/actionBarTheme"
-            app:title="Gateway Devices"
+            app:title="Gateway Device(s)"
             app:titleTextColor="@color/white"
             tools:layout_editor_absoluteX="0dp"
             tools:layout_editor_absoluteY="0dp" />

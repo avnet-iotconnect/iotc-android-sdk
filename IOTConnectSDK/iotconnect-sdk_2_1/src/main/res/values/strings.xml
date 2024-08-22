@@ -84,8 +84,8 @@
     <string name="tv_something_wrong">Could not create device, something went wrong</string>
     <string name="tv_tag_not_valid">Child device tag is not valid</string>
     <string name="tv_tag_issue">Child device tag name cannot be same as Gateway device</string>
-    <string name="tv_id_exist">Child uniqueid is already exists.</string>
-    <string name="tv_id_limit">Child uniqueid should not exceed 128 characters</string>
+    <string name="tv_id_exist">Unique id already exists</string>
+    <string name="tv_id_limit">Child unique id should not exceed 128 characters</string>
 
 
     <string name="tv_device_deleted">Child Device deleted</string>
