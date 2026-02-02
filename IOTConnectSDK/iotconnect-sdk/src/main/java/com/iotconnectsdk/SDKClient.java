@@ -3,6 +3,7 @@ package com.iotconnectsdk;
 import android.app.Activity;
 import android.content.Context;
 import android.content.IntentFilter;
+import android.os.Build;
 import android.webkit.URLUtil;
 
 import com.google.gson.Gson;
@@ -156,7 +157,12 @@ public class SDKClient implements WsResponseInterface, HubToSdkCallback, TwinUpd
         try {
             networkStateReceiver = new NetworkStateReceiver();
             networkStateReceiver.addListener(this);
-            context.registerReceiver(networkStateReceiver, new IntentFilter(android.net.ConnectivityManager.CONNECTIVITY_ACTION));
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                // Android 12+ (API 31+) requires RECEIVER_EXPORTED or RECEIVER_NOT_EXPORTED flag
+                context.registerReceiver(networkStateReceiver, new IntentFilter(android.net.ConnectivityManager.CONNECTIVITY_ACTION), Context.RECEIVER_NOT_EXPORTED);
+            } else {
+                context.registerReceiver(networkStateReceiver, new IntentFilter(android.net.ConnectivityManager.CONNECTIVITY_ACTION));
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -12,7 +12,7 @@
         android:usesCleartextTraffic="true"
         android:supportsRtl="true">
         <!-- Mqtt Service -->
-        <service android:name="org.eclipse.paho.android.service.MqttService" />
+        <service android:name="org.eclipse.paho.android.service.MqttService" android:exported="false" />
     </application>
 
 </manifest>

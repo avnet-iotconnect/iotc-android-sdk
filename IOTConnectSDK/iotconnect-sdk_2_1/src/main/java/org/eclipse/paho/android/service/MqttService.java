@@ -772,8 +772,14 @@ public class MqttService extends Service implements MqttTraceHandler {
   private void registerBroadcastReceivers() {
 		if (networkConnectionMonitor == null) {
 			networkConnectionMonitor = new NetworkConnectionIntentReceiver();
-			registerReceiver(networkConnectionMonitor, new IntentFilter(
-					ConnectivityManager.CONNECTIVITY_ACTION));
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+				// Android 12+ (API 31+) requires RECEIVER_EXPORTED or RECEIVER_NOT_EXPORTED flag
+				registerReceiver(networkConnectionMonitor, new IntentFilter(
+						ConnectivityManager.CONNECTIVITY_ACTION), Context.RECEIVER_NOT_EXPORTED);
+			} else {
+				registerReceiver(networkConnectionMonitor, new IntentFilter(
+						ConnectivityManager.CONNECTIVITY_ACTION));
+			}
 		}
 
 		if (Build.VERSION.SDK_INT < 14 /**Build.VERSION_CODES.ICE_CREAM_SANDWICH**/) {
@@ -782,10 +788,19 @@ public class MqttService extends Service implements MqttTraceHandler {
 			backgroundDataEnabled = cm.getBackgroundDataSetting();
 			if (backgroundDataPreferenceMonitor == null) {
 				backgroundDataPreferenceMonitor = new BackgroundDataPreferenceReceiver();
-				registerReceiver(
-						backgroundDataPreferenceMonitor,
-						new IntentFilter(
-								ConnectivityManager.ACTION_BACKGROUND_DATA_SETTING_CHANGED));
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+					// Android 12+ (API 31+) requires RECEIVER_EXPORTED or RECEIVER_NOT_EXPORTED flag
+					registerReceiver(
+							backgroundDataPreferenceMonitor,
+							new IntentFilter(
+									ConnectivityManager.ACTION_BACKGROUND_DATA_SETTING_CHANGED),
+							Context.RECEIVER_NOT_EXPORTED);
+				} else {
+					registerReceiver(
+							backgroundDataPreferenceMonitor,
+							new IntentFilter(
+									ConnectivityManager.ACTION_BACKGROUND_DATA_SETTING_CHANGED));
+				}
 			}
 		}
   }
