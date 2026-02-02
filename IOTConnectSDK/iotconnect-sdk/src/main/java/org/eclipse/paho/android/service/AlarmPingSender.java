@@ -25,10 +25,14 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.util.Log;
+import android.widget.Toast;
 
 /**
  * Default ping sender implementation on Android. It is based on AlarmManager.
@@ -71,12 +75,13 @@ class AlarmPingSender implements MqttPingSender {
 		String action = MqttServiceConstants.PING_SENDER
 				+ comms.getClient().getClientId();
 		Log.d(TAG, "Register alarmreceiver to MqttService"+ action);
-		service.registerReceiver(alarmReceiver, new IntentFilter(action));
-
-		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S){
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+			// Android 12+ (API 31+) requires RECEIVER_EXPORTED or RECEIVER_NOT_EXPORTED flag
+			service.registerReceiver(alarmReceiver, new IntentFilter(action), Context.RECEIVER_NOT_EXPORTED);
 			pendingIntent = PendingIntent.getBroadcast(service, 0, new Intent(
 					action), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 		} else {
+			service.registerReceiver(alarmReceiver, new IntentFilter(action));
 			pendingIntent = PendingIntent.getBroadcast(service, 0, new Intent(
 					action), PendingIntent.FLAG_UPDATE_CURRENT);
 		}
@@ -113,14 +118,35 @@ class AlarmPingSender implements MqttPingSender {
 		AlarmManager alarmManager = (AlarmManager) service
 				.getSystemService(Service.ALARM_SERVICE);
 
-		if(Build.VERSION.SDK_INT >= 23){
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+			// Android 12+ (API 31+) - check if we have permission for exact alarms
+			Log.d(TAG, "Alarm schedule using setExactAndAllowWhileIdle, next: " + delayInMilliseconds);
+
+			if (alarmManager.canScheduleExactAlarms()) {
+				alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nextAlarmInMilliseconds,
+						pendingIntent);
+			} else {
+				// Permission denied - prompt user to grant it
+				new Handler(Looper.getMainLooper()).post(new Runnable() {
+					@Override
+					public void run() {
+						Toast.makeText(service, "Please allow Permissions", Toast.LENGTH_LONG).show();
+					}
+				});
+
+				Intent intent = new Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+				intent.setData(Uri.fromParts("package", service.getPackageName(), null));
+				intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+				service.startActivity(intent);
+			}
+		} else if (Build.VERSION.SDK_INT >= 23) {
 			// In SDK 23 and above, dosing will prevent setExact, setExactAndAllowWhileIdle will force
 			// the device to run this task whilst dosing.
-			Log.d(TAG, "Alarm scheule using setExactAndAllowWhileIdle, next: " + delayInMilliseconds);
+			Log.d(TAG, "Alarm schedule using setExactAndAllowWhileIdle, next: " + delayInMilliseconds);
 			alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nextAlarmInMilliseconds,
 					pendingIntent);
 		} else if (Build.VERSION.SDK_INT >= 19) {
-			Log.d(TAG, "Alarm scheule using setExact, delay: " + delayInMilliseconds);
+			Log.d(TAG, "Alarm schedule using setExact, delay: " + delayInMilliseconds);
 			alarmManager.setExact(AlarmManager.RTC_WAKEUP, nextAlarmInMilliseconds,
 					pendingIntent);
 		} else {

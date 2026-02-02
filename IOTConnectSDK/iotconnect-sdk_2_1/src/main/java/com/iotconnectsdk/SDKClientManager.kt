@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.IntentFilter
 import android.net.ConnectivityManager
+import android.os.Build
 import android.text.TextUtils
 import android.webkit.URLUtil
 import com.google.common.collect.ArrayListMultimap
@@ -227,9 +228,19 @@ internal class SDKClientManager(
         try {
             networkStateReceiver = NetworkStateReceiver()
             networkStateReceiver?.addListener(this)
-            context?.registerReceiver(
-                networkStateReceiver, IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
-            )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                // Android 12+ (API 31+) requires RECEIVER_EXPORTED or RECEIVER_NOT_EXPORTED flag
+                context?.registerReceiver(
+                    networkStateReceiver,
+                    IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION),
+                    Context.RECEIVER_NOT_EXPORTED
+                )
+            } else {
+                context?.registerReceiver(
+                    networkStateReceiver,
+                    IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
+                )
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }
